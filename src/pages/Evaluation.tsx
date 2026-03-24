@@ -27,6 +27,12 @@ const Evaluation = () => {
     birth_date: '',
     email: '',
     phone: '',
+    address: '',
+    marital_status: '',
+    gender: '',
+    profession: '',
+    responsible_doctor: '',
+    doctor_phone: '',
     chief_complaint: '',
     history_present_illness: '',
     medications: '',
@@ -58,27 +64,23 @@ const Evaluation = () => {
     return `${numbers.slice(0, 2)}/${numbers.slice(2, 4)}/${numbers.slice(4, 8)}`;
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     let filteredValue = value;
     
-    if (name === 'patient_name') {
+    if (name === 'patient_name' || name === 'responsible_doctor') {
       filteredValue = value.replace(/[^a-zA-ZÀ-ÿ\s]/g, '');
-    } else if (name === 'phone') {
+    } else if (name === 'phone' || name === 'doctor_phone') {
       filteredValue = formatPhone(value);
     } else if (name === 'birth_date') {
       filteredValue = formatDate(value);
     } else if (name === 'blood_pressure') {
-      // Limite de 7 caracteres (ex: 120/100)
       filteredValue = value.replace(/[^\d/]/g, '').substring(0, 7);
     } else if (name === 'heart_rate') {
-      // Limite de 3 dígitos
       filteredValue = value.replace(/\D/g, '').substring(0, 3);
     } else if (name === 'respiratory_rate') {
-      // Limite de 2 dígitos
       filteredValue = value.replace(/\D/g, '').substring(0, 2);
     } else if (name === 'temperature') {
-      // Limite de 4 caracteres (ex: 36.5)
       filteredValue = value.replace(/[^\d.,]/g, '').substring(0, 4);
     }
 
@@ -120,6 +122,12 @@ const Evaluation = () => {
         birth_date: '',
         email: '',
         phone: '',
+        address: '',
+        marital_status: '',
+        gender: '',
+        profession: '',
+        responsible_doctor: '',
+        doctor_phone: '',
         chief_complaint: '',
         history_present_illness: '',
         medications: '',
@@ -223,12 +231,52 @@ const Evaluation = () => {
                     <input name="birth_date" value={formData.birth_date} onChange={handleInputChange} type="text" className={inputClasses} placeholder="DD/MM/AAAA" maxLength={10} />
                   </div>
                   <div>
+                    <label className={labelClasses}>Gênero</label>
+                    <select name="gender" value={formData.gender} onChange={handleInputChange} className={inputClasses}>
+                      <option value="">Selecione...</option>
+                      <option value="Masculino">Masculino</option>
+                      <option value="Feminino">Feminino</option>
+                      <option value="Outro">Outro</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className={labelClasses}>Estado Civil</label>
+                    <select name="marital_status" value={formData.marital_status} onChange={handleInputChange} className={inputClasses}>
+                      <option value="">Selecione...</option>
+                      <option value="Solteiro(a)">Solteiro(a)</option>
+                      <option value="Casado(a)">Casado(a)</option>
+                      <option value="Divorciado(a)">Divorciado(a)</option>
+                      <option value="Viúvo(a)">Viúvo(a)</option>
+                    </select>
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className={labelClasses}>Endereço Completo</label>
+                    <input name="address" value={formData.address} onChange={handleInputChange} type="text" className={inputClasses} placeholder="Rua, número, bairro, cidade - UF" />
+                  </div>
+                  <div>
+                    <label className={labelClasses}>Profissão</label>
+                    <input name="profession" value={formData.profession} onChange={handleInputChange} type="text" className={inputClasses} placeholder="Ex: Engenheiro" />
+                  </div>
+                  <div>
                     <label className={labelClasses}>E-mail do Paciente</label>
                     <input name="email" value={formData.email} onChange={handleInputChange} type="email" className={inputClasses} placeholder="exemplo@email.com" />
                   </div>
                   <div>
                     <label className={labelClasses}>Telefone de Contato</label>
                     <input name="phone" value={formData.phone} onChange={handleInputChange} type="tel" className={inputClasses} placeholder="(00) 00000-0000" maxLength={15} />
+                  </div>
+                  <div className="border-t border-slate-100 pt-8 md:col-span-2">
+                    <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">Informações Médicas</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      <div>
+                        <label className={labelClasses}>Médico Responsável</label>
+                        <input name="responsible_doctor" value={formData.responsible_doctor} onChange={handleInputChange} type="text" className={inputClasses} placeholder="Nome do médico" />
+                      </div>
+                      <div>
+                        <label className={labelClasses}>Telefone do Médico</label>
+                        <input name="doctor_phone" value={formData.doctor_phone} onChange={handleInputChange} type="tel" className={inputClasses} placeholder="(00) 00000-0000" maxLength={15} />
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

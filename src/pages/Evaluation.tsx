@@ -41,23 +41,32 @@ const Evaluation = () => {
     physio_diagnosis: ''
   });
 
+  const formatPhone = (value: string) => {
+    const numbers = value.replace(/\D/g, '');
+    if (numbers.length <= 10) {
+      return numbers.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3').substring(0, 14);
+    }
+    return numbers.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3').substring(0, 15);
+  };
+
+  const formatDate = (value: string) => {
+    const numbers = value.replace(/\D/g, '');
+    return numbers.replace(/(\d{2})(\d{2})(\d{4})/, '$1/$2/$3').substring(0, 10);
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    
     let filteredValue = value;
     
-    // Validações específicas por campo
     if (name === 'patient_name') {
-      // Permite apenas letras (incluindo acentuadas) e espaços
       filteredValue = value.replace(/[^a-zA-ZÀ-ÿ\s]/g, '');
     } else if (name === 'phone') {
-      // Permite apenas números e caracteres comuns de telefone
-      filteredValue = value.replace(/[^\d\s()+-]/g, '');
+      filteredValue = formatPhone(value);
+    } else if (name === 'birth_date') {
+      filteredValue = formatDate(value);
     } else if (['heart_rate', 'respiratory_rate', 'temperature'].includes(name)) {
-      // Permite apenas números, ponto e vírgula para sinais vitais
       filteredValue = value.replace(/[^\d.,]/g, '');
     } else if (name === 'blood_pressure') {
-      // Permite números e a barra (ex: 120/80)
       filteredValue = value.replace(/[^\d/]/g, '');
     }
 
@@ -70,6 +79,18 @@ const Evaluation = () => {
       return;
     }
 
+    // Validar e converter data para o formato do banco (AAAA-MM-DD)
+    let formattedBirthDate = null;
+    if (formData.birth_date) {
+      const parts = formData.birth_date.split('/');
+      if (parts.length === 3) {
+        formattedBirthDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+      } else {
+        alert('Data de nascimento inválida. Use o formato DD/MM/AAAA');
+        return;
+      }
+    }
+
     if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       alert('Por favor, insira um e-mail válido.');
       return;
@@ -79,7 +100,11 @@ const Evaluation = () => {
     try {
       const { error } = await supabase
         .from('evaluations')
-        .insert([{ ...formData, user_id: user?.id }]);
+        .insert([{ 
+          ...formData, 
+          birth_date: formattedBirthDate,
+          user_id: user?.id 
+        }]);
 
       if (error) throw error;
       alert('Avaliação salva com sucesso!');
@@ -189,7 +214,7 @@ const Evaluation = () => {
                   </div>
                   <div>
                     <label className={labelClasses}>Data de Nascimento</label>
-                    <input name="birth_date" value={formData.birth_date} onChange={handleInputChange} type="date" className={inputClasses} />
+                    <input name="birth_date" value={formData.birth_date} onChange={handleInputChange} type="text" className={inputClasses} placeholder="DD/MM/AAAA" maxLength={10} />
                   </div>
                   <div>
                     <label className={labelClasses}>E-mail do Paciente</label>
@@ -197,7 +222,7 @@ const Evaluation = () => {
                   </div>
                   <div>
                     <label className={labelClasses}>Telefone de Contato</label>
-                    <input name="phone" value={formData.phone} onChange={handleInputChange} type="tel" className={inputClasses} placeholder="(00) 00000-0000" />
+                    <input name="phone" value={formData.phone} onChange={handleInputChange} type="tel" className={inputClasses} placeholder="(00) 00000-0000" maxLength={15} />
                   </div>
                 </div>
               </div>

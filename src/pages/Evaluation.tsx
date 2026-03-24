@@ -8,13 +8,64 @@ import {
   Dumbbell, 
   Save, 
   LogOut,
-  ChevronRight
+  ChevronRight,
+  Loader2
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/components/AuthProvider';
 
 const Evaluation = () => {
   const navigate = useNavigate();
+  const { signOut, user } = useAuth();
   const [activeTab, setActiveTab] = useState('identificacao');
+  const [isSaving, setIsSaving] = useState(false);
+  
+  const [formData, setFormData] = useState({
+    patient_name: '',
+    birth_date: '',
+    profession: '',
+    phone: '',
+    chief_complaint: '',
+    history_present_illness: '',
+    medications: '',
+    previous_surgeries: '',
+    blood_pressure: '',
+    heart_rate: '',
+    respiratory_rate: '',
+    temperature: '',
+    inspection_palpation: '',
+    range_of_motion: '',
+    muscle_strength: '',
+    physio_diagnosis: ''
+  });
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSave = async () => {
+    if (!formData.patient_name) {
+      alert('Por favor, preencha ao menos o nome do paciente.');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const { error } = await supabase
+        .from('evaluations')
+        .insert([{ ...formData, user_id: user?.id }]);
+
+      if (error) throw error;
+      alert('Avaliação salva com sucesso!');
+      // Limpar formulário ou redirecionar
+    } catch (error: any) {
+      alert('Erro ao salvar: ' + error.message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const tabs = [
     { id: 'identificacao', label: 'Identificação', icon: User },
@@ -25,7 +76,6 @@ const Evaluation = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 flex">
-      {/* Sidebar */}
       <aside className="w-64 bg-white border-r border-slate-200 hidden md:flex flex-col">
         <div className="p-6 border-b border-slate-100">
           <h2 className="text-xl font-bold text-blue-600 flex items-center gap-2">
@@ -50,7 +100,7 @@ const Evaluation = () => {
         </nav>
         <div className="p-4 border-t border-slate-100">
           <button 
-            onClick={() => navigate('/login')}
+            onClick={() => { signOut(); navigate('/login'); }}
             className="w-full flex items-center gap-3 px-4 py-3 text-slate-500 hover:text-red-600 transition-colors"
           >
             <LogOut size={20} /> Sair
@@ -58,7 +108,6 @@ const Evaluation = () => {
         </div>
       </aside>
 
-      {/* Main Content */}
       <main className="flex-1 overflow-y-auto p-4 md:p-8">
         <div className="max-w-4xl mx-auto">
           <header className="mb-8 flex justify-between items-center">
@@ -66,8 +115,13 @@ const Evaluation = () => {
               <h1 className="text-2xl font-bold text-slate-800">Nova Avaliação</h1>
               <p className="text-slate-500">Preencha os dados do paciente com atenção.</p>
             </div>
-            <button className="bg-blue-600 text-white px-6 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700 transition-all shadow-md">
-              <Save size={18} /> Salvar Ficha
+            <button 
+              onClick={handleSave}
+              disabled={isSaving}
+              className="bg-blue-600 text-white px-6 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700 transition-all shadow-md disabled:opacity-50"
+            >
+              {isSaving ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
+              Salvar Ficha
             </button>
           </header>
 
@@ -78,19 +132,19 @@ const Evaluation = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-slate-700">Nome Completo</label>
-                    <input type="text" className="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ex: João Silva" />
+                    <input name="patient_name" value={formData.patient_name} onChange={handleInputChange} type="text" className="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ex: João Silva" />
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-slate-700">Data de Nascimento</label>
-                    <input type="date" className="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+                    <input name="birth_date" value={formData.birth_date} onChange={handleInputChange} type="date" className="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-slate-700">Profissão</label>
-                    <input type="text" className="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+                    <input name="profession" value={formData.profession} onChange={handleInputChange} type="text" className="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-slate-700">Telefone</label>
-                    <input type="tel" className="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="(00) 00000-0000" />
+                    <input name="phone" value={formData.phone} onChange={handleInputChange} type="tel" className="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="(00) 00000-0000" />
                   </div>
                 </div>
               </div>
@@ -102,20 +156,20 @@ const Evaluation = () => {
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-slate-700">Queixa Principal</label>
-                    <textarea className="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none h-24" placeholder="Descreva o motivo da consulta..."></textarea>
+                    <textarea name="chief_complaint" value={formData.chief_complaint} onChange={handleInputChange} className="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none h-24" placeholder="Descreva o motivo da consulta..."></textarea>
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-slate-700">História da Doença Atual (HDA)</label>
-                    <textarea className="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none h-24"></textarea>
+                    <textarea name="history_present_illness" value={formData.history_present_illness} onChange={handleInputChange} className="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none h-24"></textarea>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <label className="text-sm font-medium text-slate-700">Medicamentos em uso</label>
-                      <input type="text" className="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+                      <input name="medications" value={formData.medications} onChange={handleInputChange} type="text" className="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
                     </div>
                     <div className="space-y-2">
                       <label className="text-sm font-medium text-slate-700">Cirurgias Prévias</label>
-                      <input type="text" className="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+                      <input name="previous_surgeries" value={formData.previous_surgeries} onChange={handleInputChange} type="text" className="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
                     </div>
                   </div>
                 </div>
@@ -128,24 +182,24 @@ const Evaluation = () => {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-slate-700">PA (mmHg)</label>
-                    <input type="text" className="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="120/80" />
+                    <input name="blood_pressure" value={formData.blood_pressure} onChange={handleInputChange} type="text" className="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="120/80" />
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-slate-700">FC (bpm)</label>
-                    <input type="text" className="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="70" />
+                    <input name="heart_rate" value={formData.heart_rate} onChange={handleInputChange} type="text" className="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="70" />
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-slate-700">FR (irpm)</label>
-                    <input type="text" className="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="16" />
+                    <input name="respiratory_rate" value={formData.respiratory_rate} onChange={handleInputChange} type="text" className="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="16" />
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-slate-700">Temp (°C)</label>
-                    <input type="text" className="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="36.5" />
+                    <input name="temperature" value={formData.temperature} onChange={handleInputChange} type="text" className="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="36.5" />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-slate-700">Inspeção / Palpação</label>
-                  <textarea className="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none h-32" placeholder="Edema, cicatrizes, trofismo muscular..."></textarea>
+                  <textarea name="inspection_palpation" value={formData.inspection_palpation} onChange={handleInputChange} className="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none h-32" placeholder="Edema, cicatrizes, trofismo muscular..."></textarea>
                 </div>
               </div>
             )}
@@ -156,15 +210,15 @@ const Evaluation = () => {
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-slate-700">Amplitude de Movimento (ADM)</label>
-                    <textarea className="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none h-24"></textarea>
+                    <textarea name="range_of_motion" value={formData.range_of_motion} onChange={handleInputChange} className="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none h-24"></textarea>
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-slate-700">Força Muscular (Grau 0-5)</label>
-                    <textarea className="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none h-24"></textarea>
+                    <textarea name="muscle_strength" value={formData.muscle_strength} onChange={handleInputChange} className="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none h-24"></textarea>
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-slate-700">Diagnóstico Fisioterapêutico</label>
-                    <textarea className="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none h-24 font-medium text-blue-700 bg-blue-50/30"></textarea>
+                    <textarea name="physio_diagnosis" value={formData.physio_diagnosis} onChange={handleInputChange} className="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none h-24 font-medium text-blue-700 bg-blue-50/30"></textarea>
                   </div>
                 </div>
               </div>
@@ -186,11 +240,13 @@ const Evaluation = () => {
                   const currentIndex = tabs.findIndex(t => t.id === activeTab);
                   if (currentIndex < tabs.length - 1) {
                     setActiveTab(tabs[currentIndex + 1].id);
+                  } else {
+                    handleSave();
                   }
                 }}
                 className="text-blue-600 font-bold flex items-center gap-1"
               >
-                {activeTab === 'funcional' ? 'Finalizar' : 'Próximo'} <ChevronRight size={18} />
+                {activeTab === 'funcional' ? 'Finalizar e Salvar' : 'Próximo'} <ChevronRight size={18} />
               </button>
             </div>
           </div>

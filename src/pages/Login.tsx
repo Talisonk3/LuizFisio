@@ -1,19 +1,22 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Stethoscope, Lock, Mail } from 'lucide-react';
+import { Auth } from '@supabase/auth-ui-react';
+import { ThemeSupa } from '@supabase/auth-ui-shared';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/components/AuthProvider';
+import { Stethoscope } from 'lucide-react';
 
 const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const { session } = useAuth();
   const navigate = useNavigate();
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Simulação de login para demonstração da interface
-    navigate('/avaliacao');
-  };
+  useEffect(() => {
+    if (session) {
+      navigate('/avaliacao');
+    }
+  }, [session, navigate]);
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
@@ -23,51 +26,39 @@ const Login = () => {
             <Stethoscope className="text-blue-600 w-8 h-8" />
           </div>
           <h1 className="text-2xl font-bold text-slate-800">FisioSystem</h1>
-          <p className="text-slate-500">Acesse sua plataforma de avaliação</p>
+          <p className="text-slate-500 text-center">Acesse sua plataforma de avaliação fisioterapêutica</p>
         </div>
 
-        <form onSubmit={handleLogin} className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">E-mail</label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
-              <input
-                type="email"
-                required
-                className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
-                placeholder="seu@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.value)}
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Senha</label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
-              <input
-                type="password"
-                required
-                className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.value)}
-              />
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition-colors shadow-lg shadow-blue-200"
-          >
-            Entrar
-          </button>
-        </form>
-
-        <p className="mt-8 text-center text-sm text-slate-500">
-          Esqueceu sua senha? <span className="text-blue-600 cursor-pointer hover:underline">Recuperar</span>
-        </p>
+        <Auth
+          supabaseClient={supabase}
+          appearance={{ 
+            theme: ThemeSupa,
+            variables: {
+              default: {
+                colors: {
+                  brand: '#2563eb',
+                  brandAccent: '#1d4ed8',
+                }
+              }
+            }
+          }}
+          providers={[]}
+          localization={{
+            variables: {
+              sign_in: {
+                email_label: 'E-mail',
+                password_label: 'Senha',
+                button_label: 'Entrar',
+              },
+              sign_up: {
+                email_label: 'E-mail',
+                password_label: 'Senha',
+                button_label: 'Cadastrar',
+              }
+            }
+          }}
+          theme="light"
+        />
       </div>
     </div>
   );

@@ -43,12 +43,35 @@ const Evaluation = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    
+    let filteredValue = value;
+    
+    // Validações específicas por campo
+    if (name === 'patient_name') {
+      // Permite apenas letras (incluindo acentuadas) e espaços
+      filteredValue = value.replace(/[^a-zA-ZÀ-ÿ\s]/g, '');
+    } else if (name === 'phone') {
+      // Permite apenas números e caracteres comuns de telefone
+      filteredValue = value.replace(/[^\d\s()+-]/g, '');
+    } else if (['heart_rate', 'respiratory_rate', 'temperature'].includes(name)) {
+      // Permite apenas números, ponto e vírgula para sinais vitais
+      filteredValue = value.replace(/[^\d.,]/g, '');
+    } else if (name === 'blood_pressure') {
+      // Permite números e a barra (ex: 120/80)
+      filteredValue = value.replace(/[^\d/]/g, '');
+    }
+
+    setFormData(prev => ({ ...prev, [name]: filteredValue }));
   };
 
   const handleSave = async () => {
-    if (!formData.patient_name) {
-      alert('Por favor, preencha ao menos o nome do paciente.');
+    if (!formData.patient_name.trim()) {
+      alert('Por favor, preencha o nome do paciente.');
+      return;
+    }
+
+    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      alert('Por favor, insira um e-mail válido.');
       return;
     }
 
@@ -59,9 +82,8 @@ const Evaluation = () => {
         .insert([{ ...formData, user_id: user?.id }]);
 
       if (error) throw error;
-      alert('Avaliação salva com sucesso no banco de dados!');
+      alert('Avaliação salva com sucesso!');
       
-      // Limpar formulário após salvar
       setFormData({
         patient_name: '',
         birth_date: '',
@@ -84,7 +106,7 @@ const Evaluation = () => {
       
     } catch (error: any) {
       console.error('Erro ao salvar:', error);
-      alert('Erro ao salvar: ' + (error.message || 'Verifique sua conexão ou permissões.'));
+      alert('Erro ao salvar: ' + (error.message || 'Verifique sua conexão.'));
     } finally {
       setIsSaving(false);
     }

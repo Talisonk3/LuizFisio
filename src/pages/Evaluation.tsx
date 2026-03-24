@@ -68,10 +68,18 @@ const Evaluation = () => {
       filteredValue = formatPhone(value);
     } else if (name === 'birth_date') {
       filteredValue = formatDate(value);
-    } else if (['heart_rate', 'respiratory_rate', 'temperature'].includes(name)) {
-      filteredValue = value.replace(/[^\d.,]/g, '');
     } else if (name === 'blood_pressure') {
-      filteredValue = value.replace(/[^\d/]/g, '');
+      // Limite de 7 caracteres (ex: 120/100)
+      filteredValue = value.replace(/[^\d/]/g, '').substring(0, 7);
+    } else if (name === 'heart_rate') {
+      // Limite de 3 dígitos
+      filteredValue = value.replace(/\D/g, '').substring(0, 3);
+    } else if (name === 'respiratory_rate') {
+      // Limite de 2 dígitos
+      filteredValue = value.replace(/\D/g, '').substring(0, 2);
+    } else if (name === 'temperature') {
+      // Limite de 4 caracteres (ex: 36.5)
+      filteredValue = value.replace(/[^\d.,]/g, '').substring(0, 4);
     }
 
     setFormData(prev => ({ ...prev, [name]: filteredValue }));
@@ -92,11 +100,6 @@ const Evaluation = () => {
         alert('Data de nascimento incompleta ou inválida. Use o formato DD/MM/AAAA');
         return;
       }
-    }
-
-    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      alert('Por favor, insira um e-mail válido.');
-      return;
     }
 
     setIsSaving(true);
@@ -142,8 +145,8 @@ const Evaluation = () => {
 
   const tabs = [
     { id: 'identificacao', label: 'Identificação', icon: User },
+    { id: 'exame-fisico', label: 'Sinais e Exames', icon: Activity },
     { id: 'anamnese', label: 'Anamnese', icon: ClipboardList },
-    { id: 'exame-fisico', label: 'Exame Físico', icon: Activity },
     { id: 'funcional', label: 'Avaliação Funcional', icon: Dumbbell },
   ];
 
@@ -231,6 +234,37 @@ const Evaluation = () => {
               </div>
             )}
 
+            {activeTab === 'exame-fisico' && (
+              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+                  <div className="bg-blue-100 p-2 rounded-lg text-blue-600"><Activity size={20} /></div>
+                  <h3 className="text-xl font-bold text-slate-800">Sinais Vitais e Exame Físico</h3>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                  <div>
+                    <label className={labelClasses}>PA (mmHg)</label>
+                    <input name="blood_pressure" value={formData.blood_pressure} onChange={handleInputChange} type="text" className={inputClasses} placeholder="120/80" />
+                  </div>
+                  <div>
+                    <label className={labelClasses}>FC (bpm)</label>
+                    <input name="heart_rate" value={formData.heart_rate} onChange={handleInputChange} type="text" className={inputClasses} placeholder="70" />
+                  </div>
+                  <div>
+                    <label className={labelClasses}>FR (irpm)</label>
+                    <input name="respiratory_rate" value={formData.respiratory_rate} onChange={handleInputChange} type="text" className={inputClasses} placeholder="16" />
+                  </div>
+                  <div>
+                    <label className={labelClasses}>Temp (°C)</label>
+                    <input name="temperature" value={formData.temperature} onChange={handleInputChange} type="text" className={inputClasses} placeholder="36.5" />
+                  </div>
+                </div>
+                <div>
+                  <label className={labelClasses}>Inspeção e Palpação</label>
+                  <textarea name="inspection_palpation" value={formData.inspection_palpation} onChange={handleInputChange} className={`${inputClasses} h-40 resize-none`} placeholder="Avaliação postural, presença de edema, cicatrizes, pontos gatilho..."></textarea>
+                </div>
+              </div>
+            )}
+
             {activeTab === 'anamnese' && (
               <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
@@ -256,37 +290,6 @@ const Evaluation = () => {
                       <input name="previous_surgeries" value={formData.previous_surgeries} onChange={handleInputChange} type="text" className={inputClasses} placeholder="Ex: Artroscopia de joelho (2021)" />
                     </div>
                   </div>
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'exame-fisico' && (
-              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
-                  <div className="bg-blue-100 p-2 rounded-lg text-blue-600"><Activity size={20} /></div>
-                  <h3 className="text-xl font-bold text-slate-800">Exame Físico e Sinais Vitais</h3>
-                </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                  <div>
-                    <label className={labelClasses}>PA (mmHg)</label>
-                    <input name="blood_pressure" value={formData.blood_pressure} onChange={handleInputChange} type="text" className={inputClasses} placeholder="120/80" />
-                  </div>
-                  <div>
-                    <label className={labelClasses}>FC (bpm)</label>
-                    <input name="heart_rate" value={formData.heart_rate} onChange={handleInputChange} type="text" className={inputClasses} placeholder="70" />
-                  </div>
-                  <div>
-                    <label className={labelClasses}>FR (irpm)</label>
-                    <input name="respiratory_rate" value={formData.respiratory_rate} onChange={handleInputChange} type="text" className={inputClasses} placeholder="16" />
-                  </div>
-                  <div>
-                    <label className={labelClasses}>Temp (°C)</label>
-                    <input name="temperature" value={formData.temperature} onChange={handleInputChange} type="text" className={inputClasses} placeholder="36.5" />
-                  </div>
-                </div>
-                <div>
-                  <label className={labelClasses}>Inspeção e Palpação</label>
-                  <textarea name="inspection_palpation" value={formData.inspection_palpation} onChange={handleInputChange} className={`${inputClasses} h-40 resize-none`} placeholder="Avaliação postural, presença de edema, cicatrizes, pontos gatilho..."></textarea>
                 </div>
               </div>
             )}

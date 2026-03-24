@@ -43,15 +43,19 @@ const Evaluation = () => {
 
   const formatPhone = (value: string) => {
     const numbers = value.replace(/\D/g, '');
-    if (numbers.length <= 10) {
-      return numbers.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3').substring(0, 14);
-    }
-    return numbers.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3').substring(0, 15);
+    if (numbers.length === 0) return '';
+    if (numbers.length <= 2) return `(${numbers}`;
+    if (numbers.length <= 6) return `(${numbers.slice(0, 2)}) ${numbers.slice(2)}`;
+    if (numbers.length <= 10) return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 6)}-${numbers.slice(6)}`;
+    return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7, 11)}`;
   };
 
   const formatDate = (value: string) => {
     const numbers = value.replace(/\D/g, '');
-    return numbers.replace(/(\d{2})(\d{2})(\d{4})/, '$1/$2/$3').substring(0, 10);
+    if (numbers.length === 0) return '';
+    if (numbers.length <= 2) return numbers;
+    if (numbers.length <= 4) return `${numbers.slice(0, 2)}/${numbers.slice(2)}`;
+    return `${numbers.slice(0, 2)}/${numbers.slice(2, 4)}/${numbers.slice(4, 8)}`;
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -79,14 +83,13 @@ const Evaluation = () => {
       return;
     }
 
-    // Validar e converter data para o formato do banco (AAAA-MM-DD)
     let formattedBirthDate = null;
     if (formData.birth_date) {
       const parts = formData.birth_date.split('/');
-      if (parts.length === 3) {
+      if (parts.length === 3 && parts[2].length === 4) {
         formattedBirthDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
       } else {
-        alert('Data de nascimento inválida. Use o formato DD/MM/AAAA');
+        alert('Data de nascimento incompleta ou inválida. Use o formato DD/MM/AAAA');
         return;
       }
     }

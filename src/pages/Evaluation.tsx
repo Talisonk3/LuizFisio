@@ -25,7 +25,7 @@ const Evaluation = () => {
   const [formData, setFormData] = useState({
     patient_name: '',
     birth_date: '',
-    profession: '',
+    email: '',
     phone: '',
     chief_complaint: '',
     history_present_illness: '',
@@ -65,7 +65,7 @@ const Evaluation = () => {
       setFormData({
         patient_name: '',
         birth_date: '',
-        profession: '',
+        email: '',
         phone: '',
         chief_complaint: '',
         history_present_illness: '',
@@ -170,8 +170,8 @@ const Evaluation = () => {
                     <input name="birth_date" value={formData.birth_date} onChange={handleInputChange} type="date" className={inputClasses} />
                   </div>
                   <div>
-                    <label className={labelClasses}>Profissão / Ocupação</label>
-                    <input name="profession" value={formData.profession} onChange={handleInputChange} type="text" className={inputClasses} placeholder="Ex: Engenheiro Civil" />
+                    <label className={labelClasses}>E-mail do Paciente</label>
+                    <input name="email" value={formData.email} onChange={handleInputChange} type="email" className={inputClasses} placeholder="exemplo@email.com" />
                   </div>
                   <div>
                     <label className={labelClasses}>Telefone de Contato</label>

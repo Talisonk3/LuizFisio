@@ -21,6 +21,7 @@ const Evaluation = () => {
   const { signOut, user } = useAuth();
   const [activeTab, setActiveTab] = useState('identificacao');
   const [isSaving, setIsSaving] = useState(false);
+  const [errors, setErrors] = useState<string[]>([]);
   
   const [formData, setFormData] = useState({
     patient_name: '',
@@ -84,12 +85,39 @@ const Evaluation = () => {
       filteredValue = value.replace(/[^\d.,]/g, '').substring(0, 4);
     }
 
+    // Limpa o erro do campo quando o usuário começa a digitar
+    if (errors.includes(name)) {
+      setErrors(prev => prev.filter(err => err !== name));
+    }
+
     setFormData(prev => ({ ...prev, [name]: filteredValue }));
   };
 
+  const validateIdentificacao = () => {
+    const requiredFields = [
+      'patient_name', 
+      'birth_date', 
+      'gender', 
+      'marital_status', 
+      'address', 
+      'profession', 
+      'email', 
+      'phone'
+    ];
+    
+    const newErrors = requiredFields.filter(field => {
+      const val = formData[field as keyof typeof formData];
+      return !val || val.toString().trim() === '';
+    });
+
+    setErrors(newErrors);
+    return newErrors.length === 0;
+  };
+
   const handleSave = async () => {
-    if (!formData.patient_name.trim()) {
-      alert('Por favor, preencha o nome do paciente.');
+    if (!validateIdentificacao()) {
+      setActiveTab('identificacao');
+      alert('Por favor, preencha todos os campos obrigatórios na aba de Identificação.');
       return;
     }
 
@@ -99,6 +127,7 @@ const Evaluation = () => {
       if (parts.length === 3 && parts[2].length === 4) {
         formattedBirthDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
       } else {
+        setErrors(prev => [...prev, 'birth_date']);
         alert('Data de nascimento incompleta ou inválida. Use o formato DD/MM/AAAA');
         return;
       }
@@ -141,6 +170,7 @@ const Evaluation = () => {
         muscle_strength: '',
         physio_diagnosis: ''
       });
+      setErrors([]);
       setActiveTab('identificacao');
       
     } catch (error: any) {
@@ -151,6 +181,23 @@ const Evaluation = () => {
     }
   };
 
+  const handleNext = () => {
+    const currentIndex = tabs.findIndex(t => t.id === activeTab);
+    
+    if (activeTab === 'identificacao') {
+      if (!validateIdentificacao()) {
+        alert('Por favor, preencha todos os campos obrigatórios marcados em vermelho.');
+        return;
+      }
+    }
+
+    if (currentIndex < tabs.length - 1) {
+      setActiveTab(tabs[currentIndex + 1].id);
+    } else {
+      handleSave();
+    }
+  };
+
   const tabs = [
     { id: 'identificacao', label: 'Identificação', icon: User },
     { id: 'exame-fisico', label: 'Sinais e Exames', icon: Activity },
@@ -158,7 +205,12 @@ const Evaluation = () => {
     { id: 'funcional', label: 'Avaliação Funcional', icon: Dumbbell },
   ];
 
-  const inputClasses = "w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all hover:border-slate-300 placeholder:text-slate-400";
+  const getInputClasses = (fieldName: string) => {
+    const base = "w-full p-3 bg-slate-50 border rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all hover:border-slate-300 placeholder:text-slate-400";
+    const errorState = errors.includes(fieldName) ? "border-red-500 bg-red-50" : "border-slate-200";
+    return `${base} ${errorState}`;
+  };
+
   const labelClasses = "text-sm font-semibold text-slate-600 mb-1 block ml-1";
 
   return (
@@ -174,7 +226,13 @@ const Evaluation = () => {
           {tabs.map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => {
+                if (activeTab === 'identificacao' && tab.id !== 'identificacao' && !validateIdentificacao()) {
+                  alert('Preencha os campos obrigatórios antes de mudar de aba.');
+                  return;
+                }
+                setActiveTab(tab.id);
+              }}
               className={`w-full flex items-center gap-3 px-5 py-4 rounded-2xl transition-all duration-200 ${
                 activeTab === tab.id 
                 ? 'bg-blue-600 text-white shadow-lg shadow-blue-100 font-bold scale-[1.02]' 
@@ -223,16 +281,16 @@ const Evaluation = () => {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div>
-                    <label className={labelClasses}>Nome Completo</label>
-                    <input name="patient_name" value={formData.patient_name} onChange={handleInputChange} type="text" className={inputClasses} placeholder="Ex: João da Silva Santos" />
+                    <label className={labelClasses}>Nome Completo <span className="text-red-500">*</span></label>
+                    <input name="patient_name" value={formData.patient_name} onChange={handleInputChange} type="text" className={getInputClasses('patient_name')} placeholder="Ex: João da Silva Santos" />
                   </div>
                   <div>
-                    <label className={labelClasses}>Data de Nascimento</label>
-                    <input name="birth_date" value={formData.birth_date} onChange={handleInputChange} type="text" className={inputClasses} placeholder="DD/MM/AAAA" maxLength={10} />
+                    <label className={labelClasses}>Data de Nascimento <span className="text-red-500">*</span></label>
+                    <input name="birth_date" value={formData.birth_date} onChange={handleInputChange} type="text" className={getInputClasses('birth_date')} placeholder="DD/MM/AAAA" maxLength={10} />
                   </div>
                   <div>
-                    <label className={labelClasses}>Gênero</label>
-                    <select name="gender" value={formData.gender} onChange={handleInputChange} className={inputClasses}>
+                    <label className={labelClasses}>Gênero <span className="text-red-500">*</span></label>
+                    <select name="gender" value={formData.gender} onChange={handleInputChange} className={getInputClasses('gender')}>
                       <option value="">Selecione...</option>
                       <option value="Masculino">Masculino</option>
                       <option value="Feminino">Feminino</option>
@@ -240,8 +298,8 @@ const Evaluation = () => {
                     </select>
                   </div>
                   <div>
-                    <label className={labelClasses}>Estado Civil</label>
-                    <select name="marital_status" value={formData.marital_status} onChange={handleInputChange} className={inputClasses}>
+                    <label className={labelClasses}>Estado Civil <span className="text-red-500">*</span></label>
+                    <select name="marital_status" value={formData.marital_status} onChange={handleInputChange} className={getInputClasses('marital_status')}>
                       <option value="">Selecione...</option>
                       <option value="Solteiro(a)">Solteiro(a)</option>
                       <option value="Casado(a)">Casado(a)</option>
@@ -250,31 +308,31 @@ const Evaluation = () => {
                     </select>
                   </div>
                   <div className="md:col-span-2">
-                    <label className={labelClasses}>Endereço Completo</label>
-                    <input name="address" value={formData.address} onChange={handleInputChange} type="text" className={inputClasses} placeholder="Rua, número, bairro, cidade - UF" />
+                    <label className={labelClasses}>Endereço Completo <span className="text-red-500">*</span></label>
+                    <input name="address" value={formData.address} onChange={handleInputChange} type="text" className={getInputClasses('address')} placeholder="Rua, número, bairro, cidade - UF" />
                   </div>
                   <div>
-                    <label className={labelClasses}>Profissão</label>
-                    <input name="profession" value={formData.profession} onChange={handleInputChange} type="text" className={inputClasses} placeholder="Ex: Engenheiro" />
+                    <label className={labelClasses}>Profissão <span className="text-red-500">*</span></label>
+                    <input name="profession" value={formData.profession} onChange={handleInputChange} type="text" className={getInputClasses('profession')} placeholder="Ex: Engenheiro" />
                   </div>
                   <div>
-                    <label className={labelClasses}>E-mail do Paciente</label>
-                    <input name="email" value={formData.email} onChange={handleInputChange} type="email" className={inputClasses} placeholder="exemplo@email.com" />
+                    <label className={labelClasses}>E-mail do Paciente <span className="text-red-500">*</span></label>
+                    <input name="email" value={formData.email} onChange={handleInputChange} type="email" className={getInputClasses('email')} placeholder="exemplo@email.com" />
                   </div>
                   <div>
-                    <label className={labelClasses}>Telefone de Contato</label>
-                    <input name="phone" value={formData.phone} onChange={handleInputChange} type="tel" className={inputClasses} placeholder="(00) 00000-0000" maxLength={15} />
+                    <label className={labelClasses}>Telefone de Contato <span className="text-red-500">*</span></label>
+                    <input name="phone" value={formData.phone} onChange={handleInputChange} type="tel" className={getInputClasses('phone')} placeholder="(00) 00000-0000" maxLength={15} />
                   </div>
                   <div className="border-t border-slate-100 pt-8 md:col-span-2">
-                    <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">Informações Médicas</h4>
+                    <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">Informações Médicas (Opcional)</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                       <div>
                         <label className={labelClasses}>Médico Responsável</label>
-                        <input name="responsible_doctor" value={formData.responsible_doctor} onChange={handleInputChange} type="text" className={inputClasses} placeholder="Nome do médico" />
+                        <input name="responsible_doctor" value={formData.responsible_doctor} onChange={handleInputChange} type="text" className={getInputClasses('responsible_doctor')} placeholder="Nome do médico" />
                       </div>
                       <div>
                         <label className={labelClasses}>Telefone do Médico</label>
-                        <input name="doctor_phone" value={formData.doctor_phone} onChange={handleInputChange} type="tel" className={inputClasses} placeholder="(00) 00000-0000" maxLength={15} />
+                        <input name="doctor_phone" value={formData.doctor_phone} onChange={handleInputChange} type="tel" className={getInputClasses('doctor_phone')} placeholder="(00) 00000-0000" maxLength={15} />
                       </div>
                     </div>
                   </div>
@@ -291,24 +349,24 @@ const Evaluation = () => {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                   <div>
                     <label className={labelClasses}>PA (mmHg)</label>
-                    <input name="blood_pressure" value={formData.blood_pressure} onChange={handleInputChange} type="text" className={inputClasses} placeholder="120/80" />
+                    <input name="blood_pressure" value={formData.blood_pressure} onChange={handleInputChange} type="text" className={getInputClasses('blood_pressure')} placeholder="120/80" />
                   </div>
                   <div>
                     <label className={labelClasses}>FC (bpm)</label>
-                    <input name="heart_rate" value={formData.heart_rate} onChange={handleInputChange} type="text" className={inputClasses} placeholder="70" />
+                    <input name="heart_rate" value={formData.heart_rate} onChange={handleInputChange} type="text" className={getInputClasses('heart_rate')} placeholder="70" />
                   </div>
                   <div>
                     <label className={labelClasses}>FR (irpm)</label>
-                    <input name="respiratory_rate" value={formData.respiratory_rate} onChange={handleInputChange} type="text" className={inputClasses} placeholder="16" />
+                    <input name="respiratory_rate" value={formData.respiratory_rate} onChange={handleInputChange} type="text" className={getInputClasses('respiratory_rate')} placeholder="16" />
                   </div>
                   <div>
                     <label className={labelClasses}>Temp (°C)</label>
-                    <input name="temperature" value={formData.temperature} onChange={handleInputChange} type="text" className={inputClasses} placeholder="36.5" />
+                    <input name="temperature" value={formData.temperature} onChange={handleInputChange} type="text" className={getInputClasses('temperature')} placeholder="36.5" />
                   </div>
                 </div>
                 <div>
                   <label className={labelClasses}>Inspeção e Palpação</label>
-                  <textarea name="inspection_palpation" value={formData.inspection_palpation} onChange={handleInputChange} className={`${inputClasses} h-40 resize-none`} placeholder="Avaliação postural, presença de edema, cicatrizes, pontos gatilho..."></textarea>
+                  <textarea name="inspection_palpation" value={formData.inspection_palpation} onChange={handleInputChange} className={`${getInputClasses('inspection_palpation')} h-40 resize-none`} placeholder="Avaliação postural, presença de edema, cicatrizes, pontos gatilho..."></textarea>
                 </div>
               </div>
             )}
@@ -322,20 +380,20 @@ const Evaluation = () => {
                 <div className="space-y-6">
                   <div>
                     <label className={labelClasses}>Queixa Principal</label>
-                    <textarea name="chief_complaint" value={formData.chief_complaint} onChange={handleInputChange} className={`${inputClasses} h-32 resize-none`} placeholder="Descreva detalhadamente o motivo da consulta..."></textarea>
+                    <textarea name="chief_complaint" value={formData.chief_complaint} onChange={handleInputChange} className={`${getInputClasses('chief_complaint')} h-32 resize-none`} placeholder="Descreva detalhadamente o motivo da consulta..."></textarea>
                   </div>
                   <div>
                     <label className={labelClasses}>História da Doença Atual (HDA)</label>
-                    <textarea name="history_present_illness" value={formData.history_present_illness} onChange={handleInputChange} className={`${inputClasses} h-32 resize-none`} placeholder="Início dos sintomas, evolução, fatores de melhora/piora..."></textarea>
+                    <textarea name="history_present_illness" value={formData.history_present_illness} onChange={handleInputChange} className={`${getInputClasses('history_present_illness')} h-32 resize-none`} placeholder="Início dos sintomas, evolução, fatores de melhora/piora..."></textarea>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div>
                       <label className={labelClasses}>Medicamentos em Uso</label>
-                      <input name="medications" value={formData.medications} onChange={handleInputChange} type="text" className={inputClasses} placeholder="Ex: Anti-inflamatórios, analgésicos..." />
+                      <input name="medications" value={formData.medications} onChange={handleInputChange} type="text" className={getInputClasses('medications')} placeholder="Ex: Anti-inflamatórios, analgésicos..." />
                     </div>
                     <div>
                       <label className={labelClasses}>Cirurgias Prévias</label>
-                      <input name="previous_surgeries" value={formData.previous_surgeries} onChange={handleInputChange} type="text" className={inputClasses} placeholder="Ex: Artroscopia de joelho (2021)" />
+                      <input name="previous_surgeries" value={formData.previous_surgeries} onChange={handleInputChange} type="text" className={getInputClasses('previous_surgeries')} placeholder="Ex: Artroscopia de joelho (2021)" />
                     </div>
                   </div>
                 </div>
@@ -351,11 +409,11 @@ const Evaluation = () => {
                 <div className="space-y-6">
                   <div>
                     <label className={labelClasses}>Amplitude de Movimento (ADM)</label>
-                    <textarea name="range_of_motion" value={formData.range_of_motion} onChange={handleInputChange} className={`${inputClasses} h-28 resize-none`} placeholder="Goniometria, limitações funcionais..."></textarea>
+                    <textarea name="range_of_motion" value={formData.range_of_motion} onChange={handleInputChange} className={`${getInputClasses('range_of_motion')} h-28 resize-none`} placeholder="Goniometria, limitações funcionais..."></textarea>
                   </div>
                   <div>
                     <label className={labelClasses}>Força Muscular (Grau 0-5)</label>
-                    <textarea name="muscle_strength" value={formData.muscle_strength} onChange={handleInputChange} className={`${inputClasses} h-28 resize-none`} placeholder="Teste de força manual por grupos musculares..."></textarea>
+                    <textarea name="muscle_strength" value={formData.muscle_strength} onChange={handleInputChange} className={`${getInputClasses('muscle_strength')} h-28 resize-none`} placeholder="Teste de força manual por grupos musculares..."></textarea>
                   </div>
                   <div className="bg-blue-50/50 p-6 rounded-3xl border border-blue-100">
                     <label className="text-sm font-bold text-blue-700 mb-2 block ml-1">Diagnóstico Fisioterapêutico Final</label>
@@ -385,14 +443,7 @@ const Evaluation = () => {
               </div>
 
               <button 
-                onClick={() => {
-                  const currentIndex = tabs.findIndex(t => t.id === activeTab);
-                  if (currentIndex < tabs.length - 1) {
-                    setActiveTab(tabs[currentIndex + 1].id);
-                  } else {
-                    handleSave();
-                  }
-                }}
+                onClick={handleNext}
                 className="bg-slate-100 text-blue-600 font-black flex items-center gap-2 px-6 py-3 rounded-2xl hover:bg-blue-600 hover:text-white transition-all group"
               >
                 {activeTab === 'funcional' ? 'Finalizar' : 'Próximo'} 

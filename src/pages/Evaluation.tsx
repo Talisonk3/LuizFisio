@@ -59,9 +59,32 @@ const Evaluation = () => {
         .insert([{ ...formData, user_id: user?.id }]);
 
       if (error) throw error;
-      alert('Avaliação salva com sucesso!');
+      alert('Avaliação salva com sucesso no banco de dados!');
+      
+      // Limpar formulário após salvar
+      setFormData({
+        patient_name: '',
+        birth_date: '',
+        profession: '',
+        phone: '',
+        chief_complaint: '',
+        history_present_illness: '',
+        medications: '',
+        previous_surgeries: '',
+        blood_pressure: '',
+        heart_rate: '',
+        respiratory_rate: '',
+        temperature: '',
+        inspection_palpation: '',
+        range_of_motion: '',
+        muscle_strength: '',
+        physio_diagnosis: ''
+      });
+      setActiveTab('identificacao');
+      
     } catch (error: any) {
-      alert('Erro ao salvar: ' + error.message);
+      console.error('Erro ao salvar:', error);
+      alert('Erro ao salvar: ' + (error.message || 'Verifique sua conexão ou permissões.'));
     } finally {
       setIsSaving(false);
     }

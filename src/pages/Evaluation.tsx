@@ -29,6 +29,7 @@ const Evaluation = () => {
     email: '',
     phone: '',
     address: '',
+    address_number: '',
     marital_status: '',
     gender: '',
     profession: '',
@@ -69,22 +70,25 @@ const Evaluation = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    let filteredValue = value;
+    // Impede que o campo comece com espaço
+    let filteredValue = value.trimStart();
     
     if (name === 'patient_name' || name === 'responsible_doctor') {
-      filteredValue = value.replace(/[^a-zA-ZÀ-ÿ\s]/g, '');
+      filteredValue = filteredValue.replace(/[^a-zA-ZÀ-ÿ\s]/g, '');
     } else if (name === 'phone' || name === 'doctor_phone') {
-      filteredValue = formatPhone(value);
+      filteredValue = formatPhone(filteredValue);
     } else if (name === 'birth_date') {
-      filteredValue = formatDate(value);
+      filteredValue = formatDate(filteredValue);
     } else if (name === 'blood_pressure') {
-      filteredValue = value.replace(/[^\d/]/g, '').substring(0, 7);
+      filteredValue = filteredValue.replace(/[^\d/]/g, '').substring(0, 7);
     } else if (name === 'heart_rate') {
-      filteredValue = value.replace(/\D/g, '').substring(0, 3);
+      filteredValue = filteredValue.replace(/\D/g, '').substring(0, 3);
     } else if (name === 'respiratory_rate') {
-      filteredValue = value.replace(/\D/g, '').substring(0, 2);
+      filteredValue = filteredValue.replace(/\D/g, '').substring(0, 2);
     } else if (name === 'temperature' || name === 'weight' || name === 'height') {
-      filteredValue = value.replace(/[^\d.,]/g, '').substring(0, 6);
+      filteredValue = filteredValue.replace(/[^\d.,]/g, '').substring(0, 6);
+    } else if (name === 'address_number') {
+      filteredValue = filteredValue.replace(/\D/g, '').substring(0, 6);
     }
 
     if (errors.includes(name)) {
@@ -101,6 +105,7 @@ const Evaluation = () => {
       'gender', 
       'marital_status', 
       'address', 
+      'address_number',
       'profession', 
       'phone'
     ];
@@ -135,10 +140,14 @@ const Evaluation = () => {
 
     setIsSaving(true);
     try {
+      // Concatenamos o endereço e o número para salvar no campo 'address' do banco
+      const fullAddress = `${formData.address}, ${formData.address_number}`;
+      
       const { error } = await supabase
         .from('evaluations')
         .insert([{ 
           ...formData, 
+          address: fullAddress,
           birth_date: formattedBirthDate,
           user_id: user?.id 
         }]);
@@ -152,6 +161,7 @@ const Evaluation = () => {
         email: '',
         phone: '',
         address: '',
+        address_number: '',
         marital_status: '',
         gender: '',
         profession: '',
@@ -309,9 +319,15 @@ const Evaluation = () => {
                       <option value="Viúvo(a)">Viúvo(a)</option>
                     </select>
                   </div>
-                  <div className="md:col-span-2">
-                    <label className={labelClasses}>Endereço Completo <span className="text-red-500">*</span></label>
-                    <input name="address" value={formData.address} onChange={handleInputChange} type="text" className={getInputClasses('address')} placeholder="Rua, número, bairro, cidade - UF" />
+                  <div className="md:col-span-2 grid grid-cols-4 gap-4">
+                    <div className="col-span-3">
+                      <label className={labelClasses}>Endereço <span className="text-red-500">*</span></label>
+                      <input name="address" value={formData.address} onChange={handleInputChange} type="text" className={getInputClasses('address')} placeholder="Rua, bairro, cidade - UF" />
+                    </div>
+                    <div className="col-span-1">
+                      <label className={labelClasses}>Nº <span className="text-red-500">*</span></label>
+                      <input name="address_number" value={formData.address_number} onChange={handleInputChange} type="text" className={getInputClasses('address_number')} placeholder="123" maxLength={6} />
+                    </div>
                   </div>
                   <div>
                     <label className={labelClasses}>Profissão <span className="text-red-500">*</span></label>

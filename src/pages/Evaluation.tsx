@@ -32,6 +32,8 @@ const Evaluation = () => {
     marital_status: '',
     gender: '',
     profession: '',
+    weight: '',
+    height: '',
     responsible_doctor: '',
     doctor_phone: '',
     chief_complaint: '',
@@ -81,11 +83,10 @@ const Evaluation = () => {
       filteredValue = value.replace(/\D/g, '').substring(0, 3);
     } else if (name === 'respiratory_rate') {
       filteredValue = value.replace(/\D/g, '').substring(0, 2);
-    } else if (name === 'temperature') {
-      filteredValue = value.replace(/[^\d.,]/g, '').substring(0, 4);
+    } else if (name === 'temperature' || name === 'weight' || name === 'height') {
+      filteredValue = value.replace(/[^\d.,]/g, '').substring(0, 6);
     }
 
-    // Limpa o erro do campo quando o usuário começa a digitar
     if (errors.includes(name)) {
       setErrors(prev => prev.filter(err => err !== name));
     }
@@ -101,7 +102,6 @@ const Evaluation = () => {
       'marital_status', 
       'address', 
       'profession', 
-      'email', 
       'phone'
     ];
     
@@ -155,6 +155,8 @@ const Evaluation = () => {
         marital_status: '',
         gender: '',
         profession: '',
+        weight: '',
+        height: '',
         responsible_doctor: '',
         doctor_phone: '',
         chief_complaint: '',
@@ -316,12 +318,20 @@ const Evaluation = () => {
                     <input name="profession" value={formData.profession} onChange={handleInputChange} type="text" className={getInputClasses('profession')} placeholder="Ex: Engenheiro" />
                   </div>
                   <div>
-                    <label className={labelClasses}>E-mail do Paciente <span className="text-red-500">*</span></label>
+                    <label className={labelClasses}>Telefone de Contato <span className="text-red-500">*</span></label>
+                    <input name="phone" value={formData.phone} onChange={handleInputChange} type="tel" className={getInputClasses('phone')} placeholder="(00) 00000-0000" maxLength={15} />
+                  </div>
+                  <div>
+                    <label className={labelClasses}>E-mail do Paciente</label>
                     <input name="email" value={formData.email} onChange={handleInputChange} type="email" className={getInputClasses('email')} placeholder="exemplo@email.com" />
                   </div>
                   <div>
-                    <label className={labelClasses}>Telefone de Contato <span className="text-red-500">*</span></label>
-                    <input name="phone" value={formData.phone} onChange={handleInputChange} type="tel" className={getInputClasses('phone')} placeholder="(00) 00000-0000" maxLength={15} />
+                    <label className={labelClasses}>Peso (kg)</label>
+                    <input name="weight" value={formData.weight} onChange={handleInputChange} type="text" className={getInputClasses('weight')} placeholder="Ex: 75.5" />
+                  </div>
+                  <div>
+                    <label className={labelClasses}>Altura (m)</label>
+                    <input name="height" value={formData.height} onChange={handleInputChange} type="text" className={getInputClasses('height')} placeholder="Ex: 1.75" />
                   </div>
                   <div className="border-t border-slate-100 pt-8 md:col-span-2">
                     <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">Informações Médicas (Opcional)</h4>

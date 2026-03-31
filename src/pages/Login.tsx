@@ -50,7 +50,7 @@ const Login = () => {
           password: formData.password,
           options: {
             data: {
-              username: formData.username.toLowerCase(),
+              username: formData.username.toLowerCase().trim(),
               full_name: formData.fullName
             }
           }
@@ -59,21 +59,26 @@ const Login = () => {
         if (signUpError) throw signUpError;
         
         if (!data.session) {
-          setError("Conta criada! Tente entrar agora.");
+          setError("Conta criada! Agora você já pode entrar.");
           setIsSignUp(false);
         }
       } else {
-        let loginEmail = formData.username;
+        let loginEmail = formData.username.trim();
 
-        // Se não for um e-mail (não tem @), tenta buscar o e-mail pelo username na tabela profiles
+        // Se não for um e-mail, busca o e-mail real no banco pelo username
         if (!loginEmail.includes('@')) {
           const { data: profile, error: profileError } = await supabase
             .from('profiles')
             .select('email')
             .eq('username', loginEmail.toLowerCase())
-            .single();
+            .maybeSingle();
 
-          if (profileError || !profile) {
+          if (profileError) {
+            console.error('Erro ao buscar perfil:', profileError);
+            throw new Error('Erro ao conectar com o servidor. Tente novamente.');
+          }
+
+          if (!profile || !profile.email) {
             throw new Error('Usuário não encontrado. Verifique o nome ou use seu e-mail.');
           }
           loginEmail = profile.email;
@@ -84,11 +89,15 @@ const Login = () => {
           password: formData.password,
         });
 
-        if (signInError) throw signInError;
+        if (signInError) {
+          if (signInError.message.includes('Invalid login credentials')) {
+            throw new Error('Senha incorreta ou usuário inválido.');
+          }
+          throw signInError;
+        }
       }
     } catch (err: any) {
-      console.error('Erro de Auth:', err);
-      setError(err.message || 'Erro ao acessar. Verifique suas credenciais.');
+      setError(err.message || 'Erro ao acessar o sistema.');
     } finally {
       setLoading(false);
     }

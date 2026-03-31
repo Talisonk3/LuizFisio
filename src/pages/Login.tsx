@@ -63,22 +63,22 @@ const Login = () => {
         
         if (signUpError) throw signUpError;
         
+        // Se a confirmação de e-mail estiver DESATIVADA no Supabase, 
+        // o 'data.session' virá preenchido e o useEffect acima redirecionará sozinho.
         if (!data.session) {
-          setError("Conta criada! Verifique seu e-mail para confirmar o cadastro antes de entrar.");
-          setIsSignUp(false);
-          setShowPassword(false);
+          setError("Conta criada! Mas o seu Supabase ainda exige confirmação por e-mail. Desative 'Confirm Email' no painel do Supabase para logar direto.");
         }
       } else {
         let loginEmail = formData.username.trim();
 
         if (!loginEmail.includes('@')) {
-          const { data: profile, error: profileError } = await supabase
+          const { data: profile } = await supabase
             .from('profiles')
             .select('email')
             .eq('username', loginEmail.toLowerCase())
             .maybeSingle();
 
-          if (profile && profile.email) {
+          if (profile?.email) {
             loginEmail = profile.email;
           }
         }
@@ -89,11 +89,10 @@ const Login = () => {
         });
 
         if (signInError) {
-          // O Supabase às vezes retorna 'Invalid login credentials' mesmo para e-mails não confirmados
           if (signInError.message.includes('Email not confirmed')) {
-            throw new Error('E-mail não confirmado. Verifique sua caixa de entrada.');
+            throw new Error('E-mail não confirmado. Desative a exigência de confirmação no painel do Supabase.');
           }
-          throw new Error('E-mail/Usuário ou senha incorretos. Se acabou de criar a conta, verifique seu e-mail.');
+          throw new Error('Usuário ou senha incorretos.');
         }
       }
     } catch (err: any) {
@@ -141,7 +140,7 @@ const Login = () => {
                 </div>
               </div>
               <div>
-                <label className="text-sm font-semibold text-slate-600 mb-1 block ml-1">E-mail Real</label>
+                <label className="text-sm font-semibold text-slate-600 mb-1 block ml-1">E-mail</label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-3 text-slate-400" size={20} />
                   <input

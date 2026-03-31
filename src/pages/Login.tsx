@@ -59,28 +59,26 @@ const Login = () => {
         if (signUpError) throw signUpError;
         
         if (!data.session) {
-          setError("Conta criada! Agora você já pode entrar.");
+          setError("Conta criada! Verifique seu e-mail ou tente entrar.");
           setIsSignUp(false);
           setShowPassword(false);
         }
       } else {
         let loginEmail = formData.username.trim();
 
+        // Se não for um e-mail, tenta buscar o e-mail real no banco pelo username
         if (!loginEmail.includes('@')) {
-          const { data: profile, error: profileError } = await supabase
+          const { data: profile } = await supabase
             .from('profiles')
             .select('email')
             .eq('username', loginEmail.toLowerCase())
             .maybeSingle();
 
-          if (profileError) {
-            console.error('Erro ao buscar perfil:', profileError);
+          if (profile && profile.email) {
+            loginEmail = profile.email;
           }
-
-          if (!profile || !profile.email) {
-            throw new Error('Nome de usuário não encontrado. Tente usar seu e-mail.');
-          }
-          loginEmail = profile.email;
+          // Se não encontrar o perfil, continuaremos tentando o login com o texto original
+          // Caso o usuário tenha digitado um e-mail sem o @ por engano ou o banco falhe
         }
 
         const { error: signInError } = await supabase.auth.signInWithPassword({
@@ -90,7 +88,10 @@ const Login = () => {
 
         if (signInError) {
           if (signInError.message.includes('Invalid login credentials')) {
-            throw new Error('Senha incorreta para este usuário.');
+            throw new Error('Usuário ou senha incorretos. Verifique os dados.');
+          }
+          if (signInError.message.includes('Email not confirmed')) {
+            throw new Error('Por favor, confirme seu e-mail antes de acessar.');
           }
           throw signInError;
         }
@@ -105,7 +106,7 @@ const Login = () => {
   const toggleAuthMode = () => {
     const newIsSignUp = !isSignUp;
     setIsSignUp(newIsSignUp);
-    setShowPassword(newIsSignUp); // Mostra a senha se for cadastro, esconde se for login
+    setShowPassword(newIsSignUp);
     setError(null);
   };
 

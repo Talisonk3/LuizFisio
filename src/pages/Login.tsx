@@ -68,17 +68,21 @@ const Login = () => {
 
         // Se não for um e-mail, tenta buscar o e-mail real no banco pelo username
         if (!loginEmail.includes('@')) {
-          const { data: profile } = await supabase
+          const { data: profile, error: profileError } = await supabase
             .from('profiles')
             .select('email')
             .eq('username', loginEmail.toLowerCase())
             .maybeSingle();
 
-          if (profile && profile.email) {
-            loginEmail = profile.email;
+          if (profileError) {
+            console.error('Erro ao buscar perfil:', profileError);
+            throw new Error('Erro de conexão com o banco. Tente usar seu e-mail.');
           }
-          // Se não encontrar o perfil, continuaremos tentando o login com o texto original
-          // Caso o usuário tenha digitado um e-mail sem o @ por engano ou o banco falhe
+
+          if (!profile || !profile.email) {
+            throw new Error('Nome de usuário não encontrado. Verifique se digitou corretamente ou use seu e-mail.');
+          }
+          loginEmail = profile.email;
         }
 
         const { error: signInError } = await supabase.auth.signInWithPassword({
@@ -88,7 +92,7 @@ const Login = () => {
 
         if (signInError) {
           if (signInError.message.includes('Invalid login credentials')) {
-            throw new Error('Usuário ou senha incorretos. Verifique os dados.');
+            throw new Error('Senha incorreta para este usuário.');
           }
           if (signInError.message.includes('Email not confirmed')) {
             throw new Error('Por favor, confirme seu e-mail antes de acessar.');

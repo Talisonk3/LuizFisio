@@ -29,8 +29,14 @@ const Login = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    let filteredValue = value.trimStart();
     
+    // Não aplicamos trim ou filtros na senha para garantir que o que o usuário digitou seja o que será enviado
+    if (name === 'password') {
+      setFormData(prev => ({ ...prev, [name]: value }));
+      return;
+    }
+
+    let filteredValue = value.trimStart();
     if (name === 'fullName') {
       filteredValue = filteredValue.replace(/[^a-zA-ZÀ-ÿ\s]/g, '');
     }
@@ -46,12 +52,12 @@ const Login = () => {
     try {
       if (isSignUp) {
         const { data, error: signUpError } = await supabase.auth.signUp({
-          email: formData.email,
+          email: formData.email.trim(),
           password: formData.password,
           options: {
             data: {
               username: formData.username.toLowerCase().trim(),
-              full_name: formData.fullName
+              full_name: formData.fullName.trim()
             }
           }
         });
@@ -59,7 +65,7 @@ const Login = () => {
         if (signUpError) throw signUpError;
         
         if (!data.session) {
-          setError("Conta criada! Verifique seu e-mail ou tente entrar.");
+          setError("Conta criada com sucesso! Agora você já pode entrar.");
           setIsSignUp(false);
           setShowPassword(false);
         }
@@ -74,15 +80,11 @@ const Login = () => {
             .eq('username', loginEmail.toLowerCase())
             .maybeSingle();
 
-          if (profileError) {
+          if (profile && profile.email) {
+            loginEmail = profile.email;
+          } else if (profileError) {
             console.error('Erro ao buscar perfil:', profileError);
-            throw new Error('Erro de conexão com o banco. Tente usar seu e-mail.');
           }
-
-          if (!profile || !profile.email) {
-            throw new Error('Nome de usuário não encontrado. Verifique se digitou corretamente ou use seu e-mail.');
-          }
-          loginEmail = profile.email;
         }
 
         const { error: signInError } = await supabase.auth.signInWithPassword({
@@ -92,7 +94,7 @@ const Login = () => {
 
         if (signInError) {
           if (signInError.message.includes('Invalid login credentials')) {
-            throw new Error('Senha incorreta para este usuário.');
+            throw new Error('Senha incorreta ou usuário não encontrado.');
           }
           if (signInError.message.includes('Email not confirmed')) {
             throw new Error('Por favor, confirme seu e-mail antes de acessar.');
@@ -112,6 +114,12 @@ const Login = () => {
     setIsSignUp(newIsSignUp);
     setShowPassword(newIsSignUp);
     setError(null);
+    setFormData({
+      username: '',
+      email: '',
+      password: '',
+      fullName: ''
+    });
   };
 
   return (

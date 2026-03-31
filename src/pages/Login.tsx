@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/AuthProvider';
-import { Stethoscope, User, Lock, Mail, Loader2 } from 'lucide-react';
+import { Stethoscope, User, Lock, Mail, Loader2, Eye, EyeOff } from 'lucide-react';
 
 const Login = () => {
   const { session } = useAuth();
@@ -12,6 +12,7 @@ const Login = () => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const [formData, setFormData] = useState({
     username: '',
@@ -28,7 +29,14 @@ const Login = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value.trimStart() }));
+    let filteredValue = value.trimStart();
+    
+    // Validação para Nome Completo: apenas letras e espaços
+    if (name === 'fullName') {
+      filteredValue = filteredValue.replace(/[^a-zA-ZÀ-ÿ\s]/g, '');
+    }
+    
+    setFormData(prev => ({ ...prev, [name]: filteredValue }));
   };
 
   const handleAuth = async (e: React.FormEvent) => {
@@ -38,7 +46,6 @@ const Login = () => {
 
     try {
       if (isSignUp) {
-        // Cadastro
         const { error: signUpError } = await supabase.auth.signUp({
           email: formData.email,
           password: formData.password,
@@ -52,36 +59,9 @@ const Login = () => {
         if (signUpError) throw signUpError;
         alert('Verifique seu e-mail para confirmar o cadastro!');
       } else {
-        // Login por Nome de Usuário
-        // 1. Buscar o e-mail associado ao username
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('username', formData.username)
-          .single();
-
-        if (profileError || !profile) {
-          throw new Error('Nome de usuário não encontrado.');
-        }
-
-        // No Supabase, precisamos do e-mail para logar. 
-        // Como não temos o e-mail aqui, vamos buscar na tabela auth (via RPC ou assumindo que o username é único)
-        // Para simplificar e manter a segurança, o ideal é que o login use e-mail ou 
-        // que busquemos o e-mail em uma tabela pública se permitido.
-        
-        // Vamos tentar logar usando o e-mail que o usuário cadastrou (buscando no profile)
-        const { data: userData, error: userError } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('username', formData.username)
-          .single();
-
-        // Nota: Para login real por username, você precisaria de uma Edge Function 
-        // ou salvar o email de forma acessível (o que pode ser um risco de privacidade).
-        // Por padrão, vamos manter o campo como "E-mail ou Usuário" para garantir o funcionamento.
-        
+        // Login simplificado (usando o que foi digitado no campo username)
         const { error: signInError } = await supabase.auth.signInWithPassword({
-          email: formData.username.includes('@') ? formData.username : `${formData.username}@fisiosystem.com`, // Exemplo de mapeamento
+          email: formData.username.includes('@') ? formData.username : `${formData.username}@fisiosystem.com`,
           password: formData.password,
         });
 
@@ -165,13 +145,23 @@ const Login = () => {
               <Lock className="absolute left-3 top-3 text-slate-400" size={20} />
               <input
                 name="password"
-                type="password"
+                // Senha visível no cadastro (type="text"), oculta no login (type="password")
+                type={isSignUp || showPassword ? "text" : "password"}
                 required
                 value={formData.password}
                 onChange={handleInputChange}
-                className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                className="w-full pl-10 pr-12 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
                 placeholder="••••••••"
               />
+              {!isSignUp && (
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 transition-colors"
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              )}
             </div>
           </div>
 
@@ -188,7 +178,11 @@ const Login = () => {
 
         <div className="mt-8 text-center">
           <button
-            onClick={() => setIsSignUp(!isSignUp)}
+            onClick={() => {
+              setIsSignUp(!isSignUp);
+              setShowPassword(false);
+              setError(null);
+            }}
             className="text-blue-600 font-semibold hover:underline text-sm"
           >
             {isSignUp ? 'Já tem uma conta? Entre aqui' : 'Não tem uma conta? Cadastre-se'}

@@ -31,7 +31,6 @@ const Login = () => {
     const { name, value } = e.target;
     let filteredValue = value.trimStart();
     
-    // Validação para Nome Completo: apenas letras e espaços
     if (name === 'fullName') {
       filteredValue = filteredValue.replace(/[^a-zA-ZÀ-ÿ\s]/g, '');
     }
@@ -56,10 +55,18 @@ const Login = () => {
             }
           }
         });
+        
         if (signUpError) throw signUpError;
-        alert('Verifique seu e-mail para confirmar o cadastro!');
+        
+        // Popup de aviso
+        alert(`Um e-mail de confirmação foi enviado para ${formData.email}. Por favor, verifique sua caixa de entrada.`);
+        
+        // Redireciona para a tela de login (limpando campos sensíveis)
+        setIsSignUp(false);
+        setFormData(prev => ({ ...prev, password: '' }));
+        setShowPassword(false);
+        
       } else {
-        // Login simplificado (usando o que foi digitado no campo username)
         const { error: signInError } = await supabase.auth.signInWithPassword({
           email: formData.username.includes('@') ? formData.username : `${formData.username}@fisiosystem.com`,
           password: formData.password,
@@ -145,7 +152,6 @@ const Login = () => {
               <Lock className="absolute left-3 top-3 text-slate-400" size={20} />
               <input
                 name="password"
-                // Senha visível no cadastro (type="text"), oculta no login (type="password")
                 type={isSignUp || showPassword ? "text" : "password"}
                 required
                 value={formData.password}

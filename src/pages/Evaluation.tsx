@@ -62,15 +62,30 @@ const Evaluation = () => {
 
   const formatDate = (value: string) => {
     const numbers = value.replace(/\D/g, '');
-    if (numbers.length === 0) return '';
-    if (numbers.length <= 2) return numbers;
-    if (numbers.length <= 4) return `${numbers.slice(0, 2)}/${numbers.slice(2)}`;
-    return `${numbers.slice(0, 2)}/${numbers.slice(2, 4)}/${numbers.slice(4, 8)}`;
+    const currentYear = new Date().getFullYear();
+    
+    let day = numbers.slice(0, 2);
+    let month = numbers.slice(2, 4);
+    let year = numbers.slice(4, 8);
+
+    // Validação de Dia
+    if (day && parseInt(day) > 31) day = '31';
+    if (day && day !== '0' && day !== '00' && parseInt(day) === 0) day = '01';
+
+    // Validação de Mês
+    if (month && parseInt(month) > 12) month = '12';
+    if (month && month !== '0' && month !== '00' && parseInt(month) === 0) month = '01';
+
+    // Validação de Ano
+    if (year && year.length === 4 && parseInt(year) > currentYear) year = currentYear.toString();
+
+    if (numbers.length <= 2) return day;
+    if (numbers.length <= 4) return `${day}/${month}`;
+    return `${day}/${month}/${year}`;
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    // Impede que o campo comece com espaço
     let filteredValue = value.trimStart();
     
     if (name === 'patient_name' || name === 'responsible_doctor') {
@@ -115,6 +130,11 @@ const Evaluation = () => {
       return !val || val.toString().trim() === '';
     });
 
+    // Validação extra de data completa
+    if (formData.birth_date.length < 10 && !newErrors.includes('birth_date')) {
+      newErrors.push('birth_date');
+    }
+
     setErrors(newErrors);
     return newErrors.length === 0;
   };
@@ -122,25 +142,16 @@ const Evaluation = () => {
   const handleSave = async () => {
     if (!validateIdentificacao()) {
       setActiveTab('identificacao');
-      alert('Por favor, preencha todos os campos obrigatórios na aba de Identificação.');
+      alert('Por favor, preencha todos os campos obrigatórios corretamente.');
       return;
     }
 
     let formattedBirthDate = null;
-    if (formData.birth_date) {
-      const parts = formData.birth_date.split('/');
-      if (parts.length === 3 && parts[2].length === 4) {
-        formattedBirthDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
-      } else {
-        setErrors(prev => [...prev, 'birth_date']);
-        alert('Data de nascimento incompleta ou inválida. Use o formato DD/MM/AAAA');
-        return;
-      }
-    }
+    const parts = formData.birth_date.split('/');
+    formattedBirthDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
 
     setIsSaving(true);
     try {
-      // Concatenamos o endereço e o número para salvar no campo 'address' do banco
       const fullAddress = `${formData.address}, ${formData.address_number}`;
       
       const { error } = await supabase

@@ -30,7 +30,6 @@ const Login = () => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     
-    // Não aplicamos trim ou filtros na senha para garantir que o que o usuário digitou seja o que será enviado
     if (name === 'password') {
       setFormData(prev => ({ ...prev, [name]: value }));
       return;
@@ -65,14 +64,13 @@ const Login = () => {
         if (signUpError) throw signUpError;
         
         if (!data.session) {
-          setError("Conta criada com sucesso! Agora você já pode entrar.");
+          setError("Conta criada! Verifique seu e-mail para confirmar o cadastro antes de entrar.");
           setIsSignUp(false);
           setShowPassword(false);
         }
       } else {
         let loginEmail = formData.username.trim();
 
-        // Se não for um e-mail, tenta buscar o e-mail real no banco pelo username
         if (!loginEmail.includes('@')) {
           const { data: profile, error: profileError } = await supabase
             .from('profiles')
@@ -82,8 +80,6 @@ const Login = () => {
 
           if (profile && profile.email) {
             loginEmail = profile.email;
-          } else if (profileError) {
-            console.error('Erro ao buscar perfil:', profileError);
           }
         }
 
@@ -93,13 +89,11 @@ const Login = () => {
         });
 
         if (signInError) {
-          if (signInError.message.includes('Invalid login credentials')) {
-            throw new Error('Senha incorreta ou usuário não encontrado.');
-          }
+          // O Supabase às vezes retorna 'Invalid login credentials' mesmo para e-mails não confirmados
           if (signInError.message.includes('Email not confirmed')) {
-            throw new Error('Por favor, confirme seu e-mail antes de acessar.');
+            throw new Error('E-mail não confirmado. Verifique sua caixa de entrada.');
           }
-          throw signInError;
+          throw new Error('E-mail/Usuário ou senha incorretos. Se acabou de criar a conta, verifique seu e-mail.');
         }
       }
     } catch (err: any) {
@@ -110,16 +104,9 @@ const Login = () => {
   };
 
   const toggleAuthMode = () => {
-    const newIsSignUp = !isSignUp;
-    setIsSignUp(newIsSignUp);
-    setShowPassword(newIsSignUp);
+    setIsSignUp(!isSignUp);
     setError(null);
-    setFormData({
-      username: '',
-      email: '',
-      password: '',
-      fullName: ''
-    });
+    setFormData({ username: '', email: '', password: '', fullName: '' });
   };
 
   return (
@@ -212,7 +199,11 @@ const Login = () => {
             </div>
           </div>
 
-          {error && <p className="text-red-500 text-sm text-center font-medium">{error}</p>}
+          {error && (
+            <div className="bg-red-50 border border-red-100 p-3 rounded-xl">
+              <p className="text-red-600 text-xs text-center font-medium leading-relaxed">{error}</p>
+            </div>
+          )}
 
           <button
             type="submit"

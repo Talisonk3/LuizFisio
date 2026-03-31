@@ -61,11 +61,11 @@ const Login = () => {
         if (!data.session) {
           setError("Conta criada! Agora você já pode entrar.");
           setIsSignUp(false);
+          setShowPassword(false);
         }
       } else {
         let loginEmail = formData.username.trim();
 
-        // Se não for um e-mail, tenta buscar o e-mail real no banco pelo username
         if (!loginEmail.includes('@')) {
           const { data: profile, error: profileError } = await supabase
             .from('profiles')
@@ -100,6 +100,13 @@ const Login = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const toggleAuthMode = () => {
+    const newIsSignUp = !isSignUp;
+    setIsSignUp(newIsSignUp);
+    setShowPassword(newIsSignUp); // Mostra a senha se for cadastro, esconde se for login
+    setError(null);
   };
 
   return (
@@ -205,11 +212,7 @@ const Login = () => {
 
         <div className="mt-8 text-center">
           <button
-            onClick={() => {
-              setIsSignUp(!isSignUp);
-              setShowPassword(false);
-              setError(null);
-            }}
+            onClick={toggleAuthMode}
             className="text-blue-600 font-semibold hover:underline text-sm"
           >
             {isSignUp ? 'Já tem uma conta? Entre aqui' : 'Não tem uma conta? Cadastre-se'}

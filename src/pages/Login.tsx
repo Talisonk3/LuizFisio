@@ -50,7 +50,7 @@ const Login = () => {
           password: formData.password,
           options: {
             data: {
-              username: formData.username,
+              username: formData.username.toLowerCase(),
               full_name: formData.fullName
             }
           }
@@ -58,23 +58,37 @@ const Login = () => {
         
         if (signUpError) throw signUpError;
         
-        // Se o Supabase estiver com "Confirm Email" desativado, 
-        // o 'data.session' existirá e o useEffect acima fará o redirecionamento.
         if (!data.session) {
-          setError("Cadastro realizado! Por favor, tente fazer login agora.");
+          setError("Conta criada! Tente entrar agora.");
           setIsSignUp(false);
         }
-        
       } else {
+        let loginEmail = formData.username;
+
+        // Se não for um e-mail (não tem @), tenta buscar o e-mail pelo username na tabela profiles
+        if (!loginEmail.includes('@')) {
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('email')
+            .eq('username', loginEmail.toLowerCase())
+            .single();
+
+          if (profileError || !profile) {
+            throw new Error('Usuário não encontrado. Verifique o nome ou use seu e-mail.');
+          }
+          loginEmail = profile.email;
+        }
+
         const { error: signInError } = await supabase.auth.signInWithPassword({
-          email: formData.username.includes('@') ? formData.username : `${formData.username}@fisiosystem.com`,
+          email: loginEmail,
           password: formData.password,
         });
 
         if (signInError) throw signInError;
       }
     } catch (err: any) {
-      setError(err.message || 'Ocorreu um erro na autenticação.');
+      console.error('Erro de Auth:', err);
+      setError(err.message || 'Erro ao acessar. Verifique suas credenciais.');
     } finally {
       setLoading(false);
     }
@@ -112,7 +126,7 @@ const Login = () => {
                 </div>
               </div>
               <div>
-                <label className="text-sm font-semibold text-slate-600 mb-1 block ml-1">E-mail</label>
+                <label className="text-sm font-semibold text-slate-600 mb-1 block ml-1">E-mail Real</label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-3 text-slate-400" size={20} />
                   <input
@@ -130,7 +144,9 @@ const Login = () => {
           )}
 
           <div>
-            <label className="text-sm font-semibold text-slate-600 mb-1 block ml-1">Nome de Usuário</label>
+            <label className="text-sm font-semibold text-slate-600 mb-1 block ml-1">
+              {isSignUp ? 'Nome de Usuário' : 'E-mail ou Usuário'}
+            </label>
             <div className="relative">
               <User className="absolute left-3 top-3 text-slate-400" size={20} />
               <input
@@ -140,7 +156,7 @@ const Login = () => {
                 value={formData.username}
                 onChange={handleInputChange}
                 className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
-                placeholder="Ex: joao_fisio"
+                placeholder={isSignUp ? "Ex: joao_fisio" : "E-mail ou nome de usuário"}
               />
             </div>
           </div>
@@ -151,22 +167,20 @@ const Login = () => {
               <Lock className="absolute left-3 top-3 text-slate-400" size={20} />
               <input
                 name="password"
-                type={isSignUp || showPassword ? "text" : "password"}
+                type={showPassword ? "text" : "password"}
                 required
                 value={formData.password}
                 onChange={handleInputChange}
                 className="w-full pl-10 pr-12 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
                 placeholder="••••••••"
               />
-              {!isSignUp && (
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 transition-colors"
-                >
-                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 transition-colors"
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
             </div>
           </div>
 
@@ -177,7 +191,7 @@ const Login = () => {
             disabled={loading}
             className="w-full bg-blue-600 text-white py-4 rounded-xl font-bold shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all flex items-center justify-center gap-2"
           >
-            {loading ? <Loader2 className="animate-spin" size={20} /> : (isSignUp ? 'Criar Conta' : 'Entrar Agora')}
+            {loading ? <Loader2 className="animate-spin" size={20} /> : (isSignUp ? 'Criar Minha Conta' : 'Entrar no Sistema')}
           </button>
         </form>
 

@@ -68,20 +68,22 @@ const Evaluation = () => {
     let month = numbers.slice(2, 4);
     let year = numbers.slice(4, 8);
 
-    // Validação de Dia
     if (day && parseInt(day) > 31) day = '31';
     if (day && day !== '0' && day !== '00' && parseInt(day) === 0) day = '01';
-
-    // Validação de Mês
     if (month && parseInt(month) > 12) month = '12';
     if (month && month !== '0' && month !== '00' && parseInt(month) === 0) month = '01';
-
-    // Validação de Ano
     if (year && year.length === 4 && parseInt(year) > currentYear) year = currentYear.toString();
 
     if (numbers.length <= 2) return day;
     if (numbers.length <= 4) return `${day}/${month}`;
     return `${day}/${month}/${year}`;
+  };
+
+  const formatHeight = (value: string) => {
+    const numbers = value.replace(/\D/g, '').substring(0, 3);
+    if (numbers.length <= 1) return numbers;
+    if (numbers.length === 2) return `${numbers.slice(0, 1)}.${numbers.slice(1)}`;
+    return `${numbers.slice(0, 1)}.${numbers.slice(1, 3)}`;
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -90,6 +92,14 @@ const Evaluation = () => {
     
     if (name === 'patient_name' || name === 'responsible_doctor') {
       filteredValue = filteredValue.replace(/[^a-zA-ZÀ-ÿ\s]/g, '');
+    } else if (name === 'profession') {
+      filteredValue = filteredValue.replace(/[^a-zA-ZÀ-ÿ\s]/g, '');
+    } else if (name === 'address') {
+      filteredValue = filteredValue.replace(/[^a-zA-Z0-9\s]/g, '');
+    } else if (name === 'weight') {
+      filteredValue = filteredValue.replace(/\D/g, '').substring(0, 3);
+    } else if (name === 'height') {
+      filteredValue = formatHeight(filteredValue);
     } else if (name === 'phone' || name === 'doctor_phone') {
       filteredValue = formatPhone(filteredValue);
     } else if (name === 'birth_date') {
@@ -100,8 +110,8 @@ const Evaluation = () => {
       filteredValue = filteredValue.replace(/\D/g, '').substring(0, 3);
     } else if (name === 'respiratory_rate') {
       filteredValue = filteredValue.replace(/\D/g, '').substring(0, 2);
-    } else if (name === 'temperature' || name === 'weight' || name === 'height') {
-      filteredValue = filteredValue.replace(/[^\d.,]/g, '').substring(0, 6);
+    } else if (name === 'temperature') {
+      filteredValue = filteredValue.replace(/[^\d.,]/g, '').substring(0, 5);
     } else if (name === 'address_number') {
       filteredValue = filteredValue.replace(/\D/g, '').substring(0, 6);
     }
@@ -130,7 +140,6 @@ const Evaluation = () => {
       return !val || val.toString().trim() === '';
     });
 
-    // Validação extra de data completa
     if (formData.birth_date.length < 10 && !newErrors.includes('birth_date')) {
       newErrors.push('birth_date');
     }
@@ -333,7 +342,7 @@ const Evaluation = () => {
                   <div className="md:col-span-2 grid grid-cols-4 gap-4">
                     <div className="col-span-3">
                       <label className={labelClasses}>Endereço <span className="text-red-500">*</span></label>
-                      <input name="address" value={formData.address} onChange={handleInputChange} type="text" className={getInputClasses('address')} placeholder="Rua, bairro, cidade - UF" />
+                      <input name="address" value={formData.address} onChange={handleInputChange} type="text" className={getInputClasses('address')} placeholder="Rua, bairro, cidade" />
                     </div>
                     <div className="col-span-1">
                       <label className={labelClasses}>Nº <span className="text-red-500">*</span></label>
@@ -354,11 +363,11 @@ const Evaluation = () => {
                   </div>
                   <div>
                     <label className={labelClasses}>Peso (kg)</label>
-                    <input name="weight" value={formData.weight} onChange={handleInputChange} type="text" className={getInputClasses('weight')} placeholder="Ex: 75.5" />
+                    <input name="weight" value={formData.weight} onChange={handleInputChange} type="text" className={getInputClasses('weight')} placeholder="Ex: 75" maxLength={3} />
                   </div>
                   <div>
                     <label className={labelClasses}>Altura (m)</label>
-                    <input name="height" value={formData.height} onChange={handleInputChange} type="text" className={getInputClasses('height')} placeholder="Ex: 1.75" />
+                    <input name="height" value={formData.height} onChange={handleInputChange} type="text" className={getInputClasses('height')} placeholder="Ex: 1.75" maxLength={4} />
                   </div>
                   <div className="border-t border-slate-100 pt-8 md:col-span-2">
                     <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">Informações Médicas (Opcional)</h4>

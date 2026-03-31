@@ -73,12 +73,14 @@ const Login = () => {
             .eq('username', loginEmail.toLowerCase())
             .maybeSingle();
 
-          if (profile && profile.email) {
-            loginEmail = profile.email;
-          } else if (profileError) {
+          if (profileError) {
             console.error('Erro ao buscar perfil:', profileError);
           }
-          // Se não encontrar o perfil, tentaremos o login com o que foi digitado mesmo assim
+
+          if (!profile || !profile.email) {
+            throw new Error('Nome de usuário não encontrado. Tente usar seu e-mail.');
+          }
+          loginEmail = profile.email;
         }
 
         const { error: signInError } = await supabase.auth.signInWithPassword({
@@ -88,7 +90,7 @@ const Login = () => {
 
         if (signInError) {
           if (signInError.message.includes('Invalid login credentials')) {
-            throw new Error('Usuário ou senha incorretos.');
+            throw new Error('Senha incorreta para este usuário.');
           }
           throw signInError;
         }

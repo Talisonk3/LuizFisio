@@ -45,7 +45,7 @@ const Login = () => {
 
     try {
       if (isSignUp) {
-        const { error: signUpError } = await supabase.auth.signUp({
+        const { data, error: signUpError } = await supabase.auth.signUp({
           email: formData.email,
           password: formData.password,
           options: {
@@ -58,13 +58,12 @@ const Login = () => {
         
         if (signUpError) throw signUpError;
         
-        // Popup de aviso
-        alert(`Um e-mail de confirmação foi enviado para ${formData.email}. Por favor, verifique sua caixa de entrada.`);
-        
-        // Redireciona para a tela de login (limpando campos sensíveis)
-        setIsSignUp(false);
-        setFormData(prev => ({ ...prev, password: '' }));
-        setShowPassword(false);
+        // Se o Supabase estiver com "Confirm Email" desativado, 
+        // o 'data.session' existirá e o useEffect acima fará o redirecionamento.
+        if (!data.session) {
+          setError("Cadastro realizado! Por favor, tente fazer login agora.");
+          setIsSignUp(false);
+        }
         
       } else {
         const { error: signInError } = await supabase.auth.signInWithPassword({

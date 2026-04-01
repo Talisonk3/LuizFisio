@@ -37,8 +37,10 @@ const Evaluation = () => {
     height: '',
     responsible_doctor: '',
     doctor_phone: '',
+    evaluation_date: new Date().toLocaleDateString('pt-BR'),
     chief_complaint: '',
     history_present_illness: '',
+    previous_illness_history: '',
     has_medications: 'Não',
     medications: '',
     has_surgeries: 'Não',
@@ -130,7 +132,7 @@ const Evaluation = () => {
       filteredValue = formatHeight(filteredValue);
     } else if (name === 'phone' || name === 'doctor_phone') {
       filteredValue = formatPhone(filteredValue);
-    } else if (name === 'birth_date') {
+    } else if (name === 'birth_date' || name === 'evaluation_date') {
       filteredValue = formatDate(filteredValue);
     } else if (name === 'blood_pressure') {
       filteredValue = formatPA(filteredValue);
@@ -203,7 +205,6 @@ const Evaluation = () => {
           address: fullAddress,
           birth_date: formattedBirthDate,
           user_id: user?.id,
-          // Se marcou "Não", garantimos que o campo de texto vá vazio
           medications: has_medications === 'Sim' ? formData.medications : '',
           previous_surgeries: has_surgeries === 'Sim' ? formData.previous_surgeries : ''
         }]);
@@ -225,8 +226,10 @@ const Evaluation = () => {
         height: '',
         responsible_doctor: '',
         doctor_phone: '',
+        evaluation_date: new Date().toLocaleDateString('pt-BR'),
         chief_complaint: '',
         history_present_illness: '',
+        previous_illness_history: '',
         has_medications: 'Não',
         medications: '',
         has_surgeries: 'Não',
@@ -601,6 +604,13 @@ const Evaluation = () => {
                   <h3 className="text-xl font-bold text-slate-800">Anamnese Completa</h3>
                 </div>
                 <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div>
+                      <label className={labelClasses}>Data da Avaliação</label>
+                      <input name="evaluation_date" value={formData.evaluation_date} onChange={handleInputChange} type="text" className={getInputClasses('evaluation_date')} placeholder="DD/MM/AAAA" maxLength={10} />
+                    </div>
+                  </div>
+
                   <div>
                     <label className={labelClasses}>Queixa Principal</label>
                     <textarea name="chief_complaint" value={formData.chief_complaint} onChange={handleInputChange} className={`${getInputClasses('chief_complaint')} h-32 resize-none`} placeholder="Descreva detalhadamente o motivo da consulta..."></textarea>
@@ -646,6 +656,11 @@ const Evaluation = () => {
                   <div>
                     <label className={labelClasses}>História da Doença Atual (HDA)</label>
                     <textarea name="history_present_illness" value={formData.history_present_illness} onChange={handleInputChange} className={`${getInputClasses('history_present_illness')} h-32 resize-none`} placeholder="Início dos sintomas, evolução, fatores de melhora/piora..."></textarea>
+                  </div>
+
+                  <div>
+                    <label className={labelClasses}>História da Doença Pregressa (HDP)</label>
+                    <textarea name="previous_illness_history" value={formData.previous_illness_history} onChange={handleInputChange} className={`${getInputClasses('previous_illness_history')} h-32 resize-none`} placeholder="Doenças anteriores, traumas, internações..."></textarea>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-slate-100 pt-8">

@@ -35,6 +35,9 @@ const Evaluation = () => {
     profession: '',
     weight: '',
     height: '',
+    has_caregiver: 'Não',
+    caregiver_name: '',
+    caregiver_phone: '',
     responsible_doctor: '',
     doctor_phone: '',
     evaluation_date: new Date().toLocaleDateString('pt-BR'),
@@ -120,7 +123,7 @@ const Evaluation = () => {
     const { name, value } = e.target;
     let filteredValue = value.trimStart();
     
-    if (name === 'patient_name' || name === 'responsible_doctor') {
+    if (name === 'patient_name' || name === 'responsible_doctor' || name === 'caregiver_name') {
       filteredValue = filteredValue.replace(/[^a-zA-ZÀ-ÿ\s]/g, '');
     } else if (name === 'profession') {
       filteredValue = filteredValue.replace(/[^a-zA-ZÀ-ÿ\s]/g, '');
@@ -130,7 +133,7 @@ const Evaluation = () => {
       filteredValue = filteredValue.replace(/\D/g, '').substring(0, 3);
     } else if (name === 'height') {
       filteredValue = formatHeight(filteredValue);
-    } else if (name === 'phone' || name === 'doctor_phone') {
+    } else if (name === 'phone' || name === 'doctor_phone' || name === 'caregiver_phone') {
       filteredValue = formatPhone(filteredValue);
     } else if (name === 'birth_date' || name === 'evaluation_date') {
       filteredValue = formatDate(filteredValue);
@@ -196,7 +199,7 @@ const Evaluation = () => {
       const fullAddress = `${formData.address}, ${formData.address_number}`;
       
       // Removemos os campos de controle Sim/Não antes de enviar para o banco
-      const { has_medications, has_surgeries, ...dataToSave } = formData;
+      const { has_medications, has_surgeries, has_caregiver, ...dataToSave } = formData;
 
       const { error } = await supabase
         .from('evaluations')
@@ -206,7 +209,9 @@ const Evaluation = () => {
           birth_date: formattedBirthDate,
           user_id: user?.id,
           medications: has_medications === 'Sim' ? formData.medications : '',
-          previous_surgeries: has_surgeries === 'Sim' ? formData.previous_surgeries : ''
+          previous_surgeries: has_surgeries === 'Sim' ? formData.previous_surgeries : '',
+          caregiver_name: has_caregiver === 'Sim' ? formData.caregiver_name : '',
+          caregiver_phone: has_caregiver === 'Sim' ? formData.caregiver_phone : ''
         }]);
 
       if (error) throw error;
@@ -224,6 +229,9 @@ const Evaluation = () => {
         profession: '',
         weight: '',
         height: '',
+        has_caregiver: 'Não',
+        caregiver_name: '',
+        caregiver_phone: '',
         responsible_doctor: '',
         doctor_phone: '',
         evaluation_date: new Date().toLocaleDateString('pt-BR'),
@@ -430,6 +438,58 @@ const Evaluation = () => {
                     <label className={labelClasses}>Altura (m)</label>
                     <input name="height" value={formData.height} onChange={handleInputChange} type="text" className={getInputClasses('height')} placeholder="Ex: 1.75" maxLength={4} />
                   </div>
+
+                  {/* Familiar Responsável ou Cuidador */}
+                  <div className="md:col-span-2 space-y-4 border-t border-slate-100 pt-8">
+                    <div>
+                      <label className={labelClasses}>Possui Familiar Responsável ou Cuidador?</label>
+                      <div className="flex gap-4">
+                        {['Não', 'Sim'].map((option) => (
+                          <button
+                            key={option}
+                            type="button"
+                            onClick={() => setFormData(prev => ({ ...prev, has_caregiver: option }))}
+                            className={`px-6 py-2 rounded-xl border transition-all font-medium ${
+                              formData.has_caregiver === option 
+                              ? 'bg-blue-600 text-white border-blue-600 shadow-md' 
+                              : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
+                            }`}
+                          >
+                            {option}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    {formData.has_caregiver === 'Sim' && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in slide-in-from-top-2 duration-300">
+                        <div>
+                          <label className={labelClasses}>Nome do Responsável</label>
+                          <input 
+                            name="caregiver_name" 
+                            value={formData.caregiver_name} 
+                            onChange={handleInputChange} 
+                            type="text" 
+                            className={getInputClasses('caregiver_name')} 
+                            placeholder="Nome completo" 
+                          />
+                        </div>
+                        <div>
+                          <label className={labelClasses}>Telefone do Responsável</label>
+                          <input 
+                            name="caregiver_phone" 
+                            value={formData.caregiver_phone} 
+                            onChange={handleInputChange} 
+                            type="tel" 
+                            className={getInputClasses('caregiver_phone')} 
+                            placeholder="(00) 00000-0000" 
+                            maxLength={15}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
                   <div className="border-t border-slate-100 pt-8 md:col-span-2">
                     <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">Informações Médicas (Opcional)</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

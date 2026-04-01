@@ -48,6 +48,10 @@ const Evaluation = () => {
     saturation: '',
     cardiac_auscultation: '',
     pulmonary_auscultation: '',
+    auditory_alterations: '',
+    visual_alterations: '',
+    gait_aid: 'Não',
+    gait_aid_details: '',
     inspection_palpation: '',
     range_of_motion: '',
     muscle_strength: '',
@@ -219,6 +223,10 @@ const Evaluation = () => {
         saturation: '',
         cardiac_auscultation: '',
         pulmonary_auscultation: '',
+        auditory_alterations: '',
+        visual_alterations: '',
+        gait_aid: 'Não',
+        gait_aid_details: '',
         inspection_palpation: '',
         range_of_motion: '',
         muscle_strength: '',
@@ -446,6 +454,54 @@ const Evaluation = () => {
                     <textarea name="pulmonary_auscultation" value={formData.pulmonary_auscultation} onChange={handleInputChange} className={`${getInputClasses('pulmonary_auscultation')} h-24 resize-none`} placeholder="Murmúrio vesicular, ruídos adventícios..."></textarea>
                   </div>
                 </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-slate-100 pt-8">
+                  <div>
+                    <label className={labelClasses}>Alterações Auditivas</label>
+                    <input name="auditory_alterations" value={formData.auditory_alterations} onChange={handleInputChange} type="text" className={getInputClasses('auditory_alterations')} placeholder="Ex: Zumbido, perda auditiva..." />
+                  </div>
+                  <div>
+                    <label className={labelClasses}>Alterações Visuais</label>
+                    <input name="visual_alterations" value={formData.visual_alterations} onChange={handleInputChange} type="text" className={getInputClasses('visual_alterations')} placeholder="Ex: Visão turva, uso de óculos..." />
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className={labelClasses}>Dispositivo para Auxílio de Marcha</label>
+                    <div className="flex gap-4">
+                      {['Não', 'Sim'].map((option) => (
+                        <button
+                          key={option}
+                          type="button"
+                          onClick={() => setFormData(prev => ({ ...prev, gait_aid: option }))}
+                          className={`px-6 py-2 rounded-xl border transition-all font-medium ${
+                            formData.gait_aid === option 
+                            ? 'bg-blue-600 text-white border-blue-600 shadow-md' 
+                            : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
+                          }`}
+                        >
+                          {option}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  {formData.gait_aid === 'Sim' && (
+                    <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                      <label className={labelClasses}>Qual dispositivo?</label>
+                      <input 
+                        name="gait_aid_details" 
+                        value={formData.gait_aid_details} 
+                        onChange={handleInputChange} 
+                        type="text" 
+                        className={getInputClasses('gait_aid_details')} 
+                        placeholder="Ex: Bengala, andador, muletas..." 
+                      />
+                    </div>
+                  )}
+                </div>
+
                 <div>
                   <label className={labelClasses}>Inspeção e Palpação</label>
                   <textarea name="inspection_palpation" value={formData.inspection_palpation} onChange={handleInputChange} className={`${getInputClasses('inspection_palpation')} h-32 resize-none`} placeholder="Avaliação postural, presença de edema, cicatrizes, pontos gatilho..."></textarea>

@@ -45,6 +45,9 @@ const Evaluation = () => {
     heart_rate: '',
     respiratory_rate: '',
     temperature: '',
+    saturation: '',
+    cardiac_auscultation: '',
+    pulmonary_auscultation: '',
     inspection_palpation: '',
     range_of_motion: '',
     muscle_strength: '',
@@ -126,6 +129,8 @@ const Evaluation = () => {
       filteredValue = filteredValue.replace(/\D/g, '').substring(0, 2);
     } else if (name === 'temperature') {
       filteredValue = formatTemp(filteredValue);
+    } else if (name === 'saturation') {
+      filteredValue = filteredValue.replace(/\D/g, '').substring(0, 3);
     } else if (name === 'address_number') {
       filteredValue = filteredValue.replace(/\D/g, '').substring(0, 6);
     }
@@ -211,6 +216,9 @@ const Evaluation = () => {
         heart_rate: '',
         respiratory_rate: '',
         temperature: '',
+        saturation: '',
+        cardiac_auscultation: '',
+        pulmonary_auscultation: '',
         inspection_palpation: '',
         range_of_motion: '',
         muscle_strength: '',
@@ -406,7 +414,7 @@ const Evaluation = () => {
                   <div className="bg-blue-100 p-2 rounded-lg text-blue-600"><Activity size={20} /></div>
                   <h3 className="text-xl font-bold text-slate-800">Sinais Vitais e Exame Físico</h3>
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
                   <div>
                     <label className={labelClasses}>PA (mmHg)</label>
                     <input name="blood_pressure" value={formData.blood_pressure} onChange={handleInputChange} type="text" className={getInputClasses('blood_pressure')} placeholder="120/80" maxLength={6} />
@@ -423,10 +431,24 @@ const Evaluation = () => {
                     <label className={labelClasses}>Temp (°C)</label>
                     <input name="temperature" value={formData.temperature} onChange={handleInputChange} type="text" className={getInputClasses('temperature')} placeholder="36.5" maxLength={4} />
                   </div>
+                  <div>
+                    <label className={labelClasses}>SatO2 (%)</label>
+                    <input name="saturation" value={formData.saturation} onChange={handleInputChange} type="text" className={getInputClasses('saturation')} placeholder="98" maxLength={3} />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div>
+                    <label className={labelClasses}>Ausculta Cardíaca</label>
+                    <textarea name="cardiac_auscultation" value={formData.cardiac_auscultation} onChange={handleInputChange} className={`${getInputClasses('cardiac_auscultation')} h-24 resize-none`} placeholder="Bulhas rítmicas, sopros..."></textarea>
+                  </div>
+                  <div>
+                    <label className={labelClasses}>Ausculta Pulmonar</label>
+                    <textarea name="pulmonary_auscultation" value={formData.pulmonary_auscultation} onChange={handleInputChange} className={`${getInputClasses('pulmonary_auscultation')} h-24 resize-none`} placeholder="Murmúrio vesicular, ruídos adventícios..."></textarea>
+                  </div>
                 </div>
                 <div>
                   <label className={labelClasses}>Inspeção e Palpação</label>
-                  <textarea name="inspection_palpation" value={formData.inspection_palpation} onChange={handleInputChange} className={`${getInputClasses('inspection_palpation')} h-40 resize-none`} placeholder="Avaliação postural, presença de edema, cicatrizes, pontos gatilho..."></textarea>
+                  <textarea name="inspection_palpation" value={formData.inspection_palpation} onChange={handleInputChange} className={`${getInputClasses('inspection_palpation')} h-32 resize-none`} placeholder="Avaliação postural, presença de edema, cicatrizes, pontos gatilho..."></textarea>
                 </div>
               </div>
             )}

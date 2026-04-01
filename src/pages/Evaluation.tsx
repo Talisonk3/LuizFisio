@@ -169,6 +169,10 @@ const Evaluation = () => {
       'profession', 
       'phone'
     ];
+
+    if (formData.has_caregiver === 'Sim') {
+      requiredFields.push('caregiver_name', 'caregiver_phone');
+    }
     
     const newErrors = requiredFields.filter(field => {
       const val = formData[field as keyof typeof formData];
@@ -464,7 +468,7 @@ const Evaluation = () => {
                     {formData.has_caregiver === 'Sim' && (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in slide-in-from-top-2 duration-300">
                         <div>
-                          <label className={labelClasses}>Nome do Responsável</label>
+                          <label className={labelClasses}>Nome do Responsável <span className="text-red-500">*</span></label>
                           <input 
                             name="caregiver_name" 
                             value={formData.caregiver_name} 
@@ -475,7 +479,7 @@ const Evaluation = () => {
                           />
                         </div>
                         <div>
-                          <label className={labelClasses}>Telefone do Responsável</label>
+                          <label className={labelClasses}>Telefone do Responsável <span className="text-red-500">*</span></label>
                           <input 
                             name="caregiver_phone" 
                             value={formData.caregiver_phone} 

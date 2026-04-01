@@ -49,7 +49,7 @@ const Evaluation = () => {
     drinks_details: '',
     smokes: 'Não',
     smokes_details: '',
-    sedentary: '', // Inicia vazio para não ter opção selecionada por padrão
+    sedentary: 'Não', // Agora inicia como 'Não' por padrão
     sedentary_details: '',
     has_medications: 'Não',
     medications: '',
@@ -135,7 +135,7 @@ const Evaluation = () => {
     } else if (name === 'profession') {
       filteredValue = filteredValue.replace(/[^a-zA-ZÀ-ÿ\s]/g, '');
     } else if (name === 'address') {
-      filteredValue = filteredValue.replace(/[^a-zA-Z0-9\s]/g, '');
+      filteredValue = filteredValue.replace(/[^a-zA-0-9\s]/g, '');
     } else if (name === 'weight') {
       filteredValue = filteredValue.replace(/\D/g, '').substring(0, 3);
     } else if (name === 'height') {
@@ -257,7 +257,7 @@ const Evaluation = () => {
         drinks_details: '',
         smokes: 'Não',
         smokes_details: '',
-        sedentary: '',
+        sedentary: 'Não',
         sedentary_details: '',
         has_medications: 'Não',
         medications: '',
@@ -823,7 +823,7 @@ const Evaluation = () => {
                     <div className="space-y-4">
                       <label className={labelClasses}>Pratica atividade física?</label>
                       <div className="flex gap-4">
-                        {['Sim', 'Não'].map((option) => (
+                        {['Não', 'Sim'].map((option) => (
                           <button
                             key={option}
                             type="button"

@@ -44,6 +44,13 @@ const Evaluation = () => {
     chief_complaint: '',
     history_present_illness: '',
     previous_illness_history: '',
+    family_history: '',
+    drinks: 'Não',
+    drinks_details: '',
+    smokes: 'Não',
+    smokes_details: '',
+    sedentary: 'Não',
+    sedentary_details: '',
     has_medications: 'Não',
     medications: '',
     has_surgeries: 'Não',
@@ -215,7 +222,10 @@ const Evaluation = () => {
           medications: has_medications === 'Sim' ? formData.medications : '',
           previous_surgeries: has_surgeries === 'Sim' ? formData.previous_surgeries : '',
           caregiver_name: has_caregiver === 'Sim' ? formData.caregiver_name : '',
-          caregiver_phone: has_caregiver === 'Sim' ? formData.caregiver_phone : ''
+          caregiver_phone: has_caregiver === 'Sim' ? formData.caregiver_phone : '',
+          drinks_details: formData.drinks === 'Sim' ? formData.drinks_details : '',
+          smokes_details: formData.smokes === 'Sim' ? formData.smokes_details : '',
+          sedentary_details: formData.sedentary === 'Sim' ? formData.sedentary_details : ''
         }]);
 
       if (error) throw error;
@@ -242,6 +252,13 @@ const Evaluation = () => {
         chief_complaint: '',
         history_present_illness: '',
         previous_illness_history: '',
+        family_history: '',
+        drinks: 'Não',
+        drinks_details: '',
+        smokes: 'Não',
+        smokes_details: '',
+        sedentary: 'Não',
+        sedentary_details: '',
         has_medications: 'Não',
         medications: '',
         has_surgeries: 'Não',
@@ -725,6 +742,115 @@ const Evaluation = () => {
                   <div>
                     <label className={labelClasses}>História da Doença Pregressa (HDP)</label>
                     <textarea name="previous_illness_history" value={formData.previous_illness_history} onChange={handleInputChange} className={`${getInputClasses('previous_illness_history')} h-32 resize-none`} placeholder="Doenças anteriores, traumas, internações..."></textarea>
+                  </div>
+
+                  <div>
+                    <label className={labelClasses}>Histórico Familiar</label>
+                    <textarea name="family_history" value={formData.family_history} onChange={handleInputChange} className={`${getInputClasses('family_history')} h-32 resize-none`} placeholder="Doenças hereditárias, histórico de saúde da família..."></textarea>
+                  </div>
+
+                  {/* Histórico Social */}
+                  <div className="border-t border-slate-100 pt-8 space-y-8">
+                    <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider">Histórico Social</h4>
+                    
+                    {/* Álcool */}
+                    <div className="space-y-4">
+                      <label className={labelClasses}>Consome bebida alcoólica?</label>
+                      <div className="flex gap-4">
+                        {['Não', 'Sim'].map((option) => (
+                          <button
+                            key={option}
+                            type="button"
+                            onClick={() => setFormData(prev => ({ ...prev, drinks: option }))}
+                            className={`px-6 py-2 rounded-xl border transition-all font-medium ${
+                              formData.drinks === option 
+                              ? 'bg-blue-600 text-white border-blue-600 shadow-md' 
+                              : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
+                            }`}
+                          >
+                            {option}
+                          </button>
+                        ))}
+                      </div>
+                      {formData.drinks === 'Sim' && (
+                        <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                          <input 
+                            name="drinks_details" 
+                            value={formData.drinks_details} 
+                            onChange={handleInputChange} 
+                            type="text" 
+                            className={getInputClasses('drinks_details')} 
+                            placeholder="Frequência e tipo de bebida..." 
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Fumo */}
+                    <div className="space-y-4">
+                      <label className={labelClasses}>É fumante ou ex-fumante?</label>
+                      <div className="flex gap-4">
+                        {['Não', 'Sim'].map((option) => (
+                          <button
+                            key={option}
+                            type="button"
+                            onClick={() => setFormData(prev => ({ ...prev, smokes: option }))}
+                            className={`px-6 py-2 rounded-xl border transition-all font-medium ${
+                              formData.smokes === option 
+                              ? 'bg-blue-600 text-white border-blue-600 shadow-md' 
+                              : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
+                            }`}
+                          >
+                            {option}
+                          </button>
+                        ))}
+                      </div>
+                      {formData.smokes === 'Sim' && (
+                        <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                          <input 
+                            name="smokes_details" 
+                            value={formData.smokes_details} 
+                            onChange={handleInputChange} 
+                            type="text" 
+                            className={getInputClasses('smokes_details')} 
+                            placeholder="Quantidade de cigarros por dia/tempo..." 
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Sedentarismo */}
+                    <div className="space-y-4">
+                      <label className={labelClasses}>É sedentário?</label>
+                      <div className="flex gap-4">
+                        {['Não', 'Sim'].map((option) => (
+                          <button
+                            key={option}
+                            type="button"
+                            onClick={() => setFormData(prev => ({ ...prev, sedentary: option }))}
+                            className={`px-6 py-2 rounded-xl border transition-all font-medium ${
+                              formData.sedentary === option 
+                              ? 'bg-blue-600 text-white border-blue-600 shadow-md' 
+                              : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
+                            }`}
+                          >
+                            {option}
+                          </button>
+                        ))}
+                      </div>
+                      {formData.sedentary === 'Sim' && (
+                        <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                          <input 
+                            name="sedentary_details" 
+                            value={formData.sedentary_details} 
+                            onChange={handleInputChange} 
+                            type="text" 
+                            className={getInputClasses('sedentary_details')} 
+                            placeholder="Pratica alguma atividade física? Qual?" 
+                          />
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-slate-100 pt-8">

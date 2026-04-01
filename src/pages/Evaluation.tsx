@@ -263,8 +263,6 @@ const Evaluation = () => {
           drinks_details: formData.drinks === 'Sim' ? formData.drinks_details : '',
           smokes_details: formData.smokes === 'Sim' ? formData.smokes_details : '',
           sedentary_details: formData.sedentary === 'Sim' ? formData.sedentary_details : '',
-          // Nota: Para salvar imagens, idealmente usaríamos Supabase Storage. 
-          // Por enquanto, salvamos como metadados ou ignoramos se a coluna não existir.
         }]);
 
       if (error) throw error;
@@ -677,8 +675,9 @@ const Evaluation = () => {
                   </div>
                 </div>
 
-                <div className="space-y-4 border-t border-slate-100 pt-8">
-                  <div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-slate-100 pt-8">
+                  {/* Dispositivo para Auxílio de Marcha */}
+                  <div className="space-y-4">
                     <label className={labelClasses}>Dispositivo para Auxílio de Marcha</label>
                     <div className="flex gap-4">
                       {['Não', 'Sim'].map((option) => (
@@ -696,26 +695,23 @@ const Evaluation = () => {
                         </button>
                       ))}
                     </div>
+                    {formData.gait_aid === 'Sim' && (
+                      <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                        <label className={labelClasses}>Qual dispositivo?</label>
+                        <input 
+                          name="gait_aid_details" 
+                          value={formData.gait_aid_details} 
+                          onChange={handleInputChange} 
+                          type="text" 
+                          className={getInputClasses('gait_aid_details')} 
+                          placeholder="Ex: Bengala, andador, muletas..." 
+                        />
+                      </div>
+                    )}
                   </div>
-                  
-                  {formData.gait_aid === 'Sim' && (
-                    <div className="animate-in fade-in slide-in-from-top-2 duration-300">
-                      <label className={labelClasses}>Qual dispositivo?</label>
-                      <input 
-                        name="gait_aid_details" 
-                        value={formData.gait_aid_details} 
-                        onChange={handleInputChange} 
-                        type="text" 
-                        className={getInputClasses('gait_aid_details')} 
-                        placeholder="Ex: Bengala, andador, muletas..." 
-                      />
-                    </div>
-                  )}
-                </div>
 
-                {/* Exames Complementares */}
-                <div className="space-y-4 border-t border-slate-100 pt-8">
-                  <div>
+                  {/* Exames Complementares */}
+                  <div className="space-y-4">
                     <label className={labelClasses}>Exames Complementares?</label>
                     <div className="flex gap-4">
                       {['Não', 'Sim'].map((option) => (
@@ -733,57 +729,56 @@ const Evaluation = () => {
                         </button>
                       ))}
                     </div>
-                  </div>
-                  
-                  {formData.has_complementary_exams === 'Sim' && (
-                    <div className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
-                      <div>
-                        <label className={labelClasses}>Descrição dos Exames</label>
-                        <textarea 
-                          name="complementary_exams_details" 
-                          value={formData.complementary_exams_details} 
-                          onChange={handleInputChange} 
-                          className={`${getInputClasses('complementary_exams_details')} h-24 resize-none`} 
-                          placeholder="Descreva os resultados dos exames..."
-                        ></textarea>
-                      </div>
-                      
-                      <div>
-                        <label className={labelClasses}>Imagens dos Exames (Máx. 10)</label>
-                        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-2">
-                          {examImages.map((img, index) => (
-                            <div key={index} className="relative group aspect-square rounded-2xl overflow-hidden border border-slate-200 bg-slate-100">
-                              <img src={img} alt={`Exame ${index + 1}`} className="w-full h-full object-cover" />
-                              <button 
-                                onClick={() => removeImage(index)}
-                                className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
-                              >
-                                <X size={14} />
-                              </button>
-                            </div>
-                          ))}
-                          
-                          {examImages.length < 10 && (
-                            <button 
-                              onClick={() => fileInputRef.current?.click()}
-                              className="aspect-square rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-2 text-slate-400 hover:border-blue-400 hover:text-blue-500 hover:bg-blue-50 transition-all"
-                            >
-                              <Plus size={24} />
-                              <span className="text-xs font-bold">Adicionar</span>
-                            </button>
-                          )}
+                    {formData.has_complementary_exams === 'Sim' && (
+                      <div className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
+                        <div>
+                          <label className={labelClasses}>Descrição dos Exames</label>
+                          <textarea 
+                            name="complementary_exams_details" 
+                            value={formData.complementary_exams_details} 
+                            onChange={handleInputChange} 
+                            className={`${getInputClasses('complementary_exams_details')} h-24 resize-none`} 
+                            placeholder="Descreva os resultados dos exames..."
+                          ></textarea>
                         </div>
-                        <input 
-                          type="file" 
-                          ref={fileInputRef} 
-                          onChange={handleImageUpload} 
-                          accept="image/*" 
-                          multiple 
-                          className="hidden" 
-                        />
+                        
+                        <div>
+                          <label className={labelClasses}>Imagens dos Exames (Máx. 10)</label>
+                          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-2">
+                            {examImages.map((img, index) => (
+                              <div key={index} className="relative group aspect-square rounded-2xl overflow-hidden border border-slate-200 bg-slate-100">
+                                <img src={img} alt={`Exame ${index + 1}`} className="w-full h-full object-cover" />
+                                <button 
+                                  onClick={() => removeImage(index)}
+                                  className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                                >
+                                  <X size={14} />
+                                </button>
+                              </div>
+                            ))}
+                            
+                            {examImages.length < 10 && (
+                              <button 
+                                onClick={() => fileInputRef.current?.click()}
+                                className="aspect-square rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-2 text-slate-400 hover:border-blue-400 hover:text-blue-500 hover:bg-blue-50 transition-all"
+                              >
+                                <Plus size={24} />
+                                <span className="text-xs font-bold">Adicionar</span>
+                              </button>
+                            )}
+                          </div>
+                          <input 
+                            type="file" 
+                            ref={fileInputRef} 
+                            onChange={handleImageUpload} 
+                            accept="image/*" 
+                            multiple 
+                            className="hidden" 
+                          />
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
 
                 <div>

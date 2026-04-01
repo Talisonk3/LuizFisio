@@ -13,7 +13,8 @@ import {
   Loader2,
   Image as ImageIcon,
   X,
-  Plus
+  Plus,
+  Trash2
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -28,6 +29,9 @@ const Evaluation = () => {
   const [errors, setErrors] = useState<string[]>([]);
   const [examImages, setExamImages] = useState<string[]>([]);
   
+  // Estado para as linhas dinâmicas de ADM
+  const [admRows, setAdmRows] = useState([{ movement: '', degree: '' }]);
+
   const [formData, setFormData] = useState({
     patient_name: '',
     birth_date: '',
@@ -174,6 +178,22 @@ const Evaluation = () => {
     setFormData(prev => ({ ...prev, [name]: filteredValue }));
   };
 
+  const handleAdmRowChange = (index: number, field: 'movement' | 'degree', value: string) => {
+    const newRows = [...admRows];
+    newRows[index][field] = value;
+    setAdmRows(newRows);
+  };
+
+  const addAdmRow = () => {
+    setAdmRows([...admRows, { movement: '', degree: '' }]);
+  };
+
+  const removeAdmRow = (index: number) => {
+    if (admRows.length > 1) {
+      setAdmRows(admRows.filter((_, i) => i !== index));
+    }
+  };
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (examImages.length + files.length > 10) {
@@ -239,6 +259,12 @@ const Evaluation = () => {
     const parts = formData.birth_date.split('/');
     formattedBirthDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
 
+    // Formata as linhas de ADM para uma string única
+    const formattedAdm = admRows
+      .filter(row => row.movement.trim() || row.degree.trim())
+      .map(row => `${row.movement}: ${row.degree}`)
+      .join('; ');
+
     setIsSaving(true);
     try {
       const fullAddress = `${formData.address}, ${formData.address_number}`;
@@ -258,6 +284,7 @@ const Evaluation = () => {
           address: fullAddress,
           birth_date: formattedBirthDate,
           user_id: user?.id,
+          range_of_motion: formattedAdm,
           medications: has_medications === 'Sim' ? formData.medications : '',
           previous_surgeries: has_surgeries === 'Sim' ? formData.previous_surgeries : '',
           caregiver_name: has_caregiver === 'Sim' ? formData.caregiver_name : '',
@@ -327,6 +354,7 @@ const Evaluation = () => {
         has_complementary_exams: 'Não',
         complementary_exams_details: ''
       });
+      setAdmRows([{ movement: '', degree: '' }]);
       setExamImages([]);
       setErrors([]);
       setActiveTab('identificacao');
@@ -1089,10 +1117,51 @@ const Evaluation = () => {
                     </div>
                   </div>
 
-                  <div>
+                  {/* Amplitude de Movimento Dinâmica */}
+                  <div className="space-y-4">
                     <label className={labelClasses}>Amplitude de Movimento (ADM)</label>
-                    <textarea name="range_of_motion" value={formData.range_of_motion} onChange={handleInputChange} className={`${getInputClasses('range_of_motion')} h-28 resize-none`} placeholder="Goniometria, limitações funcionais..."></textarea>
+                    <div className="space-y-3">
+                      {admRows.map((row, index) => (
+                        <div key={index} className="flex gap-3 items-end animate-in fade-in slide-in-from-left-2 duration-200">
+                          <div className="flex-1">
+                            <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 mb-1 block">Movimento</label>
+                            <input 
+                              type="text" 
+                              value={row.movement} 
+                              onChange={(e) => handleAdmRowChange(index, 'movement', e.target.value)}
+                              className={getInputClasses(`adm_mov_${index}`)}
+                              placeholder="Ex: Flexão de Ombro"
+                            />
+                          </div>
+                          <div className="w-32">
+                            <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 mb-1 block">Grau</label>
+                            <input 
+                              type="text" 
+                              value={row.degree} 
+                              onChange={(e) => handleAdmRowChange(index, 'degree', e.target.value)}
+                              className={getInputClasses(`adm_deg_${index}`)}
+                              placeholder="Ex: 90°"
+                            />
+                          </div>
+                          {admRows.length > 1 && (
+                            <button 
+                              onClick={() => removeAdmRow(index)}
+                              className="p-3 text-slate-300 hover:text-red-500 transition-colors mb-0.5"
+                            >
+                              <Trash2 size={20} />
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    <button 
+                      onClick={addAdmRow}
+                      className="mt-2 flex items-center gap-2 text-blue-600 font-bold text-sm hover:bg-blue-50 px-4 py-2 rounded-xl transition-all"
+                    >
+                      <Plus size={18} /> Adicionar Movimento
+                    </button>
                   </div>
+
                   <div>
                     <label className={labelClasses}>Força Muscular (Grau 0-5)</label>
                     <textarea name="muscle_strength" value={formData.muscle_strength} onChange={handleInputChange} className={`${getInputClasses('muscle_strength')} h-28 resize-none`} placeholder="Teste de força manual por grupos musculares..."></textarea>

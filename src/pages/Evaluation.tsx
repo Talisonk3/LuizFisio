@@ -41,6 +41,9 @@ const Evaluation = () => {
     history_present_illness: '',
     medications: '',
     previous_surgeries: '',
+    pain_scale: '0',
+    pain_worsening_factors: '',
+    pain_improvement_factors: '',
     blood_pressure: '',
     heart_rate: '',
     respiratory_rate: '',
@@ -218,6 +221,9 @@ const Evaluation = () => {
         history_present_illness: '',
         medications: '',
         previous_surgeries: '',
+        pain_scale: '0',
+        pain_worsening_factors: '',
+        pain_improvement_factors: '',
         blood_pressure: '',
         heart_rate: '',
         respiratory_rate: '',
@@ -278,6 +284,14 @@ const Evaluation = () => {
   };
 
   const labelClasses = "text-sm font-semibold text-slate-600 mb-1 block ml-1";
+
+  const getPainColor = (value: number) => {
+    if (value === 0) return 'bg-green-500';
+    if (value <= 3) return 'bg-yellow-400';
+    if (value <= 6) return 'bg-orange-500';
+    if (value <= 8) return 'bg-red-500';
+    return 'bg-red-700';
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 flex">
@@ -581,6 +595,44 @@ const Evaluation = () => {
                     <label className={labelClasses}>Queixa Principal</label>
                     <textarea name="chief_complaint" value={formData.chief_complaint} onChange={handleInputChange} className={`${getInputClasses('chief_complaint')} h-32 resize-none`} placeholder="Descreva detalhadamente o motivo da consulta..."></textarea>
                   </div>
+                  
+                  {/* Escala de Dor EVA */}
+                  <div className="bg-slate-50 p-6 rounded-3xl border border-slate-200">
+                    <label className="text-sm font-bold text-slate-700 mb-4 block ml-1">Escala Visual Analógica de Dor (EVA)</label>
+                    <div className="flex flex-wrap gap-2 justify-between">
+                      {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
+                        <button
+                          key={num}
+                          type="button"
+                          onClick={() => setFormData(prev => ({ ...prev, pain_scale: num.toString() }))}
+                          className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center font-bold transition-all ${
+                            formData.pain_scale === num.toString()
+                            ? `${getPainColor(num)} text-white scale-110 shadow-lg ring-4 ring-white`
+                            : 'bg-white text-slate-400 border border-slate-200 hover:border-slate-400'
+                          }`}
+                        >
+                          {num}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="flex justify-between mt-3 px-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                      <span>Sem Dor</span>
+                      <span>Dor Moderada</span>
+                      <span>Dor Máxima</span>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div>
+                      <label className={labelClasses}>O que piora a dor?</label>
+                      <textarea name="pain_worsening_factors" value={formData.pain_worsening_factors} onChange={handleInputChange} className={`${getInputClasses('pain_worsening_factors')} h-24 resize-none`} placeholder="Ex: Movimentos bruscos, frio, ficar em pé..."></textarea>
+                    </div>
+                    <div>
+                      <label className={labelClasses}>O que melhora a dor?</label>
+                      <textarea name="pain_improvement_factors" value={formData.pain_improvement_factors} onChange={handleInputChange} className={`${getInputClasses('pain_improvement_factors')} h-24 resize-none`} placeholder="Ex: Repouso, calor local, medicação..."></textarea>
+                    </div>
+                  </div>
+
                   <div>
                     <label className={labelClasses}>História da Doença Atual (HDA)</label>
                     <textarea name="history_present_illness" value={formData.history_present_illness} onChange={handleInputChange} className={`${getInputClasses('history_present_illness')} h-32 resize-none`} placeholder="Início dos sintomas, evolução, fatores de melhora/piora..."></textarea>

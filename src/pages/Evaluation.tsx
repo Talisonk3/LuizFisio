@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   User, 
   ClipboardList, 
@@ -10,7 +10,10 @@ import {
   LogOut,
   ChevronRight,
   ChevronLeft,
-  Loader2
+  Loader2,
+  Image as ImageIcon,
+  X,
+  Plus
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -19,9 +22,11 @@ import { useAuth } from '@/components/AuthProvider';
 const Evaluation = () => {
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [activeTab, setActiveTab] = useState('identificacao');
   const [isSaving, setIsSaving] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
+  const [examImages, setExamImages] = useState<string[]>([]);
   
   const [formData, setFormData] = useState({
     patient_name: '',
@@ -74,7 +79,9 @@ const Evaluation = () => {
     inspection_palpation: '',
     range_of_motion: '',
     muscle_strength: '',
-    physio_diagnosis: ''
+    physio_diagnosis: '',
+    has_complementary_exams: 'Não',
+    complementary_exams_details: ''
   });
 
   const formatPhone = (value: string) => {
@@ -135,7 +142,6 @@ const Evaluation = () => {
     } else if (name === 'profession') {
       filteredValue = filteredValue.replace(/[^a-zA-ZÀ-ÿ\s]/g, '');
     } else if (name === 'address') {
-      // Corrigido: a-zA-ZÀ-ÿ0-9 para permitir letras, acentos e números
       filteredValue = filteredValue.replace(/[^a-zA-ZÀ-ÿ0-9\s]/g, '');
     } else if (name === 'weight') {
       filteredValue = filteredValue.replace(/\D/g, '').substring(0, 3);
@@ -164,6 +170,31 @@ const Evaluation = () => {
     }
 
     setFormData(prev => ({ ...prev, [name]: filteredValue }));
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (examImages.length + files.length > 10) {
+      alert('Você pode enviar no máximo 10 imagens.');
+      return;
+    }
+
+    files.forEach(file => {
+      if (!file.type.startsWith('image/')) {
+        alert('Apenas arquivos de imagem são permitidos.');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setExamImages(prev => [...prev, reader.result as string]);
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const removeImage = (index: number) => {
+    setExamImages(prev => prev.filter((_, i) => i !== index));
   };
 
   const validateIdentificacao = () => {
@@ -210,8 +241,13 @@ const Evaluation = () => {
     try {
       const fullAddress = `${formData.address}, ${formData.address_number}`;
       
-      // Removemos os campos de controle Sim/Não antes de enviar para o banco
-      const { has_medications, has_surgeries, has_caregiver, ...dataToSave } = formData;
+      const { 
+        has_medications, 
+        has_surgeries, 
+        has_caregiver, 
+        has_complementary_exams,
+        ...dataToSave 
+      } = formData;
 
       const { error } = await supabase
         .from('evaluations')
@@ -226,7 +262,9 @@ const Evaluation = () => {
           caregiver_phone: has_caregiver === 'Sim' ? formData.caregiver_phone : '',
           drinks_details: formData.drinks === 'Sim' ? formData.drinks_details : '',
           smokes_details: formData.smokes === 'Sim' ? formData.smokes_details : '',
-          sedentary_details: formData.sedentary === 'Sim' ? formData.sedentary_details : ''
+          sedentary_details: formData.sedentary === 'Sim' ? formData.sedentary_details : '',
+          // Nota: Para salvar imagens, idealmente usaríamos Supabase Storage. 
+          // Por enquanto, salvamos como metadados ou ignoramos se a coluna não existir.
         }]);
 
       if (error) throw error;
@@ -283,8 +321,11 @@ const Evaluation = () => {
         inspection_palpation: '',
         range_of_motion: '',
         muscle_strength: '',
-        physio_diagnosis: ''
+        physio_diagnosis: '',
+        has_complementary_exams: 'Não',
+        complementary_exams_details: ''
       });
+      setExamImages([]);
       setErrors([]);
       setActiveTab('identificacao');
       
@@ -668,6 +709,79 @@ const Evaluation = () => {
                         className={getInputClasses('gait_aid_details')} 
                         placeholder="Ex: Bengala, andador, muletas..." 
                       />
+                    </div>
+                  )}
+                </div>
+
+                {/* Exames Complementares */}
+                <div className="space-y-4 border-t border-slate-100 pt-8">
+                  <div>
+                    <label className={labelClasses}>Exames Complementares?</label>
+                    <div className="flex gap-4">
+                      {['Não', 'Sim'].map((option) => (
+                        <button
+                          key={option}
+                          type="button"
+                          onClick={() => setFormData(prev => ({ ...prev, has_complementary_exams: option }))}
+                          className={`px-6 py-2 rounded-xl border transition-all font-medium ${
+                            formData.has_complementary_exams === option 
+                            ? 'bg-blue-600 text-white border-blue-600 shadow-md' 
+                            : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
+                          }`}
+                        >
+                          {option}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  {formData.has_complementary_exams === 'Sim' && (
+                    <div className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
+                      <div>
+                        <label className={labelClasses}>Descrição dos Exames</label>
+                        <textarea 
+                          name="complementary_exams_details" 
+                          value={formData.complementary_exams_details} 
+                          onChange={handleInputChange} 
+                          className={`${getInputClasses('complementary_exams_details')} h-24 resize-none`} 
+                          placeholder="Descreva os resultados dos exames..."
+                        ></textarea>
+                      </div>
+                      
+                      <div>
+                        <label className={labelClasses}>Imagens dos Exames (Máx. 10)</label>
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-2">
+                          {examImages.map((img, index) => (
+                            <div key={index} className="relative group aspect-square rounded-2xl overflow-hidden border border-slate-200 bg-slate-100">
+                              <img src={img} alt={`Exame ${index + 1}`} className="w-full h-full object-cover" />
+                              <button 
+                                onClick={() => removeImage(index)}
+                                className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                              >
+                                <X size={14} />
+                              </button>
+                            </div>
+                          ))}
+                          
+                          {examImages.length < 10 && (
+                            <button 
+                              onClick={() => fileInputRef.current?.click()}
+                              className="aspect-square rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-2 text-slate-400 hover:border-blue-400 hover:text-blue-500 hover:bg-blue-50 transition-all"
+                            >
+                              <Plus size={24} />
+                              <span className="text-xs font-bold">Adicionar</span>
+                            </button>
+                          )}
+                        </div>
+                        <input 
+                          type="file" 
+                          ref={fileInputRef} 
+                          onChange={handleImageUpload} 
+                          accept="image/*" 
+                          multiple 
+                          className="hidden" 
+                        />
+                      </div>
                     </div>
                   )}
                 </div>

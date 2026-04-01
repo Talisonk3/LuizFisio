@@ -49,7 +49,7 @@ const Evaluation = () => {
     drinks_details: '',
     smokes: 'Não',
     smokes_details: '',
-    sedentary: 'Não', // Agora inicia como 'Não' por padrão
+    sedentary: 'Não',
     sedentary_details: '',
     has_medications: 'Não',
     medications: '',
@@ -135,7 +135,8 @@ const Evaluation = () => {
     } else if (name === 'profession') {
       filteredValue = filteredValue.replace(/[^a-zA-ZÀ-ÿ\s]/g, '');
     } else if (name === 'address') {
-      filteredValue = filteredValue.replace(/[^a-zA-0-9\s]/g, '');
+      // Corrigido: a-zA-ZÀ-ÿ0-9 para permitir letras, acentos e números
+      filteredValue = filteredValue.replace(/[^a-zA-ZÀ-ÿ0-9\s]/g, '');
     } else if (name === 'weight') {
       filteredValue = filteredValue.replace(/\D/g, '').substring(0, 3);
     } else if (name === 'height') {

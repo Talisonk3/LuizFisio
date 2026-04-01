@@ -86,6 +86,20 @@ const Evaluation = () => {
     return `${numbers.slice(0, 1)}.${numbers.slice(1, 3)}`;
   };
 
+  const formatPA = (value: string) => {
+    const numbers = value.replace(/\D/g, '').substring(0, 5);
+    if (numbers.length <= 2) return numbers;
+    if (numbers.length === 3) return `${numbers.slice(0, 2)}/${numbers.slice(2)}`;
+    if (numbers.length === 4) return `${numbers.slice(0, 2)}/${numbers.slice(2)}`;
+    return `${numbers.slice(0, 3)}/${numbers.slice(3)}`;
+  };
+
+  const formatTemp = (value: string) => {
+    const numbers = value.replace(/\D/g, '').substring(0, 3);
+    if (numbers.length <= 2) return numbers;
+    return `${numbers.slice(0, 2)}.${numbers.slice(2)}`;
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     let filteredValue = value.trimStart();
@@ -105,13 +119,13 @@ const Evaluation = () => {
     } else if (name === 'birth_date') {
       filteredValue = formatDate(filteredValue);
     } else if (name === 'blood_pressure') {
-      filteredValue = filteredValue.replace(/[^\d/]/g, '').substring(0, 7);
+      filteredValue = formatPA(filteredValue);
     } else if (name === 'heart_rate') {
       filteredValue = filteredValue.replace(/\D/g, '').substring(0, 3);
     } else if (name === 'respiratory_rate') {
       filteredValue = filteredValue.replace(/\D/g, '').substring(0, 2);
     } else if (name === 'temperature') {
-      filteredValue = filteredValue.replace(/[^\d.,]/g, '').substring(0, 5);
+      filteredValue = formatTemp(filteredValue);
     } else if (name === 'address_number') {
       filteredValue = filteredValue.replace(/\D/g, '').substring(0, 6);
     }
@@ -395,19 +409,19 @@ const Evaluation = () => {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                   <div>
                     <label className={labelClasses}>PA (mmHg)</label>
-                    <input name="blood_pressure" value={formData.blood_pressure} onChange={handleInputChange} type="text" className={getInputClasses('blood_pressure')} placeholder="120/80" />
+                    <input name="blood_pressure" value={formData.blood_pressure} onChange={handleInputChange} type="text" className={getInputClasses('blood_pressure')} placeholder="120/80" maxLength={6} />
                   </div>
                   <div>
                     <label className={labelClasses}>FC (bpm)</label>
-                    <input name="heart_rate" value={formData.heart_rate} onChange={handleInputChange} type="text" className={getInputClasses('heart_rate')} placeholder="70" />
+                    <input name="heart_rate" value={formData.heart_rate} onChange={handleInputChange} type="text" className={getInputClasses('heart_rate')} placeholder="70" maxLength={3} />
                   </div>
                   <div>
                     <label className={labelClasses}>FR (irpm)</label>
-                    <input name="respiratory_rate" value={formData.respiratory_rate} onChange={handleInputChange} type="text" className={getInputClasses('respiratory_rate')} placeholder="16" />
+                    <input name="respiratory_rate" value={formData.respiratory_rate} onChange={handleInputChange} type="text" className={getInputClasses('respiratory_rate')} placeholder="16" maxLength={2} />
                   </div>
                   <div>
                     <label className={labelClasses}>Temp (°C)</label>
-                    <input name="temperature" value={formData.temperature} onChange={handleInputChange} type="text" className={getInputClasses('temperature')} placeholder="36.5" />
+                    <input name="temperature" value={formData.temperature} onChange={handleInputChange} type="text" className={getInputClasses('temperature')} placeholder="36.5" maxLength={4} />
                   </div>
                 </div>
                 <div>

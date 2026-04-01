@@ -79,6 +79,8 @@ const Evaluation = () => {
     inspection_palpation: '',
     range_of_motion: '',
     muscle_strength: '',
+    muscle_tone_mmss: 'Normal',
+    muscle_tone_mmii: 'Normal',
     physio_diagnosis: '',
     has_complementary_exams: 'Não',
     complementary_exams_details: ''
@@ -319,6 +321,8 @@ const Evaluation = () => {
         inspection_palpation: '',
         range_of_motion: '',
         muscle_strength: '',
+        muscle_tone_mmss: 'Normal',
+        muscle_tone_mmii: 'Normal',
         physio_diagnosis: '',
         has_complementary_exams: 'Não',
         complementary_exams_details: ''
@@ -1040,7 +1044,51 @@ const Evaluation = () => {
                   <div className="bg-blue-100 p-2 rounded-lg text-blue-600"><Dumbbell size={20} /></div>
                   <h3 className="text-xl font-bold text-slate-800">Avaliação Funcional e Diagnóstico</h3>
                 </div>
-                <div className="space-y-6">
+                <div className="space-y-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {/* Tônus Muscular MMSS */}
+                    <div className="space-y-4">
+                      <label className={labelClasses}>Tônus Muscular MMSS</label>
+                      <div className="flex flex-wrap gap-3">
+                        {['Normal', 'Hipertônico', 'Hipotônico'].map((option) => (
+                          <button
+                            key={option}
+                            type="button"
+                            onClick={() => setFormData(prev => ({ ...prev, muscle_tone_mmss: option }))}
+                            className={`px-4 py-2 rounded-xl border transition-all font-medium text-sm ${
+                              formData.muscle_tone_mmss === option 
+                              ? 'bg-blue-600 text-white border-blue-600 shadow-md' 
+                              : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
+                            }`}
+                          >
+                            {option}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Tônus Muscular MMII */}
+                    <div className="space-y-4">
+                      <label className={labelClasses}>Tônus Muscular MMII</label>
+                      <div className="flex flex-wrap gap-3">
+                        {['Normal', 'Hipertônico', 'Hipotônico'].map((option) => (
+                          <button
+                            key={option}
+                            type="button"
+                            onClick={() => setFormData(prev => ({ ...prev, muscle_tone_mmii: option }))}
+                            className={`px-4 py-2 rounded-xl border transition-all font-medium text-sm ${
+                              formData.muscle_tone_mmii === option 
+                              ? 'bg-blue-600 text-white border-blue-600 shadow-md' 
+                              : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
+                            }`}
+                          >
+                            {option}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
                   <div>
                     <label className={labelClasses}>Amplitude de Movimento (ADM)</label>
                     <textarea name="range_of_motion" value={formData.range_of_motion} onChange={handleInputChange} className={`${getInputClasses('range_of_motion')} h-28 resize-none`} placeholder="Goniometria, limitações funcionais..."></textarea>

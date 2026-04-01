@@ -48,8 +48,10 @@ const Evaluation = () => {
     saturation: '',
     cardiac_auscultation: '',
     pulmonary_auscultation: '',
-    auditory_alterations: '',
-    visual_alterations: '',
+    auditory_alteration: 'Não',
+    auditory_alteration_details: '',
+    visual_alteration: 'Não',
+    visual_alteration_details: '',
     gait_aid: 'Não',
     gait_aid_details: '',
     inspection_palpation: '',
@@ -223,8 +225,10 @@ const Evaluation = () => {
         saturation: '',
         cardiac_auscultation: '',
         pulmonary_auscultation: '',
-        auditory_alterations: '',
-        visual_alterations: '',
+        auditory_alteration: 'Não',
+        auditory_alteration_details: '',
+        visual_alteration: 'Não',
+        visual_alteration_details: '',
         gait_aid: 'Não',
         gait_aid_details: '',
         inspection_palpation: '',
@@ -456,17 +460,74 @@ const Evaluation = () => {
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-slate-100 pt-8">
-                  <div>
+                  {/* Alterações Auditivas */}
+                  <div className="space-y-4">
                     <label className={labelClasses}>Alterações Auditivas</label>
-                    <input name="auditory_alterations" value={formData.auditory_alterations} onChange={handleInputChange} type="text" className={getInputClasses('auditory_alterations')} placeholder="Ex: Zumbido, perda auditiva..." />
+                    <div className="flex gap-4">
+                      {['Não', 'Sim'].map((option) => (
+                        <button
+                          key={option}
+                          type="button"
+                          onClick={() => setFormData(prev => ({ ...prev, auditory_alteration: option }))}
+                          className={`px-6 py-2 rounded-xl border transition-all font-medium ${
+                            formData.auditory_alteration === option 
+                            ? 'bg-blue-600 text-white border-blue-600 shadow-md' 
+                            : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
+                          }`}
+                        >
+                          {option}
+                        </button>
+                      ))}
+                    </div>
+                    {formData.auditory_alteration === 'Sim' && (
+                      <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                        <input 
+                          name="auditory_alteration_details" 
+                          value={formData.auditory_alteration_details} 
+                          onChange={handleInputChange} 
+                          type="text" 
+                          className={getInputClasses('auditory_alteration_details')} 
+                          placeholder="Descreva as alterações auditivas..." 
+                        />
+                      </div>
+                    )}
                   </div>
-                  <div>
+
+                  {/* Alterações Visuais */}
+                  <div className="space-y-4">
                     <label className={labelClasses}>Alterações Visuais</label>
-                    <input name="visual_alterations" value={formData.visual_alterations} onChange={handleInputChange} type="text" className={getInputClasses('visual_alterations')} placeholder="Ex: Visão turva, uso de óculos..." />
+                    <div className="flex gap-4">
+                      {['Não', 'Sim'].map((option) => (
+                        <button
+                          key={option}
+                          type="button"
+                          onClick={() => setFormData(prev => ({ ...prev, visual_alteration: option }))}
+                          className={`px-6 py-2 rounded-xl border transition-all font-medium ${
+                            formData.visual_alteration === option 
+                            ? 'bg-blue-600 text-white border-blue-600 shadow-md' 
+                            : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
+                          }`}
+                        >
+                          {option}
+                        </button>
+                      ))}
+                    </div>
+                    {formData.visual_alteration === 'Sim' && (
+                      <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                        <input 
+                          name="visual_alteration_details" 
+                          value={formData.visual_alteration_details} 
+                          onChange={handleInputChange} 
+                          type="text" 
+                          className={getInputClasses('visual_alteration_details')} 
+                          placeholder="Descreva as alterações visuais..." 
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-4 border-t border-slate-100 pt-8">
                   <div>
                     <label className={labelClasses}>Dispositivo para Auxílio de Marcha</label>
                     <div className="flex gap-4">

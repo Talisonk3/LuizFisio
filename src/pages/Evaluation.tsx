@@ -760,10 +760,9 @@ const Evaluation = () => {
                             {examImages.length < 10 && (
                               <button 
                                 onClick={() => fileInputRef.current?.click()}
-                                className="aspect-square rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center p-2 text-slate-400 hover:border-blue-400 hover:text-blue-500 hover:bg-blue-50 transition-all overflow-hidden"
+                                className="aspect-square rounded-2xl border-2 border-dashed border-slate-200 flex items-center justify-center p-2 text-slate-400 hover:border-blue-400 hover:text-blue-500 hover:bg-blue-50 transition-all overflow-hidden"
                               >
-                                <Plus size={20} className="shrink-0" />
-                                <span className="text-[10px] font-bold uppercase tracking-tight leading-none">Adicionar</span>
+                                <Plus size={28} className="shrink-0" />
                               </button>
                             )}
                           </div>

@@ -39,7 +39,9 @@ const Evaluation = () => {
     doctor_phone: '',
     chief_complaint: '',
     history_present_illness: '',
+    has_medications: 'Não',
     medications: '',
+    has_surgeries: 'Não',
     previous_surgeries: '',
     pain_scale: '0',
     pain_worsening_factors: '',
@@ -191,13 +193,19 @@ const Evaluation = () => {
     try {
       const fullAddress = `${formData.address}, ${formData.address_number}`;
       
+      // Removemos os campos de controle Sim/Não antes de enviar para o banco
+      const { has_medications, has_surgeries, ...dataToSave } = formData;
+
       const { error } = await supabase
         .from('evaluations')
         .insert([{ 
-          ...formData, 
+          ...dataToSave, 
           address: fullAddress,
           birth_date: formattedBirthDate,
-          user_id: user?.id 
+          user_id: user?.id,
+          // Se marcou "Não", garantimos que o campo de texto vá vazio
+          medications: has_medications === 'Sim' ? formData.medications : '',
+          previous_surgeries: has_surgeries === 'Sim' ? formData.previous_surgeries : ''
         }]);
 
       if (error) throw error;
@@ -219,7 +227,9 @@ const Evaluation = () => {
         doctor_phone: '',
         chief_complaint: '',
         history_present_illness: '',
+        has_medications: 'Não',
         medications: '',
+        has_surgeries: 'Não',
         previous_surgeries: '',
         pain_scale: '0',
         pain_worsening_factors: '',
@@ -637,14 +647,72 @@ const Evaluation = () => {
                     <label className={labelClasses}>História da Doença Atual (HDA)</label>
                     <textarea name="history_present_illness" value={formData.history_present_illness} onChange={handleInputChange} className={`${getInputClasses('history_present_illness')} h-32 resize-none`} placeholder="Início dos sintomas, evolução, fatores de melhora/piora..."></textarea>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div>
-                      <label className={labelClasses}>Medicamentos em Uso</label>
-                      <input name="medications" value={formData.medications} onChange={handleInputChange} type="text" className={getInputClasses('medications')} placeholder="Ex: Anti-inflamatórios, analgésicos..." />
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-slate-100 pt-8">
+                    {/* Medicamentos */}
+                    <div className="space-y-4">
+                      <label className={labelClasses}>Faz uso de medicamentos?</label>
+                      <div className="flex gap-4">
+                        {['Não', 'Sim'].map((option) => (
+                          <button
+                            key={option}
+                            type="button"
+                            onClick={() => setFormData(prev => ({ ...prev, has_medications: option }))}
+                            className={`px-6 py-2 rounded-xl border transition-all font-medium ${
+                              formData.has_medications === option 
+                              ? 'bg-blue-600 text-white border-blue-600 shadow-md' 
+                              : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
+                            }`}
+                          >
+                            {option}
+                          </button>
+                        ))}
+                      </div>
+                      {formData.has_medications === 'Sim' && (
+                        <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                          <input 
+                            name="medications" 
+                            value={formData.medications} 
+                            onChange={handleInputChange} 
+                            type="text" 
+                            className={getInputClasses('medications')} 
+                            placeholder="Quais medicamentos?" 
+                          />
+                        </div>
+                      )}
                     </div>
-                    <div>
-                      <label className={labelClasses}>Cirurgias Prévias</label>
-                      <input name="previous_surgeries" value={formData.previous_surgeries} onChange={handleInputChange} type="text" className={getInputClasses('previous_surgeries')} placeholder="Ex: Artroscopia de joelho (2021)" />
+
+                    {/* Cirurgias */}
+                    <div className="space-y-4">
+                      <label className={labelClasses}>Cirurgias Prévias?</label>
+                      <div className="flex gap-4">
+                        {['Não', 'Sim'].map((option) => (
+                          <button
+                            key={option}
+                            type="button"
+                            onClick={() => setFormData(prev => ({ ...prev, has_surgeries: option }))}
+                            className={`px-6 py-2 rounded-xl border transition-all font-medium ${
+                              formData.has_surgeries === option 
+                              ? 'bg-blue-600 text-white border-blue-600 shadow-md' 
+                              : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
+                            }`}
+                          >
+                            {option}
+                          </button>
+                        ))}
+                      </div>
+                      {formData.has_surgeries === 'Sim' && (
+                        <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                          <input 
+                            name="previous_surgeries" 
+                            value={formData.previous_surgeries} 
+                            onChange={handleInputChange} 
+                            type="text" 
+                            className={getInputClasses('previous_surgeries')} 
+                            placeholder="Quais cirurgias e quando?" 
+                          />
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

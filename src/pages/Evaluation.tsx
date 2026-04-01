@@ -299,7 +299,7 @@ const Evaluation = () => {
   ];
 
   const getInputClasses = (fieldName: string) => {
-    const base = "w-full p-3 bg-slate-50 border rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all hover:border-slate-300 placeholder:text-slate-400";
+    const base = "w-full p-3 bg-slate-50 border rounded-2xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all hover:border-slate-300 placeholder:text-slate-400";
     const errorState = errors.includes(fieldName) ? "border-red-500 bg-red-50" : "border-slate-200";
     return `${base} ${errorState}`;
   };

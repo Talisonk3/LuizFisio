@@ -49,7 +49,7 @@ const Evaluation = () => {
     drinks_details: '',
     smokes: 'Não',
     smokes_details: '',
-    sedentary: 'Não',
+    sedentary: '', // Inicia vazio para não ter opção selecionada por padrão
     sedentary_details: '',
     has_medications: 'Não',
     medications: '',
@@ -257,7 +257,7 @@ const Evaluation = () => {
         drinks_details: '',
         smokes: 'Não',
         smokes_details: '',
-        sedentary: 'Não',
+        sedentary: '',
         sedentary_details: '',
         has_medications: 'Não',
         medications: '',
@@ -819,11 +819,11 @@ const Evaluation = () => {
                       )}
                     </div>
 
-                    {/* Sedentarismo */}
+                    {/* Atividade Física */}
                     <div className="space-y-4">
-                      <label className={labelClasses}>É sedentário?</label>
+                      <label className={labelClasses}>Pratica atividade física?</label>
                       <div className="flex gap-4">
-                        {['Não', 'Sim'].map((option) => (
+                        {['Sim', 'Não'].map((option) => (
                           <button
                             key={option}
                             type="button"
@@ -840,13 +840,14 @@ const Evaluation = () => {
                       </div>
                       {formData.sedentary === 'Sim' && (
                         <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                          <label className={labelClasses}>Quais atividades físicas pratica?</label>
                           <input 
                             name="sedentary_details" 
                             value={formData.sedentary_details} 
                             onChange={handleInputChange} 
                             type="text" 
                             className={getInputClasses('sedentary_details')} 
-                            placeholder="Pratica alguma atividade física? Qual?" 
+                            placeholder="Ex: Caminhada 3x por semana, musculação..." 
                           />
                         </div>
                       )}

@@ -19,7 +19,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/AuthProvider';
 import CustomSelect from '@/components/CustomSelect';
-import ConfirmationModal from '@/components/ConfirmationModal';
+import NotificationModal, { ModalType } from '@/components/NotificationModal';
 
 const Evaluation = () => {
   const navigate = useNavigate();
@@ -29,7 +29,22 @@ const Evaluation = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
   const [examImages, setExamImages] = useState<string[]>([]);
-  const [showExitModal, setShowExitModal] = useState(false);
+  
+  // Estado para a modal genérica
+  const [modalConfig, setModalConfig] = useState<{
+    isOpen: boolean;
+    type: ModalType;
+    title: string;
+    message: string;
+    onConfirm?: () => void;
+    confirmLabel?: string;
+    cancelLabel?: string;
+  }>({
+    isOpen: false,
+    type: 'info',
+    title: '',
+    message: ''
+  });
   
   const [admRows, setAdmRows] = useState([{ movement: '', degree: '' }]);
 
@@ -93,25 +108,38 @@ const Evaluation = () => {
 
   const [formData, setFormData] = useState(initialFormData);
 
+  const showAlert = (type: ModalType, title: string, message: string, onConfirm?: () => void, confirmLabel?: string, cancelLabel?: string) => {
+    setModalConfig({
+      isOpen: true,
+      type,
+      title,
+      message,
+      onConfirm,
+      confirmLabel,
+      cancelLabel
+    });
+  };
+
   const isFormDirty = () => {
-    // Verifica se algum campo do formData foi alterado (exceto a data de avaliação que já vem preenchida)
     const hasFormDataChanges = Object.keys(formData).some(key => {
       if (key === 'evaluation_date') return false;
       return formData[key as keyof typeof formData] !== initialFormData[key as keyof typeof initialFormData];
     });
-
-    // Verifica se há linhas de ADM preenchidas
     const hasAdmChanges = admRows.some(row => row.movement.trim() !== '' || row.degree.trim() !== '');
-    
-    // Verifica se há imagens
     const hasImages = examImages.length > 0;
-
     return hasFormDataChanges || hasAdmChanges || hasImages;
   };
 
   const handleGoHome = () => {
     if (isFormDirty()) {
-      setShowExitModal(true);
+      showAlert(
+        'warning', 
+        'Ficha não salva!', 
+        'Você preencheu alguns dados nesta avaliação. Se sair agora, todas as informações não salvas serão perdidas. Deseja realmente voltar ao início?',
+        () => navigate('/'),
+        'Sim, sair agora',
+        'Não, continuar'
+      );
     } else {
       navigate('/');
     }
@@ -129,17 +157,14 @@ const Evaluation = () => {
   const formatDate = (value: string) => {
     const numbers = value.replace(/\D/g, '');
     const currentYear = new Date().getFullYear();
-    
     let day = numbers.slice(0, 2);
     let month = numbers.slice(2, 4);
     let year = numbers.slice(4, 8);
-
     if (day && parseInt(day) > 31) day = '31';
     if (day && day !== '0' && day !== '00' && parseInt(day) === 0) day = '01';
     if (month && parseInt(month) > 12) month = '12';
     if (month && month !== '0' && month !== '00' && parseInt(month) === 0) month = '01';
     if (year && year.length === 4 && parseInt(year) > currentYear) year = currentYear.toString();
-
     if (numbers.length <= 2) return day;
     if (numbers.length <= 4) return `${day}/${month}`;
     return `${day}/${month}/${year}`;
@@ -215,14 +240,12 @@ const Evaluation = () => {
   const handleAdmRowChange = (index: number, field: 'movement' | 'degree', value: string) => {
     const newRows = [...admRows];
     let filteredValue = value;
-
     if (field === 'movement') {
       filteredValue = value.replace(/[^a-zA-ZÀ-ÿ\s]/g, '');
     } else if (field === 'degree') {
       const numbers = value.replace(/\D/g, '').substring(0, 3);
       filteredValue = numbers ? `${numbers}°` : '';
     }
-
     newRows[index][field] = filteredValue;
     setAdmRows(newRows);
   };
@@ -240,16 +263,14 @@ const Evaluation = () => {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (examImages.length + files.length > 10) {
-      alert('Você pode enviar no máximo 10 imagens.');
+      showAlert('warning', 'Limite de Imagens', 'Você pode enviar no máximo 10 imagens.');
       return;
     }
-
     files.forEach(file => {
       if (!file.type.startsWith('image/')) {
-        alert('Apenas arquivos de imagem são permitidos.');
+        showAlert('error', 'Arquivo Inválido', 'Apenas arquivos de imagem são permitidos.');
         return;
       }
-
       const reader = new FileReader();
       reader.onloadend = () => {
         setExamImages(prev => [...prev, reader.result as string]);
@@ -272,20 +293,16 @@ const Evaluation = () => {
       'address_number',
       'profession'
     ];
-
     if (formData.has_caregiver === 'Sim') {
       requiredFields.push('caregiver_name', 'caregiver_phone');
     }
-    
     const newErrors = requiredFields.filter(field => {
       const val = formData[field as keyof typeof formData];
       return !val || val.toString().trim() === '';
     });
-
     if (formData.birth_date.length < 10 && !newErrors.includes('birth_date')) {
       newErrors.push('birth_date');
     }
-
     setErrors(newErrors);
     return newErrors.length === 0;
   };
@@ -293,7 +310,7 @@ const Evaluation = () => {
   const handleSave = async () => {
     if (!validateIdentificacao()) {
       setActiveTab('identificacao');
-      alert('Por favor, preencha todos os campos obrigatórios corretamente.');
+      showAlert('warning', 'Campos Obrigatórios', 'Por favor, preencha todos os campos obrigatórios marcados em vermelho.');
       return;
     }
 
@@ -311,7 +328,6 @@ const Evaluation = () => {
     setIsSaving(true);
     try {
       const fullAddress = `${formData.address}, ${formData.address_number}`;
-      
       const { 
         has_medications, 
         has_surgeries, 
@@ -338,7 +354,7 @@ const Evaluation = () => {
         }]);
 
       if (error) throw error;
-      alert('Avaliação salva com sucesso!');
+      showAlert('success', 'Sucesso!', 'Avaliação salva com sucesso no banco de dados.');
       
       setFormData(initialFormData);
       setAdmRows([{ movement: '', degree: '' }]);
@@ -348,7 +364,7 @@ const Evaluation = () => {
       
     } catch (error: any) {
       console.error('Erro ao salvar:', error);
-      alert('Erro ao salvar: ' + (error.message || 'Verifique sua conexão.'));
+      showAlert('error', 'Erro ao Salvar', error.message || 'Verifique sua conexão com a internet.');
     } finally {
       setIsSaving(false);
     }
@@ -356,14 +372,12 @@ const Evaluation = () => {
 
   const handleNext = () => {
     const currentIndex = tabs.findIndex(t => t.id === activeTab);
-    
     if (activeTab === 'identificacao') {
       if (!validateIdentificacao()) {
-        alert('Por favor, preencha todos os campos obrigatórios marcados em vermelho.');
+        showAlert('warning', 'Campos Obrigatórios', 'Preencha os campos marcados em vermelho antes de prosseguir.');
         return;
       }
     }
-
     if (currentIndex < tabs.length - 1) {
       setActiveTab(tabs[currentIndex + 1].id);
     } else {
@@ -416,7 +430,7 @@ const Evaluation = () => {
               key={tab.id}
               onClick={() => {
                 if (activeTab === 'identificacao' && tab.id !== 'identificacao' && !validateIdentificacao()) {
-                  alert('Preencha os campos obrigatórios antes de mudar de aba.');
+                  showAlert('warning', 'Campos Obrigatórios', 'Preencha os campos obrigatórios antes de mudar de aba.');
                   return;
                 }
                 setActiveTab(tab.id);
@@ -1207,16 +1221,16 @@ const Evaluation = () => {
         </div>
       </main>
 
-      {/* Modal de Confirmação de Saída */}
-      <ConfirmationModal 
-        isOpen={showExitModal}
-        onClose={() => setShowExitModal(false)}
-        onConfirm={() => {
-          setShowExitModal(false);
-          navigate('/');
-        }}
-        title="Ficha não salva!"
-        message="Você preencheu alguns dados nesta avaliação. Se sair agora, todas as informações não salvas serão perdidas. Deseja realmente voltar ao início?"
+      {/* Modal de Notificação Reutilizável */}
+      <NotificationModal 
+        isOpen={modalConfig.isOpen}
+        onClose={() => setModalConfig(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={modalConfig.onConfirm}
+        type={modalConfig.type}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        confirmLabel={modalConfig.confirmLabel}
+        cancelLabel={modalConfig.cancelLabel}
       />
     </div>
   );

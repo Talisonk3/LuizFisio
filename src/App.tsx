@@ -5,14 +5,33 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Login from './pages/Login';
 import Evaluation from './pages/Evaluation';
 import Index from './pages/Index';
+import { useAuth } from './components/AuthProvider';
+
+// Componente para proteger rotas que exigem login
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const { session, loading } = useAuth();
+  
+  if (loading) return null;
+  if (!session) return <Navigate to="/login" />;
+  
+  return <>{children}</>;
+};
 
 function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Index />} />
+        <Route path="/" element={
+          <ProtectedRoute>
+            <Index />
+          </ProtectedRoute>
+        } />
         <Route path="/login" element={<Login />} />
-        <Route path="/avaliacao" element={<Evaluation />} />
+        <Route path="/avaliacao" element={
+          <ProtectedRoute>
+            <Evaluation />
+          </ProtectedRoute>
+        } />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </Router>

@@ -23,7 +23,7 @@ const Login = () => {
 
   useEffect(() => {
     if (session) {
-      navigate('/avaliacao');
+      navigate('/'); // Redireciona para o Dashboard
     }
   }, [session, navigate]);
 
@@ -63,8 +63,6 @@ const Login = () => {
         
         if (signUpError) throw signUpError;
         
-        // Se a confirmação de e-mail estiver DESATIVADA no Supabase, 
-        // o 'data.session' virá preenchido e o useEffect acima redirecionará sozinho.
         if (!data.session) {
           setError("Conta criada! Mas o seu Supabase ainda exige confirmação por e-mail. Desative 'Confirm Email' no painel do Supabase para logar direto.");
         }

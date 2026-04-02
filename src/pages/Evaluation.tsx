@@ -19,6 +19,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/AuthProvider';
+import CustomSelect from '@/components/CustomSelect';
 
 const Evaluation = () => {
   const navigate = useNavigate();
@@ -29,7 +30,6 @@ const Evaluation = () => {
   const [errors, setErrors] = useState<string[]>([]);
   const [examImages, setExamImages] = useState<string[]>([]);
   
-  // Estado para as linhas dinâmicas de ADM
   const [admRows, setAdmRows] = useState([{ movement: '', degree: '' }]);
 
   const [formData, setFormData] = useState({
@@ -176,6 +176,542 @@ const Evaluation = () => {
     }
 
     setFormData(prev => ({ ...prev, [name]: filteredValue }));
+  };
+
+  const handleSelectChange = (name: string, value: string) => {
+    if (errors.includes(name)) {
+      setErrors(prev => prev.filter(err => err !== name));
+    }
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleAdmRowChange = (index: number, field: 'movement' | 'degree', value: string) => {
+    const newRows = [...admRows];
+    let filteredValue = value;
+
+    if (field === 'movement') {
+      filteredValue = value.replace(/[^a-zA-ZÀ-ÿ\s]/g, '');
+    } else if (field === 'degree') {
+      const numbers = value.replace(/\D/g, '').substring(0, 3);
+      filteredValue = numbers ? `${numbers}°` : '';
+    }
+
+    newRows[index][field] = filteredValue;
+    setAdmRows(newRows);
+  };
+
+  const addAdmRow = () => {
+    setAdmRows([...admRows, { movement: '', degree: '' }]);
+  };
+
+  const removeAdmRow = (index: number) => {
+    if (admRows.length > 1) {
+      setAdmRows(admRows.filter((_, i) => i !== index));
+    }
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (examImages.length + files.length > 10) {
+      alert('Você pode enviar no máximo 10 imagens.');
+      return;
+    }
+
+    files.forEach(file => {
+      if (!file.type.startsWith('image/')) {
+        alert('Apenas arquivos de imagem são permitidos.');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setExamImages(prev => [...prev, reader.result as string]);
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const removeImage = (index: number) => {
+    setExamImages(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const validateIdentificacao = () => {
+    const requiredFields = [
+      'patient_name', 
+      'birth_date', 
+      'gender', 
+      'marital_status', 
+      'address', 
+      'address_number',
+      'profession'
+    ];
+
+    if (formData.has_caregiver === 'Sim') {
+      requiredFields.push('caregiver_name', 'caregiver_phone');
+    }
+    
+    const newErrors = requiredFields.filter(field => {
+      const val = formData[field as keyof typeof formData];
+      return !val || val.toString().trim() === '';
+    });
+
+    if (formData.birth_date.length < 10 && !newErrors.includes('birth_date')) {
+      newErrors.push('birth_date');
+    }
+
+    setErrors(newErrors);
+    return newErrors.length === 0;
+  };
+
+  const handleSave = async () => {
+    if (!validateIdentificacao()) {
+      setActiveTab('identificacao');
+      alert('Por favor, preencha todos os campos obrigatórios corretamente.');
+      return;
+    }
+
+    let formattedBirthDate = null;
+    const parts = formData.birth_date.split('/');
+    if (parts.length === 3) {
+      formattedBirthDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+    }
+
+    const formattedAdm = admRows
+      .filter(row => row.movement.trim() || row.degree.trim())
+      .map(row => `${row.movement}: ${row.degree}`)
+      .join('; ');
+
+    setIsSaving(true);
+    try {
+      const fullAddress = `${formData.address}, ${formData.address_number}`;
+      
+      const { 
+        has_medications, 
+        has_surgeries, 
+        has_caregiver, 
+        has_complementary_exams,
+        ...dataToSave 
+      } = formData;
+
+      const { error } = await supabase
+        .from('evaluations')
+        .insert([{ 
+          ...dataToSave, 
+          address: fullAddress,
+          birth_date: formattedBirthDate,
+          user_id: user?.id,
+          range_of_motion: formatted<dyad-write path="src/pages/Evaluation.tsx" description="Finalizando a atualização da página de avaliação com o CustomSelect e corrigindo o fechamento do arquivo.">
+"use client";
+
+import React, { useState, useRef } from 'react';
+import { 
+  User, 
+  ClipboardList, 
+  Activity, 
+  Dumbbell, 
+  Save, 
+  LogOut,
+  ChevronRight,
+  ChevronLeft,
+  Loader2,
+  Image as ImageIcon,
+  X,
+  Plus,
+  Trash2
+} from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/components/AuthProvider';
+import CustomSelect from '@/components/CustomSelect';
+
+const Evaluation = () => {
+  const navigate = useNavigate();
+  const { signOut, user } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [activeTab, setActiveTab] = useState('identificacao');
+  const [isSaving, setIsSaving] = useState(false);
+  const [errors, setErrors] = useState<string[]>([]);
+  const [examImages, setExamImages] = useState<string[]>([]);
+  
+  const [admRows, setAdmRows] = useState([{ movement: '', degree: '' }]);
+
+  const [formData, setFormData] = useState({
+    patient_name: '',
+    birth_date: '',
+    email: '',
+    phone: '',
+    address: '',
+    address_number: '',
+    marital_status: '',
+    gender: '',
+    profession: '',
+    weight: '',
+    height: '',
+    has_caregiver: 'Não',
+    caregiver_name: '',
+    caregiver_phone: '',
+    responsible_doctor: '',
+    doctor_phone: '',
+    evaluation_date: new Date().toLocaleDateString('pt-BR'),
+    chief_complaint: '',
+    history_present_illness: '',
+    previous_illness_history: '',
+    family_history: '',
+    drinks: 'Não',
+    drinks_details: '',
+    smokes: 'Não',
+    smokes_details: '',
+    sedentary: 'Não',
+    sedentary_details: '',
+    has_medications: 'Não',
+    medications: '',
+    has_surgeries: 'Não',
+    previous_surgeries: '',
+    pain_scale: '0',
+    pain_worsening_factors: '',
+    pain_improvement_factors: '',
+    blood_pressure: '',
+    heart_rate: '',
+    respiratory_rate: '',
+    temperature: '',
+    saturation: '',
+    cardiac_auscultation: '',
+    pulmonary_auscultation: '',
+    auditory_alteration: 'Não',
+    auditory_alteration_details: '',
+    visual_alteration: 'Não',
+    visual_alteration_details: '',
+    gait_aid: 'Não',
+    gait_aid_details: '',
+    inspection_palpation: '',
+    range_of_motion: '',
+    muscle_strength: '',
+    muscle_tone_mmss: 'Normal',
+    muscle_tone_mmii: 'Normal',
+    physio_diagnosis: '',
+    has_complementary_exams: 'Não',
+    complementary_exams_details: ''
+  });
+
+  const formatPhone = (value: string) => {
+    const numbers = value.replace(/\D/g, '');
+    if (numbers.length === 0) return '';
+    if (numbers.length <= 2) return `(${numbers}`;
+    if (numbers.length <= 6) return `(${numbers.slice(0, 2)}) ${numbers.slice(2)}`;
+    if (numbers.length <= 10) return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 6)}-${numbers.slice(6)}`;
+    return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7, 11)}`;
+  };
+
+  const formatDate = (value: string) => {
+    const numbers = value.replace(/\D/g, '');
+    const currentYear = new Date().getFullYear();
+    
+    let day = numbers.slice(0, 2);
+    let month = numbers.slice(2, 4);
+    let year = numbers.slice(4, 8);
+
+    if (day && parseInt(day) > 31) day = '31';
+    if (day && day !== '0' && day !== '00' && parseInt(day) === 0) day = '01';
+    if (month && parseInt(month) > 12) month = '12';
+    if (month && month !== '0' && month !== '00' && parseInt(month) === 0) month = '01';
+    if (year && year.length === 4 && parseInt(year) > currentYear) year = currentYear.toString();
+
+    if (numbers.length <= 2) return day;
+    if (numbers.length <= 4) return `${day}/${month}`;
+    return `${day}/${month}/${year}`;
+  };
+
+  const formatHeight = (value: string) => {
+    const numbers = value.replace(/\D/g, '').substring(0, 3);
+    if (numbers.length <= 1) return numbers;
+    if (numbers.length === 2) return `${numbers.slice(0, 1)}.${numbers.slice(1)}`;
+    return `${numbers.slice(0, 1)}.${numbers.slice(1, 3)}`;
+  };
+
+  const formatPA = (value: string) => {
+    const numbers = value.replace(/\D/g, '').substring(0, 5);
+    if (numbers.length <= 2) return numbers;
+    if (numbers.length === 3) return `${numbers.slice(0, 2)}/${numbers.slice(2)}`;
+    if (numbers.length === 4) return `${numbers.slice(0, 2)}/${numbers.slice(2)}`;
+    return `${numbers.slice(0, 3)}/${numbers.slice(3)}`;
+  };
+
+  const formatTemp = (value: string) => {
+    const numbers = value.replace(/\D/g, '').substring(0, 3);
+    if (numbers.length <= 2) return numbers;
+    return `${numbers.slice(0, 2)}.${numbers.slice(2)}`;
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    let filteredValue = value.trimStart();
+    
+    if (name === 'patient_name' || name === 'responsible_doctor' || name === 'caregiver_name') {
+      filteredValue = filteredValue.replace(/[^a-zA-ZÀ-ÿ\s]/g, '');
+    } else if (name === 'profession') {
+      filteredValue = filteredValue.replace(/[^a-zA-ZÀ-ÿ\s]/g, '');
+    } else if (name === 'address') {
+      filteredValue = filteredValue.replace(/[^a-zA-ZÀ-ÿ0-9\s]/g, '');
+    } else if (name === 'weight') {
+      filteredValue = filteredValue.replace(/\D/g, '').substring(0, 3);
+    } else if (name === 'height') {
+      filteredValue = formatHeight(filteredValue);
+    } else if (name === 'phone' || name === 'doctor_phone' || name === 'caregiver_phone') {
+      filteredValue = formatPhone(filteredValue);
+    } else if (name === 'birth_date' || name === 'evaluation_date') {
+      filteredValue = formatDate(filteredValue);
+    } else if (name === 'blood_pressure') {
+      filteredValue = formatPA(filteredValue);
+    } else if (name === 'heart_rate') {
+      filteredValue = filteredValue.replace(/\D/g, '').substring(0, 3);
+    } else if (name === 'respiratory_rate') {
+      filteredValue = filteredValue.replace(/\D/g, '').substring(0, 2);
+    } else if (name === 'temperature') {
+      filteredValue = formatTemp(filteredValue);
+    } else if (name === 'saturation') {
+      filteredValue = filteredValue.replace(/\D/g, '').substring(0, 3);
+    } else if (name === 'address_number') {
+      filteredValue = filteredValue.replace(/\D/g, '').substring(0, 6);
+    }
+
+    if (errors.includes(name)) {
+      setErrors(prev => prev.filter(err => err !== name));
+    }
+
+    setFormData(prev => ({ ...prev, [name]: filteredValue }));
+  };
+
+  const handleSelectChange = (name: string, value: string) => {
+    if (errors.includes(name)) {
+      setErrors(prev => prev.filter(err => err !== name));
+    }
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleAdmRowChange = (index: number, field: 'movement' | 'degree', value: string) => {
+    const newRows = [...admRows];
+    let filteredValue = value;
+
+    if (field === 'movement') {
+      filteredValue = value.replace(/[^a-zA-ZÀ-ÿ\s]/g, '');
+    } else if (field === 'degree') {
+      const numbers = value.replace(/\D/g, '').substring(0, 3);
+      filteredValue = numbers ? `${numbers}°` : '';
+    }
+
+    newRows[index][field] = filteredValue;
+    setAdmRows(newRows);
+  };
+
+  const addAdmRow = () => {
+    setAdmRows([...admRows, { movement: '', degree: '' }]);
+  };
+
+  const removeAdmRow = (index: number) => {
+    if (admRows.length > 1) {
+      setAdmRows(admRows.filter((_, i) => i !== index));
+    }
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (examImages.length + files.length > 10) {
+      alert('Você pode enviar no máximo 10 imagens.');
+      return;
+    }
+
+    files.forEach(file => {
+      if (!file.type.startsWith('image/')) {
+        alert('Apenas arquivos de imagem são permitidos.');
+        return;
+      }
+
+      const<dyad-write path="src/pages/Evaluation.tsx" description="Finalizando a implementação do CustomSelect e garantindo que o arquivo esteja completo e sem erros.">
+"use client";
+
+import React, { useState, useRef } from 'react';
+import { 
+  User, 
+  ClipboardList, 
+  Activity, 
+  Dumbbell, 
+  Save, 
+  LogOut,
+  ChevronRight,
+  ChevronLeft,
+  Loader2,
+  Image as ImageIcon,
+  X,
+  Plus,
+  Trash2
+} from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/components/AuthProvider';
+import CustomSelect from '@/components/CustomSelect';
+
+const Evaluation = () => {
+  const navigate = useNavigate();
+  const { signOut, user } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [activeTab, setActiveTab] = useState('identificacao');
+  const [isSaving, setIsSaving] = useState(false);
+  const [errors, setErrors] = useState<string[]>([]);
+  const [examImages, setExamImages] = useState<string[]>([]);
+  
+  const [admRows, setAdmRows] = useState([{ movement: '', degree: '' }]);
+
+  const [formData, setFormData] = useState({
+    patient_name: '',
+    birth_date: '',
+    email: '',
+    phone: '',
+    address: '',
+    address_number: '',
+    marital_status: '',
+    gender: '',
+    profession: '',
+    weight: '',
+    height: '',
+    has_caregiver: 'Não',
+    caregiver_name: '',
+    caregiver_phone: '',
+    responsible_doctor: '',
+    doctor_phone: '',
+    evaluation_date: new Date().toLocaleDateString('pt-BR'),
+    chief_complaint: '',
+    history_present_illness: '',
+    previous_illness_history: '',
+    family_history: '',
+    drinks: 'Não',
+    drinks_details: '',
+    smokes: 'Não',
+    smokes_details: '',
+    sedentary: 'Não',
+    sedentary_details: '',
+    has_medications: 'Não',
+    medications: '',
+    has_surgeries: 'Não',
+    previous_surgeries: '',
+    pain_scale: '0',
+    pain_worsening_factors: '',
+    pain_improvement_factors: '',
+    blood_pressure: '',
+    heart_rate: '',
+    respiratory_rate: '',
+    temperature: '',
+    saturation: '',
+    cardiac_auscultation: '',
+    pulmonary_auscultation: '',
+    auditory_alteration: 'Não',
+    auditory_alteration_details: '',
+    visual_alteration: 'Não',
+    visual_alteration_details: '',
+    gait_aid: 'Não',
+    gait_aid_details: '',
+    inspection_palpation: '',
+    range_of_motion: '',
+    muscle_strength: '',
+    muscle_tone_mmss: 'Normal',
+    muscle_tone_mmii: 'Normal',
+    physio_diagnosis: '',
+    has_complementary_exams: 'Não',
+    complementary_exams_details: ''
+  });
+
+  const formatPhone = (value: string) => {
+    const numbers = value.replace(/\D/g, '');
+    if (numbers.length === 0) return '';
+    if (numbers.length <= 2) return `(${numbers}`;
+    if (numbers.length <= 6) return `(${numbers.slice(0, 2)}) ${numbers.slice(2)}`;
+    if (numbers.length <= 10) return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 6)}-${numbers.slice(6)}`;
+    return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7, 11)}`;
+  };
+
+  const formatDate = (value: string) => {
+    const numbers = value.replace(/\D/g, '');
+    const currentYear = new Date().getFullYear();
+    
+    let day = numbers.slice(0, 2);
+    let month = numbers.slice(2, 4);
+    let year = numbers.slice(4, 8);
+
+    if (day && parseInt(day) > 31) day = '31';
+    if (day && day !== '0' && day !== '00' && parseInt(day) === 0) day = '01';
+    if (month && parseInt(month) > 12) month = '12';
+    if (month && month !== '0' && month !== '00' && parseInt(month) === 0) month = '01';
+    if (year && year.length === 4 && parseInt(year) > currentYear) year = currentYear.toString();
+
+    if (numbers.length <= 2) return day;
+    if (numbers.length <= 4) return `${day}/${month}`;
+    return `${day}/${month}/${year}`;
+  };
+
+  const formatHeight = (value: string) => {
+    const numbers = value.replace(/\D/g, '').substring(0, 3);
+    if (numbers.length <= 1) return numbers;
+    if (numbers.length === 2) return `${numbers.slice(0, 1)}.${numbers.slice(1)}`;
+    return `${numbers.slice(0, 1)}.${numbers.slice(1, 3)}`;
+  };
+
+  const formatPA = (value: string) => {
+    const numbers = value.replace(/\D/g, '').substring(0, 5);
+    if (numbers.length <= 2) return numbers;
+    if (numbers.length === 3) return `${numbers.slice(0, 2)}/${numbers.slice(2)}`;
+    if (numbers.length === 4) return `${numbers.slice(0, 2)}/${numbers.slice(2)}`;
+    return `${numbers.slice(0, 3)}/${numbers.slice(3)}`;
+  };
+
+  const formatTemp = (value: string) => {
+    const numbers = value.replace(/\D/g, '').substring(0, 3);
+    if (numbers.length <= 2) return numbers;
+    return `${numbers.slice(0, 2)}.${numbers.slice(2)}`;
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    let filteredValue = value.trimStart();
+    
+    if (name === 'patient_name' || name === 'responsible_doctor' || name === 'caregiver_name') {
+      filteredValue = filteredValue.replace(/[^a-zA-ZÀ-ÿ\s]/g, '');
+    } else if (name === 'profession') {
+      filteredValue = filteredValue.replace(/[^a-zA-ZÀ-ÿ\s]/g, '');
+    } else if (name === 'address') {
+      filteredValue = filteredValue.replace(/[^a-zA-ZÀ-ÿ0-9\s]/g, '');
+    } else if (name === 'weight') {
+      filteredValue = filteredValue.replace(/\D/g, '').substring(0, 3);
+    } else if (name === 'height') {
+      filteredValue = formatHeight(filteredValue);
+    } else if (name === 'phone' || name === 'doctor_phone' || name === 'caregiver_phone') {
+      filteredValue = formatPhone(filteredValue);
+    } else if (name === 'birth_date' || name === 'evaluation_date') {
+      filteredValue = formatDate(filteredValue);
+    } else if (name === 'blood_pressure') {
+      filteredValue = formatPA(filteredValue);
+    } else if (name === 'heart_rate') {
+      filteredValue = filteredValue.replace(/\D/g, '').substring(0, 3);
+    } else if (name === 'respiratory_rate') {
+      filteredValue = filteredValue.replace(/\D/g, '').substring(0, 2);
+    } else if (name === 'temperature') {
+      filteredValue = formatTemp(filteredValue);
+    } else if (name === 'saturation') {
+      filteredValue = filteredValue.replace(/\D/g, '').substring(0, 3);
+    } else if (name === 'address_number') {
+      filteredValue = filteredValue.replace(/\D/g, '').substring(0, 6);
+    }
+
+    if (errors.includes(name)) {
+      setErrors(prev => prev.filter(err => err !== name));
+    }
+
+    setFormData(prev => ({ ...prev, [name]: filteredValue }));
+  };
+
+  const handleSelectChange = (name: string, value: string) => {
+    if (errors.includes(name)) {
+      setErrors(prev => prev.filter(err => err !== name));
+    }
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleAdmRowChange = (index: number, field: 'movement' | 'degree', value: string) => {
@@ -493,32 +1029,30 @@ const Evaluation = () => {
                   </div>
                   <div>
                     <label className={labelClasses}>Gênero <span className="text-red-500">*</span></label>
-                    <div className="relative">
-                      <select name="gender" value={formData.gender} onChange={handleInputChange} className={getInputClasses('gender')}>
-                        <option value="">Selecione...</option>
-                        <option value="Masculino">Masculino</option>
-                        <option value="Feminino">Feminino</option>
-                        <option value="Outro">Outro</option>
-                      </select>
-                      <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-                        <ChevronRight size={18} className="rotate-90" />
-                      </div>
-                    </div>
+                    <CustomSelect 
+                      options={[
+                        { value: 'Masculino', label: 'Masculino' },
+                        { value: 'Feminino', label: 'Feminino' },
+                        { value: 'Outro', label: 'Outro' }
+                      ]}
+                      value={formData.gender}
+                      onChange={(val) => handleSelectChange('gender', val)}
+                      error={errors.includes('gender')}
+                    />
                   </div>
                   <div>
                     <label className={labelClasses}>Estado Civil <span className="text-red-500">*</span></label>
-                    <div className="relative">
-                      <select name="marital_status" value={formData.marital_status} onChange={handleInputChange} className={getInputClasses('marital_status')}>
-                        <option value="">Selecione...</option>
-                        <option value="Solteiro(a)">Solteiro(a)</option>
-                        <option value="Casado(a)">Casado(a)</option>
-                        <option value="Divorciado(a)">Divorciado(a)</option>
-                        <option value="Viúvo(a)">Viúvo(a)</option>
-                      </select>
-                      <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-                        <ChevronRight size={18} className="rotate-90" />
-                      </div>
-                    </div>
+                    <CustomSelect 
+                      options={[
+                        { value: 'Solteiro(a)', label: 'Solteiro(a)' },
+                        { value: 'Casado(a)', label: 'Casado(a)' },
+                        { value: 'Divorciado(a)', label: 'Divorciado(a)' },
+                        { value: 'Viúvo(a)', label: 'Viúvo(a)' }
+                      ]}
+                      value={formData.marital_status}
+                      onChange={(val) => handleSelectChange('marital_status', val)}
+                      error={errors.includes('marital_status')}
+                    />
                   </div>
                   <div className="md:col-span-2 grid grid-cols-4 gap-4">
                     <div className="col-span-3">

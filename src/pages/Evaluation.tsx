@@ -11,7 +11,6 @@ import {
   ChevronRight,
   ChevronLeft,
   Loader2,
-  Image as ImageIcon,
   X,
   Plus,
   Trash2
@@ -20,6 +19,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/AuthProvider';
 import CustomSelect from '@/components/CustomSelect';
+import ConfirmationModal from '@/components/ConfirmationModal';
 
 const Evaluation = () => {
   const navigate = useNavigate();
@@ -29,10 +29,11 @@ const Evaluation = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
   const [examImages, setExamImages] = useState<string[]>([]);
+  const [showExitModal, setShowExitModal] = useState(false);
   
   const [admRows, setAdmRows] = useState([{ movement: '', degree: '' }]);
 
-  const [formData, setFormData] = useState({
+  const initialFormData = {
     patient_name: '',
     birth_date: '',
     email: '',
@@ -88,7 +89,33 @@ const Evaluation = () => {
     physio_diagnosis: '',
     has_complementary_exams: 'Não',
     complementary_exams_details: ''
-  });
+  };
+
+  const [formData, setFormData] = useState(initialFormData);
+
+  const isFormDirty = () => {
+    // Verifica se algum campo do formData foi alterado (exceto a data de avaliação que já vem preenchida)
+    const hasFormDataChanges = Object.keys(formData).some(key => {
+      if (key === 'evaluation_date') return false;
+      return formData[key as keyof typeof formData] !== initialFormData[key as keyof typeof initialFormData];
+    });
+
+    // Verifica se há linhas de ADM preenchidas
+    const hasAdmChanges = admRows.some(row => row.movement.trim() !== '' || row.degree.trim() !== '');
+    
+    // Verifica se há imagens
+    const hasImages = examImages.length > 0;
+
+    return hasFormDataChanges || hasAdmChanges || hasImages;
+  };
+
+  const handleGoHome = () => {
+    if (isFormDirty()) {
+      setShowExitModal(true);
+    } else {
+      navigate('/');
+    }
+  };
 
   const formatPhone = (value: string) => {
     const numbers = value.replace(/\D/g, '');
@@ -313,63 +340,7 @@ const Evaluation = () => {
       if (error) throw error;
       alert('Avaliação salva com sucesso!');
       
-      setFormData({
-        patient_name: '',
-        birth_date: '',
-        email: '',
-        phone: '',
-        address: '',
-        address_number: '',
-        marital_status: '',
-        gender: '',
-        profession: '',
-        weight: '',
-        height: '',
-        has_caregiver: 'Não',
-        caregiver_name: '',
-        caregiver_phone: '',
-        responsible_doctor: '',
-        doctor_phone: '',
-        evaluation_date: new Date().toLocaleDateString('pt-BR'),
-        chief_complaint: '',
-        history_present_illness: '',
-        previous_illness_history: '',
-        family_history: '',
-        drinks: 'Não',
-        drinks_details: '',
-        smokes: 'Não',
-        smokes_details: '',
-        sedentary: 'Não',
-        sedentary_details: '',
-        has_medications: 'Não',
-        medications: '',
-        has_surgeries: 'Não',
-        previous_surgeries: '',
-        pain_scale: '0',
-        pain_worsening_factors: '',
-        pain_improvement_factors: '',
-        blood_pressure: '',
-        heart_rate: '',
-        respiratory_rate: '',
-        temperature: '',
-        saturation: '',
-        cardiac_auscultation: '',
-        pulmonary_auscultation: '',
-        auditory_alteration: 'Não',
-        auditory_alteration_details: '',
-        visual_alteration: 'Não',
-        visual_alteration_details: '',
-        gait_aid: 'Não',
-        gait_aid_details: '',
-        inspection_palpation: '',
-        range_of_motion: '',
-        muscle_strength: '',
-        muscle_tone_mmss: 'Normal',
-        muscle_tone_mmii: 'Normal',
-        physio_diagnosis: '',
-        has_complementary_exams: 'Não',
-        complementary_exams_details: ''
-      });
+      setFormData(initialFormData);
       setAdmRows([{ movement: '', degree: '' }]);
       setExamImages([]);
       setErrors([]);
@@ -429,7 +400,7 @@ const Evaluation = () => {
       <aside className="w-72 bg-white border-r border-slate-200 hidden lg:flex flex-col shadow-sm">
         <div className="p-8 border-b border-slate-100 flex flex-col items-center">
           <button 
-            onClick={() => navigate('/')}
+            onClick={handleGoHome}
             className="group flex flex-col items-center transition-all"
           >
             <div className="bg-white border-2 border-slate-100 p-4 rounded-[2rem] shadow-sm group-hover:shadow-md group-hover:border-blue-200 group-hover:scale-105 transition-all duration-300">
@@ -1235,6 +1206,18 @@ const Evaluation = () => {
           </div>
         </div>
       </main>
+
+      {/* Modal de Confirmação de Saída */}
+      <ConfirmationModal 
+        isOpen={showExitModal}
+        onClose={() => setShowExitModal(false)}
+        onConfirm={() => {
+          setShowExitModal(false);
+          navigate('/');
+        }}
+        title="Ficha não salva!"
+        message="Você preencheu alguns dados nesta avaliação. Se sair agora, todas as informações não salvas serão perdidas. Deseja realmente voltar ao início?"
+      />
     </div>
   );
 };

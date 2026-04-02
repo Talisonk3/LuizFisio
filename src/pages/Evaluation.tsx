@@ -236,8 +236,7 @@ const Evaluation = () => {
       'marital_status', 
       'address', 
       'address_number',
-      'profession', 
-      'phone'
+      'profession'
     ];
 
     if (formData.has_caregiver === 'Sim') {
@@ -402,7 +401,7 @@ const Evaluation = () => {
   ];
 
   const getInputClasses = (fieldName: string) => {
-    const base = "w-full p-3 bg-slate-50 border rounded-2xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all hover:border-slate-300 placeholder:text-slate-400";
+    const base = "w-full p-3 bg-slate-50 border rounded-2xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all hover:border-slate-300 placeholder:text-slate-400 appearance-none";
     const errorState = errors.includes(fieldName) ? "border-red-500 bg-red-50" : "border-slate-200";
     return `${base} ${errorState}`;
   };
@@ -494,22 +493,32 @@ const Evaluation = () => {
                   </div>
                   <div>
                     <label className={labelClasses}>Gênero <span className="text-red-500">*</span></label>
-                    <select name="gender" value={formData.gender} onChange={handleInputChange} className={getInputClasses('gender')}>
-                      <option value="">Selecione...</option>
-                      <option value="Masculino">Masculino</option>
-                      <option value="Feminino">Feminino</option>
-                      <option value="Outro">Outro</option>
-                    </select>
+                    <div className="relative">
+                      <select name="gender" value={formData.gender} onChange={handleInputChange} className={getInputClasses('gender')}>
+                        <option value="">Selecione...</option>
+                        <option value="Masculino">Masculino</option>
+                        <option value="Feminino">Feminino</option>
+                        <option value="Outro">Outro</option>
+                      </select>
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                        <ChevronRight size={18} className="rotate-90" />
+                      </div>
+                    </div>
                   </div>
                   <div>
                     <label className={labelClasses}>Estado Civil <span className="text-red-500">*</span></label>
-                    <select name="marital_status" value={formData.marital_status} onChange={handleInputChange} className={getInputClasses('marital_status')}>
-                      <option value="">Selecione...</option>
-                      <option value="Solteiro(a)">Solteiro(a)</option>
-                      <option value="Casado(a)">Casado(a)</option>
-                      <option value="Divorciado(a)">Divorciado(a)</option>
-                      <option value="Viúvo(a)">Viúvo(a)</option>
-                    </select>
+                    <div className="relative">
+                      <select name="marital_status" value={formData.marital_status} onChange={handleInputChange} className={getInputClasses('marital_status')}>
+                        <option value="">Selecione...</option>
+                        <option value="Solteiro(a)">Solteiro(a)</option>
+                        <option value="Casado(a)">Casado(a)</option>
+                        <option value="Divorciado(a)">Divorciado(a)</option>
+                        <option value="Viúvo(a)">Viúvo(a)</option>
+                      </select>
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                        <ChevronRight size={18} className="rotate-90" />
+                      </div>
+                    </div>
                   </div>
                   <div className="md:col-span-2 grid grid-cols-4 gap-4">
                     <div className="col-span-3">
@@ -526,7 +535,7 @@ const Evaluation = () => {
                     <input name="profession" value={formData.profession} onChange={handleInputChange} type="text" className={getInputClasses('profession')} placeholder="Ex: Engenheiro" />
                   </div>
                   <div>
-                    <label className={labelClasses}>Telefone de Contato <span className="text-red-500">*</span></label>
+                    <label className={labelClasses}>Telefone de Contato</label>
                     <input name="phone" value={formData.phone} onChange={handleInputChange} type="tel" className={getInputClasses('phone')} placeholder="(00) 00000-0000" maxLength={15} />
                   </div>
                   <div>

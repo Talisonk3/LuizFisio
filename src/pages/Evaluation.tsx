@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   User, 
   ClipboardList, 
@@ -15,18 +15,20 @@ import {
   Plus,
   Trash2
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/AuthProvider';
 import CustomSelect from '@/components/CustomSelect';
 import NotificationModal, { ModalType } from '@/components/NotificationModal';
 
 const Evaluation = () => {
+  const { id } = useParams();
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [activeTab, setActiveTab] = useState('identificacao');
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(!!id);
   const [errors, setErrors] = useState<string[]>([]);
   const [examImages, setExamImages] = useState<string[]>([]);
   
@@ -107,6 +109,75 @@ const Evaluation = () => {
 
   const [formData, setFormData] = useState(initialFormData);
 
+  useEffect(() => {
+    const fetchEvaluation = async () => {
+      if (!id) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('evaluations')
+          .select('*')
+          .eq('id', id)
+          .single();
+
+        if (error) throw error;
+
+        if (data) {
+          // Processar endereço (separar rua de número se possível)
+          let street = data.address || '';
+          let number = '';
+          if (street.includes(',')) {
+            const parts = street.split(',');
+            street = parts[0].trim();
+            number = parts[1].trim();
+          }
+
+          // Processar data de nascimento
+          let birthDate = '';
+          if (data.birth_date) {
+            const parts = data.birth_date.split('-');
+            birthDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+          }
+
+          // Processar ADM
+          if (data.range_of_motion) {
+            const rows = data.range_of_motion.split('; ').map((item: string) => {
+              const [movement, degree] = item.split(': ');
+              return { movement: movement || '', degree: degree || '' };
+            });
+            setAdmRows(rows.length > 0 ? rows : [{ movement: '', degree: '' }]);
+          }
+
+          setFormData({
+            ...initialFormData,
+            ...data,
+            address: street,
+            address_number: number,
+            birth_date: birthDate,
+            has_caregiver: data.caregiver_name ? 'Sim' : 'Não',
+            has_medications: data.medications ? 'Sim' : 'Não',
+            has_surgeries: data.previous_surgeries ? 'Sim' : 'Não',
+            drinks: data.drinks_details ? 'Sim' : 'Não',
+            smokes: data.smokes_details ? 'Sim' : 'Não',
+            sedentary: data.sedentary_details ? 'Sim' : 'Não',
+            auditory_alteration: data.auditory_alteration_details ? 'Sim' : 'Não',
+            visual_alteration: data.visual_alteration_details ? 'Sim' : 'Não',
+            gait_aid: data.gait_aid_details ? 'Sim' : 'Não',
+            has_complementary_exams: data.complementary_exams_details ? 'Sim' : 'Não',
+            evaluation_date: data.created_at ? new Date(data.created_at).toLocaleDateString('pt-BR') : initialFormData.evaluation_date
+          });
+        }
+      } catch (error) {
+        console.error('Erro ao carregar avaliação:', error);
+        showAlert('error', 'Erro', 'Não foi possível carregar os dados desta avaliação.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchEvaluation();
+  }, [id]);
+
   const showAlert = (type: ModalType, title: string, message: string, onConfirm?: () => void, confirmLabel?: string, cancelLabel?: string) => {
     setModalConfig({
       isOpen: true,
@@ -120,6 +191,7 @@ const Evaluation = () => {
   };
 
   const isFormDirty = () => {
+    if (id) return false; // Na edição não mostramos o alerta de dirty por enquanto para simplificar
     const hasFormDataChanges = Object.keys(formData).some(key => {
       if (key === 'evaluation_date') return false;
       return formData[key as keyof typeof formData] !== initialFormData[key as keyof typeof initialFormData];
@@ -328,7 +400,6 @@ const Evaluation = () => {
     try {
       const fullAddress = `${formData.address}, ${formData.address_number}`;
       
-      // Removemos campos que não existem no banco de dados ou que são processados separadamente
       const { 
         has_medications, 
         has_surgeries, 
@@ -342,42 +413,58 @@ const Evaluation = () => {
         auditory_alteration,
         visual_alteration,
         gait_aid,
+        id: recordId,
+        created_at,
         ...dataToSave 
       } = formData;
 
-      const { error } = await supabase
-        .from('evaluations')
-        .insert([{ 
-          ...dataToSave, 
-          address: fullAddress,
-          birth_date: formattedBirthDate,
-          user_id: user?.id,
-          range_of_motion: formattedAdm,
-          medications: has_medications === 'Sim' ? formData.medications : '',
-          previous_surgeries: has_surgeries === 'Sim' ? formData.previous_surgeries : '',
-          caregiver_name: has_caregiver === 'Sim' ? formData.caregiver_name : '',
-          caregiver_phone: has_caregiver === 'Sim' ? formData.caregiver_phone : '',
-          drinks_details: formData.drinks === 'Sim' ? formData.drinks_details : '',
-          smokes_details: formData.smokes === 'Sim' ? formData.smokes_details : '',
-          sedentary_details: formData.sedentary === 'Sim' ? formData.sedentary_details : '',
-        }]);
+      const payload = { 
+        ...dataToSave, 
+        address: fullAddress,
+        birth_date: formattedBirthDate,
+        user_id: user?.id,
+        range_of_motion: formattedAdm,
+        medications: has_medications === 'Sim' ? formData.medications : '',
+        previous_surgeries: has_surgeries === 'Sim' ? formData.previous_surgeries : '',
+        caregiver_name: has_caregiver === 'Sim' ? formData.caregiver_name : '',
+        caregiver_phone: has_caregiver === 'Sim' ? formData.caregiver_phone : '',
+        drinks_details: formData.drinks === 'Sim' ? formData.drinks_details : '',
+        smokes_details: formData.smokes === 'Sim' ? formData.smokes_details : '',
+        sedentary_details: formData.sedentary === 'Sim' ? formData.sedentary_details : '',
+      };
+
+      let error;
+      if (id) {
+        const { error: updateError } = await supabase
+          .from('evaluations')
+          .update(payload)
+          .eq('id', id);
+        error = updateError;
+      } else {
+        const { error: insertError } = await supabase
+          .from('evaluations')
+          .insert([payload]);
+        error = insertError;
+      }
 
       if (error) throw error;
       
       showAlert(
         'success', 
         'Sucesso!', 
-        'Avaliação salva com sucesso! Deseja ver sua lista de pacientes agora?',
+        id ? 'Ficha atualizada com sucesso!' : 'Avaliação salva com sucesso!',
         () => navigate('/pacientes'),
         'Ver Pacientes',
-        'Nova Avaliação'
+        id ? 'Continuar Editando' : 'Nova Avaliação'
       );
       
-      setFormData(initialFormData);
-      setAdmRows([{ movement: '', degree: '' }]);
-      setExamImages([]);
-      setErrors([]);
-      setActiveTab('identificacao');
+      if (!id) {
+        setFormData(initialFormData);
+        setAdmRows([{ movement: '', degree: '' }]);
+        setExamImages([]);
+        setErrors([]);
+        setActiveTab('identificacao');
+      }
       
     } catch (error: any) {
       console.error('Erro ao salvar:', error);
@@ -424,6 +511,17 @@ const Evaluation = () => {
     if (value <= 8) return 'bg-red-500';
     return 'bg-red-700';
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="animate-spin text-blue-600" size={48} />
+          <p className="text-slate-500 font-medium">Carregando ficha do paciente...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 flex">
@@ -478,8 +576,12 @@ const Evaluation = () => {
         <div className="max-w-4xl mx-auto">
           <header className="mb-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
-              <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">Nova Avaliação</h1>
-              <p className="text-slate-500 mt-1">Preencha os dados clínicos do seu paciente.</p>
+              <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">
+                {id ? 'Ficha do Paciente' : 'Nova Avaliação'}
+              </h1>
+              <p className="text-slate-500 mt-1">
+                {id ? `Editando dados de ${formData.patient_name}` : 'Preencha os dados clínicos do seu paciente.'}
+              </p>
             </div>
             <button 
               onClick={handleSave}
@@ -487,7 +589,7 @@ const Evaluation = () => {
               className="bg-blue-600 text-white px-8 py-3 rounded-2xl flex items-center gap-2 hover:bg-blue-700 transition-all shadow-xl shadow-blue-100 disabled:opacity-50 font-bold"
             >
               {isSaving ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
-              Salvar Ficha
+              {id ? 'Atualizar Ficha' : 'Salvar Ficha'}
             </button>
           </header>
 
@@ -1230,7 +1332,7 @@ const Evaluation = () => {
                 onClick={handleNext}
                 className="bg-slate-100 text-blue-600 font-black flex items-center gap-2 px-6 py-3 rounded-2xl hover:bg-blue-600 hover:text-white transition-all group"
               >
-                {activeTab === 'funcional' ? 'Finalizar' : 'Próximo'} 
+                {activeTab === 'funcional' ? (id ? 'Atualizar' : 'Finalizar') : 'Próximo'} 
                 <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform" />
               </button>
             </div>

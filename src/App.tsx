@@ -33,6 +33,11 @@ function App() {
             <Evaluation />
           </ProtectedRoute>
         } />
+        <Route path="/avaliacao/:id" element={
+          <ProtectedRoute>
+            <Evaluation />
+          </ProtectedRoute>
+        } />
         <Route path="/pacientes" element={
           <ProtectedRoute>
             <Patients />

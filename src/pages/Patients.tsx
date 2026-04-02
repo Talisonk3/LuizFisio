@@ -40,7 +40,7 @@ const Patients = () => {
           .from('evaluations')
           .select('id, patient_name, birth_date, phone, created_at')
           .eq('user_id', user.id)
-          .order('patient_name', { ascending: true }); // Alterado para ordem alfabética
+          .order('patient_name', { ascending: true });
 
         if (error) throw error;
         setPatients(data || []);
@@ -107,6 +107,7 @@ const Patients = () => {
             {filteredPatients.map((patient) => (
               <div 
                 key={patient.id}
+                onClick={() => navigate(`/avaliacao/${patient.id}`)}
                 className="group bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 transition-all flex items-center justify-between cursor-pointer"
               >
                 <div className="flex items-center gap-4">

@@ -428,9 +428,12 @@ const Evaluation = () => {
       {/* Sidebar */}
       <aside className="w-72 bg-white border-r border-slate-200 hidden lg:flex flex-col shadow-sm">
         <div className="p-8 border-b border-slate-100">
-          <h2 className="text-2xl font-black text-blue-600 flex items-center gap-2 tracking-tight">
-            <Activity size={28} strokeWidth={3} /> FisioSystem
-          </h2>
+          <button 
+            onClick={() => navigate('/')}
+            className="text-2xl font-black text-blue-600 flex items-center gap-2 tracking-tight hover:opacity-80 transition-opacity"
+          >
+            <Activity size={28} strokeWidth={3} /> Início
+          </button>
         </div>
         <nav className="flex-1 p-6 space-y-3">
           {tabs.map((tab) => (

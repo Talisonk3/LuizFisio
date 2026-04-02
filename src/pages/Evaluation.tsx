@@ -30,7 +30,6 @@ const Evaluation = () => {
   const [errors, setErrors] = useState<string[]>([]);
   const [examImages, setExamImages] = useState<string[]>([]);
   
-  // Estado para a modal genérica
   const [modalConfig, setModalConfig] = useState<{
     isOpen: boolean;
     type: ModalType;
@@ -354,8 +353,17 @@ const Evaluation = () => {
         }]);
 
       if (error) throw error;
-      showAlert('success', 'Sucesso!', 'Avaliação salva com sucesso no banco de dados.');
       
+      showAlert(
+        'success', 
+        'Sucesso!', 
+        'Avaliação salva com sucesso! Deseja ver sua lista de pacientes agora?',
+        () => navigate('/pacientes'),
+        'Ver Pacientes',
+        'Nova Avaliação'
+      );
+      
+      // Se o usuário escolher "Nova Avaliação" (cancelLabel), limpamos o formulário
       setFormData(initialFormData);
       setAdmRows([{ movement: '', degree: '' }]);
       setExamImages([]);

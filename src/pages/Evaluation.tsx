@@ -427,12 +427,19 @@ const Evaluation = () => {
     <div className="min-h-screen bg-slate-50 flex">
       {/* Sidebar */}
       <aside className="w-72 bg-white border-r border-slate-200 hidden lg:flex flex-col shadow-sm">
-        <div className="p-8 border-b border-slate-100">
+        <div className="p-8 border-b border-slate-100 flex flex-col items-center">
           <button 
             onClick={() => navigate('/')}
-            className="text-2xl font-black text-blue-600 flex items-center gap-2 tracking-tight hover:opacity-80 transition-opacity"
+            className="group flex flex-col items-center gap-3 transition-all"
           >
-            <Activity size={28} strokeWidth={3} /> Início
+            <div className="bg-white border-2 border-slate-100 p-4 rounded-[2rem] shadow-sm group-hover:shadow-md group-hover:border-blue-200 group-hover:scale-105 transition-all duration-300">
+              <div className="bg-blue-600 p-3 rounded-2xl text-white shadow-lg shadow-blue-100">
+                <Activity size={32} strokeWidth={3} />
+              </div>
+            </div>
+            <span className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] group-hover:text-blue-600 transition-colors">
+              Início
+            </span>
           </button>
         </div>
         <nav className="flex-1 p-6 space-y-3">

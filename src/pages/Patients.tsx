@@ -40,7 +40,7 @@ const Patients = () => {
           .from('evaluations')
           .select('id, patient_name, birth_date, phone, created_at')
           .eq('user_id', user.id)
-          .order('created_at', { ascending: false });
+          .order('patient_name', { ascending: true }); // Alterado para ordem alfabética
 
         if (error) throw error;
         setPatients(data || []);

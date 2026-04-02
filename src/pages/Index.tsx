@@ -9,9 +9,7 @@ import {
   Share2, 
   LogOut, 
   Activity, 
-  ChevronRight,
-  Calendar,
-  ClipboardCheck
+  ChevronRight
 } from 'lucide-react';
 
 const Index = () => {
@@ -103,35 +101,6 @@ const Index = () => {
               </div>
             </button>
           ))}
-        </div>
-
-        {/* Quick Stats / Info Section */}
-        <div className="mt-16 grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="bg-blue-600 rounded-[2.5rem] p-8 text-white shadow-2xl shadow-blue-200 flex items-center gap-6">
-            <div className="bg-white/20 p-4 rounded-3xl">
-              <Calendar size={40} />
-            </div>
-            <div>
-              <h4 className="text-xl font-bold">Agenda do Dia</h4>
-              <p className="text-blue-100 mt-1">Você tem 5 atendimentos programados para hoje.</p>
-              <button className="mt-4 bg-white text-blue-600 px-6 py-2 rounded-xl font-bold text-sm hover:bg-blue-50 transition-colors">
-                Ver Agenda
-              </button>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-xl shadow-slate-200/50 flex items-center gap-6">
-            <div className="bg-slate-100 text-slate-600 p-4 rounded-3xl">
-              <ClipboardCheck size={40} />
-            </div>
-            <div>
-              <h4 className="text-xl font-bold text-slate-800">Última Atividade</h4>
-              <p className="text-slate-500 mt-1">Ficha de "João Silva" salva há 15 minutos.</p>
-              <button className="mt-4 text-blue-600 font-bold text-sm hover:underline">
-                Continuar Editando
-              </button>
-            </div>
-          </div>
         </div>
       </main>
 

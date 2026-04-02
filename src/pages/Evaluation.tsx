@@ -327,11 +327,21 @@ const Evaluation = () => {
     setIsSaving(true);
     try {
       const fullAddress = `${formData.address}, ${formData.address_number}`;
+      
+      // Removemos campos que não existem no banco de dados ou que são processados separadamente
       const { 
         has_medications, 
         has_surgeries, 
         has_caregiver, 
         has_complementary_exams,
+        address_number,
+        evaluation_date,
+        drinks,
+        smokes,
+        sedentary,
+        auditory_alteration,
+        visual_alteration,
+        gait_aid,
         ...dataToSave 
       } = formData;
 
@@ -363,7 +373,6 @@ const Evaluation = () => {
         'Nova Avaliação'
       );
       
-      // Se o usuário escolher "Nova Avaliação" (cancelLabel), limpamos o formulário
       setFormData(initialFormData);
       setAdmRows([{ movement: '', degree: '' }]);
       setExamImages([]);

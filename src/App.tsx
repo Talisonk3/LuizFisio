@@ -6,6 +6,7 @@ import Login from './pages/Login';
 import Evaluation from './pages/Evaluation';
 import Index from './pages/Index';
 import Patients from './pages/Patients';
+import Share from './pages/Share';
 import { useAuth } from './components/AuthProvider';
 
 // Componente para proteger rotas que exigem login
@@ -52,6 +53,11 @@ function App() {
         <Route path="/pacientes" element={
           <ProtectedRoute>
             <Patients />
+          </ProtectedRoute>
+        } />
+        <Route path="/compartilhar" element={
+          <ProtectedRoute>
+            <Share />
           </ProtectedRoute>
         } />
         <Route path="*" element={<Navigate to="/" />} />

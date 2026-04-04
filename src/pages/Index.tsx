@@ -24,7 +24,7 @@ const Index = () => {
       color: 'bg-blue-500',
       lightColor: 'bg-blue-50',
       textColor: 'text-blue-600',
-      path: '/pacientes' // Futura implementação
+      path: '/pacientes'
     },
     {
       title: 'Criar Nova Ficha',
@@ -36,13 +36,13 @@ const Index = () => {
       path: '/avaliacao'
     },
     {
-      title: 'Partilhar Fichas',
-      description: 'Compartilhe relatórios e evoluções com outros profissionais.',
+      title: 'Compartilhar Fichas',
+      description: 'Crie acessos para visitantes ou compartilhe com outros profissionais.',
       icon: Share2,
       color: 'bg-purple-500',
       lightColor: 'bg-purple-50',
       textColor: 'text-purple-600',
-      path: '/compartilhar' // Futura implementação
+      path: '/compartilhar'
     }
   ];
 

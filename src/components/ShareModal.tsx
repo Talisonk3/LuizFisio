@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { X, UserPlus, Users, Link, Copy, Check, Lock, User, Save, Loader2 } from 'lucide-react';
+import { X, UserPlus, Users, Link, Copy, Check, Lock, User, Save, Loader2, ShieldAlert } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface ShareModalProps {
@@ -15,22 +15,36 @@ interface ShareModalProps {
 const ShareModal = ({ isOpen, onClose, patientName, evaluationId, onSuccess }: ShareModalProps) => {
   const [step, setStep] = useState<'options' | 'visitor-config'>('options');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [visitorData, setVisitorData] = useState({
     username: '',
-    password: ''
+    password: '',
+    confirmPassword: ''
   });
 
   if (!isOpen) return null;
 
   const handleSaveVisitor = async () => {
-    if (!visitorData.username || !visitorData.password) {
-      alert('Por favor, preencha o usuário e a senha.');
+    setError(null);
+
+    if (!visitorData.username || !visitorData.password || !visitorData.confirmPassword) {
+      setError('Por favor, preencha todos os campos.');
+      return;
+    }
+
+    if (visitorData.password !== visitorData.confirmPassword) {
+      setError('As senhas não coincidem.');
+      return;
+    }
+
+    if (visitorData.password.length < 4) {
+      setError('A senha deve ter pelo menos 4 caracteres.');
       return;
     }
 
     setLoading(true);
     try {
-      const { error } = await supabase
+      const { error: updateError } = await supabase
         .from('evaluations')
         .update({
           visitor_username: visitorData.username.toLowerCase().trim(),
@@ -38,15 +52,15 @@ const ShareModal = ({ isOpen, onClose, patientName, evaluationId, onSuccess }: S
         })
         .eq('id', evaluationId);
 
-      if (error) throw error;
+      if (updateError) throw updateError;
 
       onSuccess(`Credenciais de visitante para ${patientName} criadas com sucesso!`);
       onClose();
       setStep('options');
-      setVisitorData({ username: '', password: '' });
-    } catch (error) {
-      console.error('Erro ao salvar credenciais:', error);
-      alert('Erro ao salvar credenciais de visitante.');
+      setVisitorData({ username: '', password: '', confirmPassword: '' });
+    } catch (err: any) {
+      console.error('Erro ao salvar credenciais:', err);
+      setError('Erro ao salvar credenciais. Tente outro nome de usuário.');
     } finally {
       setLoading(false);
     }
@@ -57,8 +71,15 @@ const ShareModal = ({ isOpen, onClose, patientName, evaluationId, onSuccess }: S
     onClose();
   };
 
+  const handleClose = () => {
+    onClose();
+    setStep('options');
+    setError(null);
+    setVisitorData({ username: '', password: '', confirmPassword: '' });
+  };
+
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
+    <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
       <div className="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl border border-slate-100 overflow-hidden animate-in zoom-in-95 duration-300">
         <div className="p-8">
           <div className="flex justify-between items-start mb-6">
@@ -66,7 +87,7 @@ const ShareModal = ({ isOpen, onClose, patientName, evaluationId, onSuccess }: S
               {step === 'options' ? <Link size={32} /> : <Lock size={32} />}
             </div>
             <button 
-              onClick={() => { onClose(); setStep('options'); }}
+              onClick={handleClose}
               className="p-2 text-slate-400 hover:bg-slate-50 rounded-xl transition-all"
             >
               <X size={20} />
@@ -146,6 +167,26 @@ const ShareModal = ({ isOpen, onClose, patientName, evaluationId, onSuccess }: S
                     />
                   </div>
                 </div>
+                <div>
+                  <label className="text-sm font-semibold text-slate-600 mb-1 block ml-1">Confirmar Senha</label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-3 text-slate-400" size={20} />
+                    <input
+                      type="password"
+                      value={visitorData.confirmPassword}
+                      onChange={(e) => setVisitorData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                      className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all"
+                      placeholder="••••••••"
+                    />
+                  </div>
+                </div>
+
+                {error && (
+                  <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-100 rounded-xl text-red-600 text-xs font-bold">
+                    <ShieldAlert size={16} />
+                    {error}
+                  </div>
+                )}
                 
                 <button
                   onClick={handleSaveVisitor}
@@ -157,7 +198,7 @@ const ShareModal = ({ isOpen, onClose, patientName, evaluationId, onSuccess }: S
                 </button>
                 
                 <button
-                  onClick={() => setStep('options')}
+                  onClick={() => { setStep('options'); setError(null); }}
                   className="w-full text-slate-400 font-semibold hover:text-slate-600 text-sm py-2"
                 >
                   Voltar para opções
@@ -167,7 +208,7 @@ const ShareModal = ({ isOpen, onClose, patientName, evaluationId, onSuccess }: S
           )}
           
           <button
-            onClick={() => { onClose(); setStep('options'); }}
+            onClick={handleClose}
             className="w-full mt-4 bg-slate-100 text-slate-600 py-4 rounded-2xl font-bold hover:bg-slate-200 transition-all"
           >
             Cancelar

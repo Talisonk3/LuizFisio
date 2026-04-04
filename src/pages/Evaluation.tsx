@@ -632,14 +632,7 @@ const Evaluation = () => {
                 <ArrowLeft size={20} /> Voltar
               </button>
               
-              {isViewMode ? (
-                <button 
-                  onClick={() => navigate(`/avaliacao/${id}`)}
-                  className="bg-blue-600 text-white px-8 py-3 rounded-2xl flex items-center gap-2 hover:bg-blue-700 transition-all shadow-xl shadow-blue-100 font-bold"
-                >
-                  <Pencil size={20} /> Editar Ficha
-                </button>
-              ) : (
+              {!isViewMode && (
                 <button 
                   onClick={handleSave}
                   disabled={isSaving || !isFormDirty}

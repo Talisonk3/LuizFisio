@@ -114,7 +114,7 @@ const Share = () => {
             className="bg-purple-600 text-white px-8 py-4 rounded-2xl flex items-center gap-3 hover:bg-purple-700 transition-all shadow-xl shadow-purple-100 font-bold"
           >
             <Plus size={20} strokeWidth={3} />
-            Adicionar usuário para compartilhamento
+            Adicionar usuário
           </button>
         </header>
 

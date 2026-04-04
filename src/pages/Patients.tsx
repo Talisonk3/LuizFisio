@@ -104,13 +104,6 @@ const Patients = () => {
               <p className="text-slate-500">Gerencie o histórico clínico de seus atendimentos.</p>
             </div>
           </div>
-          
-          <button 
-            onClick={() => navigate('/avaliacao')}
-            className="bg-blue-600 text-white px-6 py-3 rounded-2xl flex items-center gap-2 hover:bg-blue-700 transition-all shadow-xl shadow-blue-100 font-bold"
-          >
-            <Plus size={20} /> Nova Avaliação
-          </button>
         </header>
 
         {/* Search Bar */}

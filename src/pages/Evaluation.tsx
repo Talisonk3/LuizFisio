@@ -518,7 +518,9 @@ const Evaluation = () => {
         const changes = [];
         for (const key in payload) {
           if (payload[key] !== originalData[key] && fieldLabels[key]) {
-            changes.push(`[${fieldLabels[key]}: ${payload[key] || 'Vazio'}]`);
+            const oldValue = originalData[key] || 'Vazio';
+            const newValue = payload[key] || 'Vazio';
+            changes.push(`[${fieldLabels[key]}: ${oldValue} → ${newValue}]`);
           }
         }
         actionDescription = changes.length > 0 

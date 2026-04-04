@@ -19,6 +19,8 @@ import {
   History
 } from 'lucide-react';
 import HistoryModal from '@/components/HistoryModal';
+import ShareModal from '@/components/ShareModal';
+import NotificationModal, { ModalType } from '@/components/NotificationModal';
 
 interface PatientRecord {
   id: string;
@@ -46,6 +48,28 @@ const Patients = () => {
     patientName: ''
   });
 
+  // Estado para o Modal de Compartilhamento
+  const [shareModal, setShareModal] = useState<{
+    isOpen: boolean;
+    patient: PatientRecord | null;
+  }>({
+    isOpen: false,
+    patient: null
+  });
+
+  // Estado para Alertas
+  const [alertConfig, setAlertConfig] = useState<{
+    isOpen: boolean;
+    type: ModalType;
+    title: string;
+    message: string;
+  }>({
+    isOpen: false,
+    type: 'info',
+    title: '',
+    message: ''
+  });
+
   useEffect(() => {
     const fetchPatients = async () => {
       if (!user) return;
@@ -69,10 +93,37 @@ const Patients = () => {
     fetchPatients();
   }, [user]);
 
-  const handleShare = (patient: PatientRecord) => {
-    const shareUrl = `${window.location.origin}/avaliacao/${patient.id}?mode=view`;
+  const handleOpenShare = (patient: PatientRecord) => {
+    setShareModal({
+      isOpen: true,
+      patient
+    });
+  };
+
+  const handleShareNew = () => {
+    if (!shareModal.patient) return;
+    const shareUrl = `${window.location.origin}/avaliacao/${shareModal.patient.id}?mode=view`;
     navigator.clipboard.writeText(shareUrl);
-    alert(`Link de visualização de ${patient.patient_name} copiado para a área de transferência!`);
+    
+    setShareModal({ isOpen: false, patient: null });
+    setAlertConfig({
+      isOpen: true,
+      type: 'success',
+      title: 'Link Copiado!',
+      message: `O link de visualização externa para ${shareModal.patient.patient_name} foi copiado para sua área de transferência.`
+    });
+  };
+
+  const handleShareRegistered = () => {
+    if (!shareModal.patient) return;
+    
+    setShareModal({ isOpen: false, patient: null });
+    setAlertConfig({
+      isOpen: true,
+      type: 'info',
+      title: 'Em Breve',
+      message: 'A funcionalidade de compartilhamento direto entre profissionais cadastrados está sendo finalizada e estará disponível em breve.'
+    });
   };
 
   const openHistory = (patient: PatientRecord) => {
@@ -164,7 +215,7 @@ const Patients = () => {
                     <History size={20} />
                   </button>
                   <button 
-                    onClick={() => handleShare(patient)}
+                    onClick={() => handleOpenShare(patient)}
                     className="p-3 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-xl transition-all"
                     title="Compartilhar"
                   >
@@ -208,6 +259,24 @@ const Patients = () => {
         onClose={() => setHistoryModal(prev => ({ ...prev, isOpen: false }))}
         evaluationId={historyModal.evaluationId}
         patientName={historyModal.patientName}
+      />
+
+      {/* Modal de Compartilhamento */}
+      <ShareModal 
+        isOpen={shareModal.isOpen}
+        onClose={() => setShareModal({ isOpen: false, patient: null })}
+        patientName={shareModal.patient?.patient_name || ''}
+        onShareNew={handleShareNew}
+        onShareRegistered={handleShareRegistered}
+      />
+
+      {/* Alerta de Feedback */}
+      <NotificationModal 
+        isOpen={alertConfig.isOpen}
+        onClose={() => setAlertConfig(prev => ({ ...prev, isOpen: false }))}
+        type={alertConfig.type}
+        title={alertConfig.title}
+        message={alertConfig.message}
       />
     </div>
   );

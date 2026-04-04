@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { X, Lock, User, Save, Loader2, ShieldAlert, Search, ChevronDown } from 'lucide-react';
+import { X, Lock, User, Save, Loader2, ShieldAlert } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface ShareModalProps {
@@ -13,59 +13,35 @@ interface ShareModalProps {
   userId?: string;
 }
 
-const ShareModal = ({ isOpen, onClose, patientName: initialPatientName, evaluationId: initialEvalId, onSuccess, userId }: ShareModalProps) => {
+const ShareModal = ({ isOpen, onClose, patientName, evaluationId, onSuccess }: ShareModalProps) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [patients, setPatients] = useState<{id: string, patient_name: string}[]>([]);
-  const [loadingPatients, setLoadingPatients] = useState(false);
   
   const [formData, setFormData] = useState({
-    evaluationId: initialEvalId || '',
-    patientName: initialPatientName || '',
     username: '',
     password: '',
     confirmPassword: ''
   });
 
-  // Carregar pacientes se não houver um ID inicial (fluxo de "Adicionar Usuário" na tela de Share)
-  useEffect(() => {
-    if (isOpen && !initialEvalId && userId) {
-      const fetchPatients = async () => {
-        setLoadingPatients(true);
-        const { data } = await supabase
-          .from('evaluations')
-          .select('id, patient_name')
-          .eq('user_id', userId)
-          .order('patient_name', { ascending: true });
-        
-        if (data) setPatients(data);
-        setLoadingPatients(false);
-      };
-      fetchPatients();
-    }
-  }, [isOpen, initialEvalId, userId]);
-
   // Resetar form ao abrir/fechar
   useEffect(() => {
     if (isOpen) {
       setFormData({
-        evaluationId: initialEvalId || '',
-        patientName: initialPatientName || '',
         username: '',
         password: '',
         confirmPassword: ''
       });
       setError(null);
     }
-  }, [isOpen, initialEvalId, initialPatientName]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
   const handleSave = async () => {
     setError(null);
 
-    if (!formData.evaluationId) {
-      setError('Por favor, selecione um paciente.');
+    if (!evaluationId) {
+      setError('Erro interno: ID do paciente não encontrado.');
       return;
     }
 
@@ -92,11 +68,11 @@ const ShareModal = ({ isOpen, onClose, patientName: initialPatientName, evaluati
           visitor_username: formData.username.toLowerCase().trim(),
           visitor_password: formData.password.trim()
         })
-        .eq('id', formData.evaluationId);
+        .eq('id', evaluationId);
 
       if (updateError) throw updateError;
 
-      onSuccess(`Acesso de visitante configurado com sucesso!`);
+      onSuccess(`Acesso de visitante para ${patientName} configurado com sucesso!`);
       onClose();
     } catch (err: any) {
       console.error('Erro ao salvar:', err);
@@ -123,38 +99,10 @@ const ShareModal = ({ isOpen, onClose, patientName: initialPatientName, evaluati
             Criar Acesso de Visitante
           </h3>
           <p className="text-slate-500 leading-relaxed mb-8">
-            Defina um usuário e senha para que o paciente ou outro profissional possa visualizar a ficha.
+            Defina as credenciais para <span className="font-bold text-slate-700">{patientName}</span> acessar a ficha.
           </p>
           
           <div className="space-y-4">
-            {/* Seleção de Paciente (apenas se não vier de uma ficha específica) */}
-            {!initialEvalId && (
-              <div>
-                <label className="text-sm font-semibold text-slate-600 mb-1 block ml-1">Selecionar Paciente</label>
-                <div className="relative">
-                  <User className="absolute left-3 top-3 text-slate-400" size={20} />
-                  <select
-                    value={formData.evaluationId}
-                    onChange={(e) => setFormData(prev => ({ ...prev, evaluationId: e.target.value }))}
-                    className="w-full pl-10 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all appearance-none"
-                  >
-                    <option value="">Escolha um paciente...</option>
-                    {patients.map(p => (
-                      <option key={p.id} value={p.id}>{p.patient_name}</option>
-                    ))}
-                  </select>
-                  <ChevronDown className="absolute right-3 top-3 text-slate-400 pointer-events-none" size={20} />
-                </div>
-              </div>
-            )}
-
-            {initialEvalId && (
-              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 mb-2">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Paciente Selecionado</span>
-                <span className="font-bold text-slate-700">{formData.patientName}</span>
-              </div>
-            )}
-
             <div>
               <label className="text-sm font-semibold text-slate-600 mb-1 block ml-1">Nome de Usuário</label>
               <div className="relative">
@@ -170,15 +118,15 @@ const ShareModal = ({ isOpen, onClose, patientName: initialPatientName, evaluati
             </div>
 
             <div>
-              <label className="text-sm font-semibold text-slate-600 mb-1 block ml-1">Senha</label>
+              <label className="text-sm font-semibold text-slate-600 mb-1 block ml-1">Senha (Visível)</label>
               <div className="relative">
                 <Lock className="absolute left-3 top-3 text-slate-400" size={20} />
                 <input
-                  type="password"
+                  type="text"
                   value={formData.password}
                   onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
                   className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all"
-                  placeholder="••••••••"
+                  placeholder="Defina uma senha"
                 />
               </div>
             </div>
@@ -188,11 +136,11 @@ const ShareModal = ({ isOpen, onClose, patientName: initialPatientName, evaluati
               <div className="relative">
                 <Lock className="absolute left-3 top-3 text-slate-400" size={20} />
                 <input
-                  type="password"
+                  type="text"
                   value={formData.confirmPassword}
                   onChange={(e) => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
                   className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all"
-                  placeholder="••••••••"
+                  placeholder="Repita a senha"
                 />
               </div>
             </div>

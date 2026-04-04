@@ -13,6 +13,7 @@ import {
   Settings2
 } from 'lucide-react';
 import ShareModal from '@/components/ShareModal';
+import PatientSelectorModal from '@/components/PatientSelectorModal';
 import NotificationModal, { ModalType } from '@/components/NotificationModal';
 
 interface SharedPatient {
@@ -27,6 +28,7 @@ const Share = () => {
   const [sharedPatients, setSharedPatients] = useState<SharedPatient[]>([]);
   const [loading, setLoading] = useState(true);
   
+  const [isSelectorOpen, setIsSelectorOpen] = useState(false);
   const [shareModal, setShareModal] = useState<{
     isOpen: boolean;
     patient: { id: string; patient_name: string } | null;
@@ -71,17 +73,11 @@ const Share = () => {
     fetchSharedPatients();
   }, [user]);
 
-  const handleOpenNewShare = () => {
+  const handlePatientSelect = (patient: { id: string; patient_name: string }) => {
+    setIsSelectorOpen(false);
     setShareModal({
       isOpen: true,
-      patient: null // Isso fará o modal mostrar o seletor de pacientes
-    });
-  };
-
-  const handleEditShare = (patient: SharedPatient) => {
-    setShareModal({
-      isOpen: true,
-      patient: { id: patient.id, patient_name: patient.patient_name }
+      patient
     });
   };
 
@@ -113,7 +109,7 @@ const Share = () => {
           </div>
 
           <button 
-            onClick={handleOpenNewShare}
+            onClick={() => setIsSelectorOpen(true)}
             className="bg-purple-600 text-white px-8 py-4 rounded-2xl flex items-center gap-3 hover:bg-purple-700 transition-all shadow-xl shadow-purple-100 font-bold"
           >
             <Plus size={20} strokeWidth={3} />
@@ -149,7 +145,7 @@ const Share = () => {
                   </div>
                   
                   <button 
-                    onClick={() => handleEditShare(patient)}
+                    onClick={() => handlePatientSelect(patient)}
                     className="p-3 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-xl transition-all"
                     title="Gerenciar Acesso"
                   >
@@ -172,14 +168,21 @@ const Share = () => {
         </div>
       </div>
 
-      {/* Modal de Configuração de Credenciais (Unificado) */}
+      {/* Modal de Seleção de Paciente */}
+      <PatientSelectorModal 
+        isOpen={isSelectorOpen}
+        onClose={() => setIsSelectorOpen(false)}
+        onSelect={handlePatientSelect}
+        userId={user?.id || ''}
+      />
+
+      {/* Modal de Configuração de Credenciais */}
       <ShareModal 
         isOpen={shareModal.isOpen}
         onClose={() => setShareModal({ isOpen: false, patient: null })}
-        patientName={shareModal.patient?.patient_name}
-        evaluationId={shareModal.patient?.id}
+        patientName={shareModal.patient?.patient_name || ''}
+        evaluationId={shareModal.patient?.id || ''}
         onSuccess={handleShareSuccess}
-        userId={user?.id}
       />
 
       {/* Alerta de Feedback */}

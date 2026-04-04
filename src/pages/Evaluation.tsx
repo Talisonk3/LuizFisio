@@ -23,6 +23,52 @@ import { useAuth } from '@/components/AuthProvider';
 import CustomSelect from '@/components/CustomSelect';
 import NotificationModal, { ModalType } from '@/components/NotificationModal';
 
+const fieldLabels: Record<string, string> = {
+  patient_name: 'Nome',
+  birth_date: 'Data de Nasc.',
+  email: 'E-mail',
+  phone: 'Telefone',
+  address: 'Endereço',
+  marital_status: 'Est. Civil',
+  gender: 'Gênero',
+  profession: 'Profissão',
+  weight: 'Peso',
+  height: 'Altura',
+  caregiver_name: 'Cuidador',
+  caregiver_phone: 'Tel. Cuidador',
+  responsible_doctor: 'Médico',
+  doctor_phone: 'Tel. Médico',
+  chief_complaint: 'Queixa',
+  history_present_illness: 'HDA',
+  previous_illness_history: 'HDP',
+  family_history: 'Hist. Familiar',
+  drinks_details: 'Álcool',
+  smokes_details: 'Fumo',
+  sedentary_details: 'Ativ. Física',
+  medications: 'Medicamentos',
+  previous_surgeries: 'Cirurgias',
+  pain_scale: 'Dor (EVA)',
+  pain_worsening_factors: 'Piora dor',
+  pain_improvement_factors: 'Melhora dor',
+  blood_pressure: 'PA',
+  heart_rate: 'FC',
+  respiratory_rate: 'FR',
+  temperature: 'Temp',
+  saturation: 'SatO2',
+  cardiac_auscultation: 'Ausc. Cardíaca',
+  pulmonary_auscultation: 'Ausc. Pulmonar',
+  auditory_alteration_details: 'Alt. Auditiva',
+  visual_alteration_details: 'Alt. Visual',
+  gait_aid_details: 'Aux. Marcha',
+  inspection_palpation: 'Inspeção',
+  range_of_motion: 'ADM',
+  muscle_strength: 'Força',
+  muscle_tone_mmss: 'Tônus MMSS',
+  muscle_tone_mmii: 'Tônus MMII',
+  physio_diagnosis: 'Diagnóstico',
+  complementary_exams_details: 'Exames Compl.'
+};
+
 const Evaluation = () => {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
@@ -130,6 +176,9 @@ const Evaluation = () => {
         if (error) throw error;
 
         if (data) {
+          // Guardar os dados brutos para comparação posterior
+          setOriginalData(data);
+
           let street = data.address || '';
           let number = '';
           if (street.includes(',')) {
@@ -172,7 +221,6 @@ const Evaluation = () => {
           };
 
           setFormData(loadedData);
-          setOriginalData(loadedData);
           setAdmRows(rows);
           setOriginalAdmRows(JSON.parse(JSON.stringify(rows)));
         }
@@ -189,19 +237,11 @@ const Evaluation = () => {
 
   const isFormDirty = useMemo(() => {
     if (isViewMode) return false;
-    const baseData = id ? originalData : initialFormData;
-    if (!baseData) return false;
-
-    const hasFormDataChanges = Object.keys(formData).some(key => {
-      if (key === 'evaluation_date') return false;
-      return formData[key as keyof typeof formData] !== baseData[key as keyof typeof baseData];
-    });
-
-    const hasAdmChanges = JSON.stringify(admRows) !== JSON.stringify(id ? originalAdmRows : [{ movement: '', degree: '' }]);
-    const hasImagesChanges = examImages.length !== originalImages.length;
-
-    return hasFormDataChanges || hasAdmChanges || hasImagesChanges;
-  }, [formData, admRows, examImages, originalData, originalAdmRows, originalImages, id, isViewMode]);
+    if (!id) return Object.values(formData).some(v => v !== '' && v !== 'Não' && v !== 'Normal' && v !== '0');
+    
+    // Comparação simplificada para o botão de salvar
+    return JSON.stringify(formData) !== JSON.stringify(originalData);
+  }, [formData, originalData, id, isViewMode]);
 
   const showAlert = (type: ModalType, title: string, message: string, onConfirm?: () => void, confirmLabel?: string, cancelLabel?: string) => {
     setModalConfig({
@@ -470,6 +510,22 @@ const Evaluation = () => {
         sedentary_details: formData.sedentary === 'Sim' ? formData.sedentary_details : '',
       };
 
+      // Gerar descrição das mudanças para o histórico
+      let actionDescription = '';
+      if (!id) {
+        actionDescription = 'Ficha de avaliação inicial criada.';
+      } else {
+        const changes = [];
+        for (const key in payload) {
+          if (payload[key] !== originalData[key] && fieldLabels[key]) {
+            changes.push(`[${fieldLabels[key]}: ${payload[key] || 'Vazio'}]`);
+          }
+        }
+        actionDescription = changes.length > 0 
+          ? `Campos atualizados: ${changes.join(' ')}` 
+          : 'Ficha salva sem alterações detectadas.';
+      }
+
       let error;
       let savedId = id;
       if (id) {
@@ -489,12 +545,12 @@ const Evaluation = () => {
 
       if (error) throw error;
 
-      // Registrar Histórico
+      // Registrar Histórico Detalhado
       if (savedId) {
         await supabase.from('evaluation_history').insert([{
           evaluation_id: savedId,
           user_id: user?.id,
-          action_description: id ? 'Ficha atualizada com novas informações.' : 'Ficha de avaliação criada.'
+          action_description: actionDescription
         }]);
       }
       
@@ -514,9 +570,8 @@ const Evaluation = () => {
         setErrors([]);
         setActiveTab('identificacao');
       } else {
-        setOriginalData(JSON.parse(JSON.stringify(formData)));
-        setOriginalAdmRows(JSON.parse(JSON.stringify(admRows)));
-        setOriginalImages([...examImages]);
+        // Atualizar originalData após salvar para futuras comparações
+        setOriginalData(payload);
       }
       
     } catch (error: any) {

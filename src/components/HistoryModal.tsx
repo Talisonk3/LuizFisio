@@ -78,8 +78,23 @@ const HistoryModal = ({ isOpen, onClose, evaluationId, patientName }: HistoryMod
                     <div className="w-2 h-2 bg-slate-300 rounded-full group-hover:bg-blue-500 transition-colors" />
                   </div>
                   <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 group-hover:border-blue-100 group-hover:bg-blue-50/30 transition-all">
-                    <p className="text-slate-700 font-bold text-sm mb-2">{entry.action_description}</p>
-                    <div className="flex items-center gap-4 text-[11px] text-slate-400 font-bold uppercase tracking-tight">
+                    <div className="text-slate-700 text-sm mb-2 leading-relaxed">
+                      {entry.action_description.startsWith('Campos atualizados:') ? (
+                        <>
+                          <span className="font-bold block mb-1 text-blue-600">Campos atualizados:</span>
+                          <div className="flex flex-wrap gap-1">
+                            {entry.action_description.replace('Campos atualizados: ', '').split('] [').map((change, i, arr) => (
+                              <span key={i} className="bg-white px-2 py-1 rounded-lg border border-slate-200 text-[11px] font-medium text-slate-600">
+                                {change.replace('[', '').replace(']', '')}
+                              </span>
+                            ))}
+                          </div>
+                        </>
+                      ) : (
+                        <p className="font-bold">{entry.action_description}</p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-4 text-[10px] text-slate-400 font-bold uppercase tracking-tight mt-3">
                       <span className="flex items-center gap-1"><Calendar size={12} /> {new Date(entry.created_at).toLocaleDateString('pt-BR')}</span>
                       <span className="flex items-center gap-1"><Clock size={12} /> {new Date(entry.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
                     </div>

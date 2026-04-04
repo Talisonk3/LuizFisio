@@ -766,6 +766,7 @@ const Evaluation = () => {
                       value={formData.gender}
                       onChange={(val) => handleSelectChange('gender', val)}
                       error={errors.includes('gender')}
+                      disabled={isViewMode}
                     />
                   </div>
                   <div>
@@ -780,6 +781,7 @@ const Evaluation = () => {
                       value={formData.marital_status}
                       onChange={(val) => handleSelectChange('marital_status', val)}
                       error={errors.includes('marital_status')}
+                      disabled={isViewMode}
                     />
                   </div>
                   <div className="md:col-span-2 grid grid-cols-4 gap-4">

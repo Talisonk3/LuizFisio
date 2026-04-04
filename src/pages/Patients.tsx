@@ -100,29 +100,12 @@ const Patients = () => {
     });
   };
 
-  const handleShareNew = () => {
-    if (!shareModal.patient) return;
-    const shareUrl = `${window.location.origin}/avaliacao/${shareModal.patient.id}?mode=view`;
-    navigator.clipboard.writeText(shareUrl);
-    
-    setShareModal({ isOpen: false, patient: null });
+  const handleShareSuccess = (message: string) => {
     setAlertConfig({
       isOpen: true,
       type: 'success',
-      title: 'Link Copiado!',
-      message: `O link de visualização externa para ${shareModal.patient.patient_name} foi copiado para sua área de transferência.`
-    });
-  };
-
-  const handleShareRegistered = () => {
-    if (!shareModal.patient) return;
-    
-    setShareModal({ isOpen: false, patient: null });
-    setAlertConfig({
-      isOpen: true,
-      type: 'info',
-      title: 'Em Breve',
-      message: 'A funcionalidade de compartilhamento direto entre profissionais cadastrados está sendo finalizada e estará disponível em breve.'
+      title: 'Sucesso!',
+      message: message
     });
   };
 
@@ -266,8 +249,8 @@ const Patients = () => {
         isOpen={shareModal.isOpen}
         onClose={() => setShareModal({ isOpen: false, patient: null })}
         patientName={shareModal.patient?.patient_name || ''}
-        onShareNew={handleShareNew}
-        onShareRegistered={handleShareRegistered}
+        evaluationId={shareModal.patient?.id || ''}
+        onSuccess={handleShareSuccess}
       />
 
       {/* Alerta de Feedback */}

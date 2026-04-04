@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Login from './pages/Login';
 import Evaluation from './pages/Evaluation';
 import Index from './pages/Index';
@@ -11,9 +11,20 @@ import { useAuth } from './components/AuthProvider';
 // Componente para proteger rotas que exigem login
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { session, loading } = useAuth();
+  const location = useLocation();
   
   if (loading) return null;
-  if (!session) return <Navigate to="/login" />;
+
+  // Verificar se é um acesso de visitante autorizado para esta avaliação específica
+  const visitorAccessId = sessionStorage.getItem('visitor_access');
+  const isEvaluationPath = location.pathname.startsWith('/avaliacao/');
+  const currentEvalId = location.pathname.split('/')[2];
+  
+  const isAuthorizedVisitor = visitorAccessId && isEvaluationPath && visitorAccessId === currentEvalId;
+
+  if (!session && !isAuthorizedVisitor) {
+    return <Navigate to="/login" />;
+  }
   
   return <>{children}</>;
 };

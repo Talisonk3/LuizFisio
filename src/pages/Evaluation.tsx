@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { 
   User, 
   ClipboardList, 
@@ -13,7 +13,8 @@ import {
   Loader2,
   X,
   Plus,
-  Trash2
+  Trash2,
+  ArrowLeft
 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -48,6 +49,9 @@ const Evaluation = () => {
   });
   
   const [admRows, setAdmRows] = useState([{ movement: '', degree: '' }]);
+  const [originalData, setOriginalData] = useState<any>(null);
+  const [originalAdmRows, setOriginalAdmRows] = useState<any>([]);
+  const [originalImages, setOriginalImages] = useState<string[]>([]);
 
   const initialFormData = {
     patient_name: '',
@@ -123,7 +127,6 @@ const Evaluation = () => {
         if (error) throw error;
 
         if (data) {
-          // Processar endereço (separar rua de número se possível)
           let street = data.address || '';
           let number = '';
           if (street.includes(',')) {
@@ -132,23 +135,21 @@ const Evaluation = () => {
             number = parts[1].trim();
           }
 
-          // Processar data de nascimento
           let birthDate = '';
           if (data.birth_date) {
             const parts = data.birth_date.split('-');
             birthDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
           }
 
-          // Processar ADM
+          let rows = [{ movement: '', degree: '' }];
           if (data.range_of_motion) {
-            const rows = data.range_of_motion.split('; ').map((item: string) => {
+            rows = data.range_of_motion.split('; ').map((item: string) => {
               const [movement, degree] = item.split(': ');
               return { movement: movement || '', degree: degree || '' };
             });
-            setAdmRows(rows.length > 0 ? rows : [{ movement: '', degree: '' }]);
           }
 
-          setFormData({
+          const loadedData = {
             ...initialFormData,
             ...data,
             address: street,
@@ -165,7 +166,13 @@ const Evaluation = () => {
             gait_aid: data.gait_aid_details ? 'Sim' : 'Não',
             has_complementary_exams: data.complementary_exams_details ? 'Sim' : 'Não',
             evaluation_date: data.created_at ? new Date(data.created_at).toLocaleDateString('pt-BR') : initialFormData.evaluation_date
-          });
+          };
+
+          setFormData(loadedData);
+          setOriginalData(loadedData);
+          setAdmRows(rows);
+          setOriginalAdmRows(JSON.parse(JSON.stringify(rows)));
+          // Imagens seriam carregadas aqui se estivessem no banco
         }
       } catch (error) {
         console.error('Erro ao carregar avaliação:', error);
@@ -177,6 +184,21 @@ const Evaluation = () => {
 
     fetchEvaluation();
   }, [id]);
+
+  const isFormDirty = useMemo(() => {
+    const baseData = id ? originalData : initialFormData;
+    if (!baseData) return false;
+
+    const hasFormDataChanges = Object.keys(formData).some(key => {
+      if (key === 'evaluation_date') return false;
+      return formData[key as keyof typeof formData] !== baseData[key as keyof typeof baseData];
+    });
+
+    const hasAdmChanges = JSON.stringify(admRows) !== JSON.stringify(id ? originalAdmRows : [{ movement: '', degree: '' }]);
+    const hasImagesChanges = examImages.length !== originalImages.length;
+
+    return hasFormDataChanges || hasAdmChanges || hasImagesChanges;
+  }, [formData, admRows, examImages, originalData, originalAdmRows, originalImages, id]);
 
   const showAlert = (type: ModalType, title: string, message: string, onConfirm?: () => void, confirmLabel?: string, cancelLabel?: string) => {
     setModalConfig({
@@ -190,19 +212,8 @@ const Evaluation = () => {
     });
   };
 
-  const isFormDirty = () => {
-    if (id) return false; // Na edição não mostramos o alerta de dirty por enquanto para simplificar
-    const hasFormDataChanges = Object.keys(formData).some(key => {
-      if (key === 'evaluation_date') return false;
-      return formData[key as keyof typeof formData] !== initialFormData[key as keyof typeof initialFormData];
-    });
-    const hasAdmChanges = admRows.some(row => row.movement.trim() !== '' || row.degree.trim() !== '');
-    const hasImages = examImages.length > 0;
-    return hasFormDataChanges || hasAdmChanges || hasImages;
-  };
-
   const handleGoHome = () => {
-    if (isFormDirty()) {
+    if (isFormDirty) {
       showAlert(
         'warning', 
         'Ficha não salva!', 
@@ -213,6 +224,21 @@ const Evaluation = () => {
       );
     } else {
       navigate('/');
+    }
+  };
+
+  const handleGoBack = () => {
+    if (isFormDirty) {
+      showAlert(
+        'warning', 
+        'Alterações não salvas!', 
+        'Existem alterações nesta ficha que ainda não foram salvas. Deseja realmente voltar para a lista de pacientes?',
+        () => navigate('/pacientes'),
+        'Sim, sair sem salvar',
+        'Não, continuar editando'
+      );
+    } else {
+      navigate('/pacientes');
     }
   };
 
@@ -464,6 +490,10 @@ const Evaluation = () => {
         setExamImages([]);
         setErrors([]);
         setActiveTab('identificacao');
+      } else {
+        setOriginalData(JSON.parse(JSON.stringify(formData)));
+        setOriginalAdmRows(JSON.parse(JSON.stringify(admRows)));
+        setOriginalImages([...examImages]);
       }
       
     } catch (error: any) {
@@ -583,14 +613,22 @@ const Evaluation = () => {
                 {id ? `Editando dados de ${formData.patient_name}` : 'Preencha os dados clínicos do seu paciente.'}
               </p>
             </div>
-            <button 
-              onClick={handleSave}
-              disabled={isSaving}
-              className="bg-blue-600 text-white px-8 py-3 rounded-2xl flex items-center gap-2 hover:bg-blue-700 transition-all shadow-xl shadow-blue-100 disabled:opacity-50 font-bold"
-            >
-              {isSaving ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
-              {id ? 'Atualizar Ficha' : 'Salvar Ficha'}
-            </button>
+            <div className="flex gap-3">
+              <button 
+                onClick={handleGoBack}
+                className="bg-white text-slate-600 border border-slate-200 px-6 py-3 rounded-2xl flex items-center gap-2 hover:bg-slate-50 transition-all font-bold shadow-sm"
+              >
+                <ArrowLeft size={20} /> Voltar
+              </button>
+              <button 
+                onClick={handleSave}
+                disabled={isSaving || !isFormDirty}
+                className="bg-blue-600 text-white px-8 py-3 rounded-2xl flex items-center gap-2 hover:bg-blue-700 transition-all shadow-xl shadow-blue-100 disabled:opacity-50 disabled:shadow-none font-bold"
+              >
+                {isSaving ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
+                {id ? 'Atualizar Ficha' : 'Salvar Ficha'}
+              </button>
+            </div>
           </header>
 
           <div className="bg-white rounded-[2rem] shadow-xl shadow-slate-200/50 border border-slate-100 p-8 md:p-12">

@@ -13,7 +13,6 @@ const Login = () => {
   const [isVisitor, setIsVisitor] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // Senha visível por padrão conforme solicitado
   const [showPassword, setShowPassword] = useState(true);
 
   const [formData, setFormData] = useState({
@@ -41,23 +40,25 @@ const Login = () => {
 
     try {
       if (isVisitor) {
-        // LOGIN DE VISITANTE (Geral ou Específico)
-        // 1. Tentar login como visitante geral (tabela 'visitors')
+        // 1. Tentar login como visitante geral
         const { data: generalVisitor, error: genError } = await supabase
           .from('visitors')
-          .select('id, created_by')
+          .select('id, created_by, is_active')
           .eq('username', formData.username.toLowerCase().trim())
           .eq('password', formData.password.trim())
           .maybeSingle();
 
         if (generalVisitor) {
+          if (!generalVisitor.is_active) {
+            throw new Error('Este acesso está desativado. Entre em contato com o profissional.');
+          }
           sessionStorage.setItem('visitor_access', 'general');
           sessionStorage.setItem('visitor_owner', generalVisitor.created_by);
           navigate('/pacientes');
           return;
         }
 
-        // 2. Tentar login como visitante de paciente específico (legado na tabela 'evaluations')
+        // 2. Tentar login como visitante de paciente específico (legado)
         const { data: evaluation, error: visitorError } = await supabase
           .from('evaluations')
           .select('id')
@@ -71,47 +72,34 @@ const Login = () => {
         } else {
           throw new Error('Usuário ou senha de visitante incorretos.');
         }
-      } else {
-        // LOGIN PROFISSIONAL (Apenas via Supabase Auth)
-        if (isSignUp) {
-          const { data, error: signUpError } = await supabase.auth.signUp({
-            email: formData.email.trim(),
-            password: formData.password,
-            options: {
-              data: {
-                username: formData.username.toLowerCase().trim(),
-                full_name: formData.fullName.trim()
-              }
-            }
-          });
-          if (signUpError) throw signUpError;
-          if (!data.session) setError("Conta criada! Verifique seu e-mail.");
-        } else {
-          let loginEmail = formData.username.trim();
-          
-          // Se não for e-mail, busca o e-mail associado ao username no perfil profissional
-          if (!loginEmail.includes('@')) {
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('email')
-              .eq('username', loginEmail.toLowerCase())
-              .maybeSingle();
-            
-            if (profile?.email) {
-              loginEmail = profile.email;
-            } else {
-              // Se não achar no perfil, o login vai falhar naturalmente no Supabase Auth
-              // pois visitantes não existem lá.
+      } else if (isSignUp) {
+        const { data, error: signUpError } = await supabase.auth.signUp({
+          email: formData.email.trim(),
+          password: formData.password,
+          options: {
+            data: {
+              username: formData.username.toLowerCase().trim(),
+              full_name: formData.fullName.trim()
             }
           }
-
-          const { error: signInError } = await supabase.auth.signInWithPassword({
-            email: loginEmail,
-            password: formData.password,
-          });
-
-          if (signInError) throw new Error('Usuário ou senha incorretos.');
+        });
+        if (signUpError) throw signUpError;
+        if (!data.session) setError("Conta criada! Verifique seu e-mail.");
+      } else {
+        let loginEmail = formData.username.trim();
+        if (!loginEmail.includes('@')) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('email')
+            .eq('username', loginEmail.toLowerCase())
+            .maybeSingle();
+          if (profile?.email) loginEmail = profile.email;
         }
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: loginEmail,
+          password: formData.password,
+        });
+        if (signInError) throw new Error('Usuário ou senha incorretos.');
       }
     } catch (err: any) {
       setError(err.message || 'Erro ao acessar o sistema.');
@@ -167,15 +155,7 @@ const Login = () => {
           <div>
             <label className="text-sm font-semibold text-slate-600 mb-1 block ml-1">Senha</label>
             <div className="relative">
-              <input 
-                name="password" 
-                type={showPassword ? "text" : "password"} 
-                required 
-                value={formData.password} 
-                onChange={handleInputChange} 
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none" 
-                placeholder="••••••••" 
-              />
+              <input name="password" type={showPassword ? "text" : "password"} required value={formData.password} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none" placeholder="••••••••" />
               <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-3 text-slate-400">
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>

@@ -15,8 +15,10 @@ import {
   Loader2,
   Plus,
   Pencil,
-  Share2
+  Share2,
+  History
 } from 'lucide-react';
+import HistoryModal from '@/components/HistoryModal';
 
 interface PatientRecord {
   id: string;
@@ -32,6 +34,17 @@ const Patients = () => {
   const [patients, setPatients] = useState<PatientRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // Estado para o Modal de Histórico
+  const [historyModal, setHistoryModal] = useState<{
+    isOpen: boolean;
+    evaluationId: string;
+    patientName: string;
+  }>({
+    isOpen: false,
+    evaluationId: '',
+    patientName: ''
+  });
 
   useEffect(() => {
     const fetchPatients = async () => {
@@ -60,6 +73,14 @@ const Patients = () => {
     const shareUrl = `${window.location.origin}/avaliacao/${patient.id}?mode=view`;
     navigator.clipboard.writeText(shareUrl);
     alert(`Link de visualização de ${patient.patient_name} copiado para a área de transferência!`);
+  };
+
+  const openHistory = (patient: PatientRecord) => {
+    setHistoryModal({
+      isOpen: true,
+      evaluationId: patient.id,
+      patientName: patient.patient_name
+    });
   };
 
   const filteredPatients = patients.filter(p => 
@@ -143,6 +164,13 @@ const Patients = () => {
                 
                 <div className="flex items-center gap-2 ml-4">
                   <button 
+                    onClick={() => openHistory(patient)}
+                    className="p-3 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
+                    title="Ver Histórico"
+                  >
+                    <History size={20} />
+                  </button>
+                  <button 
                     onClick={() => handleShare(patient)}
                     className="p-3 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-xl transition-all"
                     title="Compartilhar"
@@ -180,6 +208,14 @@ const Patients = () => {
           </div>
         )}
       </div>
+
+      {/* Modal de Histórico */}
+      <HistoryModal 
+        isOpen={historyModal.isOpen}
+        onClose={() => setHistoryModal(prev => ({ ...prev, isOpen: false }))}
+        evaluationId={historyModal.evaluationId}
+        patientName={historyModal.patientName}
+      />
     </div>
   );
 };

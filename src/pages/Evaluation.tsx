@@ -471,6 +471,7 @@ const Evaluation = () => {
       };
 
       let error;
+      let savedId = id;
       if (id) {
         const { error: updateError } = await supabase
           .from('evaluations')
@@ -478,13 +479,24 @@ const Evaluation = () => {
           .eq('id', id);
         error = updateError;
       } else {
-        const { error: insertError } = await supabase
+        const { data: insertData, error: insertError } = await supabase
           .from('evaluations')
-          .insert([payload]);
+          .insert([payload])
+          .select();
         error = insertError;
+        if (insertData) savedId = insertData[0].id;
       }
 
       if (error) throw error;
+
+      // Registrar Histórico
+      if (savedId) {
+        await supabase.from('evaluation_history').insert([{
+          evaluation_id: savedId,
+          user_id: user?.id,
+          action_description: id ? 'Ficha atualizada com novas informações.' : 'Ficha de avaliação criada.'
+        }]);
+      }
       
       showAlert(
         'success', 

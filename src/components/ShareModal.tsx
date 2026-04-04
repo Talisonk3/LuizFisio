@@ -7,13 +7,11 @@ import { supabase } from '@/integrations/supabase/client';
 interface ShareModalProps {
   isOpen: boolean;
   onClose: () => void;
-  patientName?: string;
-  evaluationId?: string;
   onSuccess: (message: string) => void;
   userId?: string;
 }
 
-const ShareModal = ({ isOpen, onClose, patientName, evaluationId, onSuccess }: ShareModalProps) => {
+const ShareModal = ({ isOpen, onClose, onSuccess, userId }: ShareModalProps) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
@@ -23,14 +21,9 @@ const ShareModal = ({ isOpen, onClose, patientName, evaluationId, onSuccess }: S
     confirmPassword: ''
   });
 
-  // Resetar form ao abrir/fechar
   useEffect(() => {
     if (isOpen) {
-      setFormData({
-        username: '',
-        password: '',
-        confirmPassword: ''
-      });
+      setFormData({ username: '', password: '', confirmPassword: '' });
       setError(null);
     }
   }, [isOpen]);
@@ -39,11 +32,6 @@ const ShareModal = ({ isOpen, onClose, patientName, evaluationId, onSuccess }: S
 
   const handleSave = async () => {
     setError(null);
-
-    if (!evaluationId) {
-      setError('Erro interno: ID do paciente não encontrado.');
-      return;
-    }
 
     if (!formData.username || !formData.password || !formData.confirmPassword) {
       setError('Por favor, preencha todos os campos.');
@@ -62,21 +50,26 @@ const ShareModal = ({ isOpen, onClose, patientName, evaluationId, onSuccess }: S
 
     setLoading(true);
     try {
-      const { error: updateError } = await supabase
-        .from('evaluations')
-        .update({
-          visitor_username: formData.username.toLowerCase().trim(),
-          visitor_password: formData.password.trim()
-        })
-        .eq('id', evaluationId);
+      const { error: insertError } = await supabase
+        .from('visitors')
+        .insert([{
+          username: formData.username.toLowerCase().trim(),
+          password: formData.password.trim(),
+          created_by: userId
+        }]);
 
-      if (updateError) throw updateError;
+      if (insertError) {
+        if (insertError.message.includes('unique constraint')) {
+          throw new Error('Este nome de usuário já está em uso.');
+        }
+        throw insertError;
+      }
 
-      onSuccess(`Acesso de visitante para ${patientName} configurado com sucesso!`);
+      onSuccess(`Usuário "${formData.username}" criado com sucesso!`);
       onClose();
     } catch (err: any) {
-      console.error('Erro ao salvar:', err);
-      setError('Erro ao salvar credenciais. Tente outro nome de usuário.');
+      console.error('Erro ao criar usuário:', err);
+      setError(err.message || 'Erro ao salvar usuário.');
     } finally {
       setLoading(false);
     }
@@ -88,7 +81,7 @@ const ShareModal = ({ isOpen, onClose, patientName, evaluationId, onSuccess }: S
         <div className="p-8">
           <div className="flex justify-between items-start mb-6">
             <div className="bg-purple-50 p-4 rounded-2xl text-purple-600">
-              <Lock size={32} />
+              <User size={32} />
             </div>
             <button onClick={onClose} className="p-2 text-slate-400 hover:bg-slate-50 rounded-xl transition-all">
               <X size={20} />
@@ -96,10 +89,10 @@ const ShareModal = ({ isOpen, onClose, patientName, evaluationId, onSuccess }: S
           </div>
           
           <h3 className="text-2xl font-extrabold text-slate-800 mb-2 tracking-tight">
-            Criar Acesso de Visitante
+            Adicionar Novo Usuário
           </h3>
           <p className="text-slate-500 leading-relaxed mb-8">
-            Defina as credenciais para <span className="font-bold text-slate-700">{patientName}</span> acessar a ficha.
+            Crie um acesso de visitante para que outra pessoa possa visualizar o sistema.
           </p>
           
           <div className="space-y-4">
@@ -112,7 +105,7 @@ const ShareModal = ({ isOpen, onClose, patientName, evaluationId, onSuccess }: S
                   value={formData.username}
                   onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value }))}
                   className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all"
-                  placeholder="Ex: paciente_joao"
+                  placeholder="Ex: assistente_clinica"
                 />
               </div>
             </div>
@@ -158,7 +151,7 @@ const ShareModal = ({ isOpen, onClose, patientName, evaluationId, onSuccess }: S
               className="w-full bg-purple-600 text-white py-4 rounded-xl font-bold shadow-lg shadow-purple-100 hover:bg-purple-700 transition-all flex items-center justify-center gap-2"
             >
               {loading ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
-              Criar Acesso
+              Criar Usuário
             </button>
             
             <button

@@ -10,32 +10,24 @@ import {
   Loader2,
   ShieldCheck,
   Plus,
-  Settings2
+  Trash2,
+  User
 } from 'lucide-react';
 import ShareModal from '@/components/ShareModal';
-import PatientSelectorModal from '@/components/PatientSelectorModal';
 import NotificationModal, { ModalType } from '@/components/NotificationModal';
 
-interface SharedPatient {
+interface Visitor {
   id: string;
-  patient_name: string;
-  visitor_username: string;
+  username: string;
+  created_at: string;
 }
 
 const Share = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [sharedPatients, setSharedPatients] = useState<SharedPatient[]>([]);
+  const [visitors, setVisitors] = useState<Visitor[]>([]);
   const [loading, setLoading] = useState(true);
-  
-  const [isSelectorOpen, setIsSelectorOpen] = useState(false);
-  const [shareModal, setShareModal] = useState<{
-    isOpen: boolean;
-    patient: { id: string; patient_name: string } | null;
-  }>({
-    isOpen: false,
-    patient: null
-  });
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const [alertConfig, setAlertConfig] = useState<{
     isOpen: boolean;
@@ -49,46 +41,53 @@ const Share = () => {
     message: ''
   });
 
-  const fetchSharedPatients = async () => {
+  const fetchVisitors = async () => {
     if (!user) return;
     setLoading(true);
     try {
       const { data, error } = await supabase
-        .from('evaluations')
-        .select('id, patient_name, visitor_username')
-        .eq('user_id', user.id)
-        .not('visitor_username', 'is', null)
-        .order('patient_name', { ascending: true });
+        .from('visitors')
+        .select('id, username, created_at')
+        .eq('created_by', user.id)
+        .order('username', { ascending: true });
 
       if (error) throw error;
-      setSharedPatients(data || []);
+      setVisitors(data || []);
     } catch (error) {
-      console.error('Erro ao buscar compartilhamentos:', error);
+      console.error('Erro ao buscar visitantes:', error);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchSharedPatients();
+    fetchVisitors();
   }, [user]);
 
-  const handlePatientSelect = (patient: { id: string; patient_name: string }) => {
-    setIsSelectorOpen(false);
-    setShareModal({
-      isOpen: true,
-      patient
-    });
+  const handleDeleteVisitor = async (id: string) => {
+    try {
+      const { error } = await supabase.from('visitors').delete().eq('id', id);
+      if (error) throw error;
+      setVisitors(prev => prev.filter(v => v.id !== id));
+      setAlertConfig({
+        isOpen: true,
+        type: 'success',
+        title: 'Removido',
+        message: 'Usuário removido com sucesso.'
+      });
+    } catch (error) {
+      console.error('Erro ao deletar:', error);
+    }
   };
 
-  const handleShareSuccess = (message: string) => {
+  const handleSuccess = (message: string) => {
     setAlertConfig({
       isOpen: true,
       type: 'success',
-      title: 'Acesso Configurado!',
-      message: message
+      title: 'Sucesso!',
+      message
     });
-    fetchSharedPatients();
+    fetchVisitors();
   };
 
   return (
@@ -103,13 +102,13 @@ const Share = () => {
               <ArrowLeft size={20} />
             </button>
             <div>
-              <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">Compartilhar Fichas</h1>
-              <p className="text-slate-500">Gerencie os acessos externos às avaliações.</p>
+              <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">Gerenciar Usuários</h1>
+              <p className="text-slate-500">Crie acessos de visitantes independentes de pacientes.</p>
             </div>
           </div>
 
           <button 
-            onClick={() => setIsSelectorOpen(true)}
+            onClick={() => setIsModalOpen(true)}
             className="bg-purple-600 text-white px-8 py-4 rounded-2xl flex items-center gap-3 hover:bg-purple-700 transition-all shadow-xl shadow-purple-100 font-bold"
           >
             <Plus size={20} strokeWidth={3} />
@@ -118,38 +117,38 @@ const Share = () => {
         </header>
 
         <div className="space-y-6">
-          <h2 className="text-sm font-black text-slate-400 uppercase tracking-widest ml-2">Acessos Ativos</h2>
+          <h2 className="text-sm font-black text-slate-400 uppercase tracking-widest ml-2">Usuários Ativos</h2>
           
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20 text-slate-400">
               <Loader2 className="animate-spin mb-4" size={40} />
-              <p className="font-medium">Carregando acessos...</p>
+              <p className="font-medium">Carregando usuários...</p>
             </div>
-          ) : sharedPatients.length > 0 ? (
+          ) : visitors.length > 0 ? (
             <div className="grid grid-cols-1 gap-4">
-              {sharedPatients.map((patient) => (
+              {visitors.map((visitor) => (
                 <div 
-                  key={patient.id}
+                  key={visitor.id}
                   className="group bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-md transition-all flex items-center justify-between"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="bg-emerald-50 text-emerald-600 p-4 rounded-2xl">
+                    <div className="bg-purple-50 text-purple-600 p-4 rounded-2xl">
                       <ShieldCheck size={24} />
                     </div>
                     <div>
-                      <h3 className="font-bold text-slate-800 text-lg">{patient.patient_name}</h3>
+                      <h3 className="font-bold text-slate-800 text-lg">{visitor.username}</h3>
                       <p className="text-xs text-slate-400 font-medium mt-1">
-                        Usuário: <span className="text-slate-600 font-bold">{patient.visitor_username}</span>
+                        Criado em: {new Date(visitor.created_at).toLocaleDateString('pt-BR')}
                       </p>
                     </div>
                   </div>
                   
                   <button 
-                    onClick={() => handlePatientSelect(patient)}
-                    className="p-3 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-xl transition-all"
-                    title="Gerenciar Acesso"
+                    onClick={() => handleDeleteVisitor(visitor.id)}
+                    className="p-3 text-slate-300 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
+                    title="Remover Usuário"
                   >
-                    <Settings2 size={22} />
+                    <Trash2 size={22} />
                   </button>
                 </div>
               ))}
@@ -157,35 +156,24 @@ const Share = () => {
           ) : (
             <div className="bg-white rounded-[2.5rem] p-16 text-center border border-dashed border-slate-200">
               <div className="bg-slate-50 w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6 text-slate-300">
-                <Share2 size={40} />
+                <User size={40} />
               </div>
-              <h3 className="text-xl font-bold text-slate-800 mb-2">Nenhum acesso configurado</h3>
+              <h3 className="text-xl font-bold text-slate-800 mb-2">Nenhum usuário criado</h3>
               <p className="text-slate-500 mb-8 max-w-xs mx-auto">
-                Clique no botão acima para criar o primeiro acesso de visitante para um de seus pacientes.
+                Clique no botão acima para criar o primeiro acesso de visitante geral.
               </p>
             </div>
           )}
         </div>
       </div>
 
-      {/* Modal de Seleção de Paciente */}
-      <PatientSelectorModal 
-        isOpen={isSelectorOpen}
-        onClose={() => setIsSelectorOpen(false)}
-        onSelect={handlePatientSelect}
-        userId={user?.id || ''}
-      />
-
-      {/* Modal de Configuração de Credenciais */}
       <ShareModal 
-        isOpen={shareModal.isOpen}
-        onClose={() => setShareModal({ isOpen: false, patient: null })}
-        patientName={shareModal.patient?.patient_name || ''}
-        evaluationId={shareModal.patient?.id || ''}
-        onSuccess={handleShareSuccess}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSuccess={handleSuccess}
+        userId={user?.id}
       />
 
-      {/* Alerta de Feedback */}
       <NotificationModal 
         isOpen={alertConfig.isOpen}
         onClose={() => setAlertConfig(prev => ({ ...prev, isOpen: false }))}

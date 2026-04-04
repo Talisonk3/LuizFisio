@@ -9,22 +9,30 @@ import Patients from './pages/Patients';
 import Share from './pages/Share';
 import { useAuth } from './components/AuthProvider';
 
-// Componente para proteger rotas que exigem login
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { session, loading } = useAuth();
   const location = useLocation();
   
   if (loading) return null;
 
-  // Verificar se é um acesso de visitante autorizado para esta avaliação específica
-  const visitorAccessId = sessionStorage.getItem('visitor_access');
+  const visitorAccess = sessionStorage.getItem('visitor_access');
   const isEvaluationPath = location.pathname.startsWith('/avaliacao/');
-  const currentEvalId = location.pathname.split('/')[2];
+  const isPatientsPath = location.pathname === '/pacientes';
   
-  const isAuthorizedVisitor = visitorAccessId && isEvaluationPath && visitorAccessId === currentEvalId;
+  // Acesso de visitante geral (pode ver a lista de pacientes do dono)
+  const isGeneralVisitor = visitorAccess === 'general';
+  
+  // Acesso de visitante específico (só vê uma avaliação)
+  const currentEvalId = location.pathname.split('/')[2];
+  const isSpecificVisitor = visitorAccess && isEvaluationPath && visitorAccess === currentEvalId;
 
-  if (!session && !isAuthorizedVisitor) {
+  if (!session && !isGeneralVisitor && !isSpecificVisitor) {
     return <Navigate to="/login" />;
+  }
+
+  // Visitantes gerais não podem acessar a Home ou Share, apenas a lista de pacientes
+  if (isGeneralVisitor && (location.pathname === '/' || location.pathname === '/compartilhar')) {
+    return <Navigate to="/pacientes" />;
   }
   
   return <>{children}</>;
@@ -34,32 +42,12 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={
-          <ProtectedRoute>
-            <Index />
-          </ProtectedRoute>
-        } />
+        <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
         <Route path="/login" element={<Login />} />
-        <Route path="/avaliacao" element={
-          <ProtectedRoute>
-            <Evaluation />
-          </ProtectedRoute>
-        } />
-        <Route path="/avaliacao/:id" element={
-          <ProtectedRoute>
-            <Evaluation />
-          </ProtectedRoute>
-        } />
-        <Route path="/pacientes" element={
-          <ProtectedRoute>
-            <Patients />
-          </ProtectedRoute>
-        } />
-        <Route path="/compartilhar" element={
-          <ProtectedRoute>
-            <Share />
-          </ProtectedRoute>
-        } />
+        <Route path="/avaliacao" element={<ProtectedRoute><Evaluation /></ProtectedRoute>} />
+        <Route path="/avaliacao/:id" element={<ProtectedRoute><Evaluation /></ProtectedRoute>} />
+        <Route path="/pacientes" element={<ProtectedRoute><Patients /></ProtectedRoute>} />
+        <Route path="/compartilhar" element={<ProtectedRoute><Share /></ProtectedRoute>} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </Router>

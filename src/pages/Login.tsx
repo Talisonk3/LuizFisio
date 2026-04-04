@@ -24,24 +24,13 @@ const Login = () => {
 
   useEffect(() => {
     if (session) {
-      navigate('/'); // Redireciona para o Dashboard
+      navigate('/');
     }
   }, [session, navigate]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    
-    if (name === 'password') {
-      setFormData(prev => ({ ...prev, [name]: value }));
-      return;
-    }
-
-    let filteredValue = value.trimStart();
-    if (name === 'fullName') {
-      filteredValue = filteredValue.replace(/[^a-zA-ZÀ-ÿ\s]/g, '');
-    }
-    
-    setFormData(prev => ({ ...prev, [name]: filteredValue }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleAuth = async (e: React.FormEvent) => {
@@ -51,7 +40,22 @@ const Login = () => {
 
     try {
       if (isVisitor) {
-        // Lógica de Login de Visitante
+        // 1. Tentar login como visitante geral (nova tabela)
+        const { data: generalVisitor, error: genError } = await supabase
+          .from('visitors')
+          .select('id, created_by')
+          .eq('username', formData.username.toLowerCase().trim())
+          .eq('password', formData.password.trim())
+          .maybeSingle();
+
+        if (generalVisitor) {
+          sessionStorage.setItem('visitor_access', 'general');
+          sessionStorage.setItem('visitor_owner', generalVisitor.created_by);
+          navigate('/pacientes');
+          return;
+        }
+
+        // 2. Tentar login como visitante de paciente específico (legado)
         const { data: evaluation, error: visitorError } = await supabase
           .from('evaluations')
           .select('id')
@@ -59,10 +63,7 @@ const Login = () => {
           .eq('visitor_password', formData.password.trim())
           .maybeSingle();
 
-        if (visitorError) throw visitorError;
-
         if (evaluation) {
-          // Armazenar token temporário de visitante no sessionStorage para o ProtectedRoute
           sessionStorage.setItem('visitor_access', evaluation.id);
           navigate(`/avaliacao/${evaluation.id}?mode=view`);
         } else {
@@ -79,38 +80,23 @@ const Login = () => {
             }
           }
         });
-        
         if (signUpError) throw signUpError;
-        
-        if (!data.session) {
-          setError("Conta criada! Mas o seu Supabase ainda exige confirmação por e-mail. Desative 'Confirm Email' no painel do Supabase para logar direto.");
-        }
+        if (!data.session) setError("Conta criada! Verifique seu e-mail.");
       } else {
         let loginEmail = formData.username.trim();
-
         if (!loginEmail.includes('@')) {
           const { data: profile } = await supabase
             .from('profiles')
             .select('email')
             .eq('username', loginEmail.toLowerCase())
             .maybeSingle();
-
-          if (profile?.email) {
-            loginEmail = profile.email;
-          }
+          if (profile?.email) loginEmail = profile.email;
         }
-
         const { error: signInError } = await supabase.auth.signInWithPassword({
           email: loginEmail,
           password: formData.password,
         });
-
-        if (signInError) {
-          if (signInError.message.includes('Email not confirmed')) {
-            throw new Error('E-mail não confirmado. Desative a exigência de confirmação no painel do Supabase.');
-          }
-          throw new Error('Usuário ou senha incorretos.');
-        }
+        if (signInError) throw new Error('Usuário ou senha incorretos.');
       }
     } catch (err: any) {
       setError(err.message || 'Erro ao acessar o sistema.');
@@ -123,14 +109,12 @@ const Login = () => {
     setIsSignUp(!isSignUp);
     setIsVisitor(false);
     setError(null);
-    setFormData({ username: '', email: '', password: '', fullName: '' });
   };
 
   const toggleVisitorMode = () => {
     setIsVisitor(!isVisitor);
     setIsSignUp(false);
     setError(null);
-    setFormData({ username: '', email: '', password: '', fullName: '' });
   };
 
   return (
@@ -142,7 +126,7 @@ const Login = () => {
           </div>
           <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">FisioSystem</h1>
           <p className="text-slate-500 text-center mt-2">
-            {isVisitor ? 'Acesso de Visitante' : (isSignUp ? 'Crie sua conta de profissional' : 'Acesse sua plataforma de avaliação')}
+            {isVisitor ? 'Acesso de Visitante' : (isSignUp ? 'Crie sua conta' : 'Acesse sua plataforma')}
           </p>
         </div>
 
@@ -151,111 +135,42 @@ const Login = () => {
             <>
               <div>
                 <label className="text-sm font-semibold text-slate-600 mb-1 block ml-1">Nome Completo</label>
-                <div className="relative">
-                  <User className="absolute left-3 top-3 text-slate-400" size={20} />
-                  <input
-                    name="fullName"
-                    type="text"
-                    required
-                    value={formData.fullName}
-                    onChange={handleInputChange}
-                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
-                    placeholder="Seu nome completo"
-                  />
-                </div>
+                <input name="fullName" type="text" required value={formData.fullName} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none" placeholder="Seu nome" />
               </div>
               <div>
                 <label className="text-sm font-semibold text-slate-600 mb-1 block ml-1">E-mail</label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-3 text-slate-400" size={20} />
-                  <input
-                    name="email"
-                    type="email"
-                    required
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
-                    placeholder="seu@email.com"
-                  />
-                </div>
+                <input name="email" type="email" required value={formData.email} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none" placeholder="seu@email.com" />
               </div>
             </>
           )}
 
           <div>
-            <label className="text-sm font-semibold text-slate-600 mb-1 block ml-1">
-              {isVisitor ? 'Usuário de Visitante' : (isSignUp ? 'Nome de Usuário' : 'E-mail ou Usuário')}
-            </label>
-            <div className="relative">
-              <User className="absolute left-3 top-3 text-slate-400" size={20} />
-              <input
-                name="username"
-                type="text"
-                required
-                value={formData.username}
-                onChange={handleInputChange}
-                className={`w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 outline-none transition-all ${isVisitor ? 'focus:ring-purple-500/20 focus:border-purple-500' : 'focus:ring-blue-500/20 focus:border-blue-500'}`}
-                placeholder={isVisitor ? "Ex: paciente_joao" : (isSignUp ? "Ex: joao_fisio" : "E-mail ou nome de usuário")}
-              />
-            </div>
+            <label className="text-sm font-semibold text-slate-600 mb-1 block ml-1">Usuário</label>
+            <input name="username" type="text" required value={formData.username} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none" placeholder="Nome de usuário" />
           </div>
 
           <div>
             <label className="text-sm font-semibold text-slate-600 mb-1 block ml-1">Senha</label>
             <div className="relative">
-              <Lock className="absolute left-3 top-3 text-slate-400" size={20} />
-              <input
-                name="password"
-                type={showPassword ? "text" : "password"}
-                required
-                value={formData.password}
-                onChange={handleInputChange}
-                className={`w-full pl-10 pr-12 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 outline-none transition-all ${isVisitor ? 'focus:ring-purple-500/20 focus:border-purple-500' : 'focus:ring-blue-500/20 focus:border-blue-500'}`}
-                placeholder="••••••••"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 transition-colors"
-              >
+              <input name="password" type={showPassword ? "text" : "password"} required value={formData.password} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none" placeholder="••••••••" />
+              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-3 text-slate-400">
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
             </div>
           </div>
 
-          {error && (
-            <div className="bg-red-50 border border-red-100 p-3 rounded-xl">
-              <p className="text-red-600 text-xs text-center font-medium leading-relaxed">{error}</p>
-            </div>
-          )}
+          {error && <p className="text-red-600 text-xs text-center font-medium">{error}</p>}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className={`w-full text-white py-4 rounded-xl font-bold shadow-lg transition-all flex items-center justify-center gap-2 ${isVisitor ? 'bg-purple-600 shadow-purple-100 hover:bg-purple-700' : 'bg-blue-600 shadow-blue-100 hover:bg-blue-700'}`}
-          >
-            {loading ? <Loader2 className="animate-spin" size={20} /> : (isVisitor ? 'Acessar como Visitante' : (isSignUp ? 'Criar Minha Conta' : 'Entrar no Sistema'))}
+          <button type="submit" disabled={loading} className={`w-full text-white py-4 rounded-xl font-bold shadow-lg transition-all ${isVisitor ? 'bg-purple-600 hover:bg-purple-700' : 'bg-blue-600 hover:bg-blue-700'}`}>
+            {loading ? <Loader2 className="animate-spin mx-auto" size={20} /> : (isVisitor ? 'Entrar como Visitante' : 'Entrar no Sistema')}
           </button>
         </form>
 
         <div className="mt-8 flex flex-col gap-3 text-center">
-          <button
-            onClick={toggleAuthMode}
-            className="text-blue-600 font-semibold hover:underline text-sm"
-          >
-            {isSignUp ? 'Já tem uma conta? Entre aqui' : 'Não tem uma conta? Cadastre-se'}
+          <button onClick={toggleAuthMode} className="text-blue-600 font-semibold hover:underline text-sm">
+            {isSignUp ? 'Já tem uma conta? Entre' : 'Não tem uma conta? Cadastre-se'}
           </button>
-          
-          <div className="flex items-center gap-2 py-2">
-            <div className="h-px bg-slate-100 flex-1"></div>
-            <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">Ou</span>
-            <div className="h-px bg-slate-100 flex-1"></div>
-          </div>
-
-          <button
-            onClick={toggleVisitorMode}
-            className={`font-bold text-sm transition-colors ${isVisitor ? 'text-blue-600 hover:underline' : 'text-purple-600 hover:underline'}`}
-          >
+          <button onClick={toggleVisitorMode} className="text-purple-600 font-bold hover:underline text-sm">
             {isVisitor ? 'Voltar para Login Profissional' : 'Sou Visitante (Acessar com senha)'}
           </button>
         </div>

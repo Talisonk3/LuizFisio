@@ -14,9 +14,10 @@ import {
   X,
   Plus,
   Trash2,
-  ArrowLeft
+  ArrowLeft,
+  Pencil
 } from 'lucide-react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/AuthProvider';
 import CustomSelect from '@/components/CustomSelect';
@@ -24,6 +25,8 @@ import NotificationModal, { ModalType } from '@/components/NotificationModal';
 
 const Evaluation = () => {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
+  const isViewMode = searchParams.get('mode') === 'view';
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -172,7 +175,6 @@ const Evaluation = () => {
           setOriginalData(loadedData);
           setAdmRows(rows);
           setOriginalAdmRows(JSON.parse(JSON.stringify(rows)));
-          // Imagens seriam carregadas aqui se estivessem no banco
         }
       } catch (error) {
         console.error('Erro ao carregar avaliação:', error);
@@ -186,6 +188,7 @@ const Evaluation = () => {
   }, [id]);
 
   const isFormDirty = useMemo(() => {
+    if (isViewMode) return false;
     const baseData = id ? originalData : initialFormData;
     if (!baseData) return false;
 
@@ -198,7 +201,7 @@ const Evaluation = () => {
     const hasImagesChanges = examImages.length !== originalImages.length;
 
     return hasFormDataChanges || hasAdmChanges || hasImagesChanges;
-  }, [formData, admRows, examImages, originalData, originalAdmRows, originalImages, id]);
+  }, [formData, admRows, examImages, originalData, originalAdmRows, originalImages, id, isViewMode]);
 
   const showAlert = (type: ModalType, title: string, message: string, onConfirm?: () => void, confirmLabel?: string, cancelLabel?: string) => {
     setModalConfig({
@@ -289,6 +292,7 @@ const Evaluation = () => {
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    if (isViewMode) return;
     const { name, value } = e.target;
     let filteredValue = value.trimStart();
     
@@ -328,6 +332,7 @@ const Evaluation = () => {
   };
 
   const handleSelectChange = (name: string, value: string) => {
+    if (isViewMode) return;
     if (errors.includes(name)) {
       setErrors(prev => prev.filter(err => err !== name));
     }
@@ -335,6 +340,7 @@ const Evaluation = () => {
   };
 
   const handleAdmRowChange = (index: number, field: 'movement' | 'degree', value: string) => {
+    if (isViewMode) return;
     const newRows = [...admRows];
     let filteredValue = value;
     if (field === 'movement') {
@@ -348,16 +354,19 @@ const Evaluation = () => {
   };
 
   const addAdmRow = () => {
+    if (isViewMode) return;
     setAdmRows([...admRows, { movement: '', degree: '' }]);
   };
 
   const removeAdmRow = (index: number) => {
+    if (isViewMode) return;
     if (admRows.length > 1) {
       setAdmRows(admRows.filter((_, i) => i !== index));
     }
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (isViewMode) return;
     const files = Array.from(e.target.files || []);
     if (examImages.length + files.length > 10) {
       showAlert('warning', 'Limite de Imagens', 'Você pode enviar no máximo 10 imagens.');
@@ -377,6 +386,7 @@ const Evaluation = () => {
   };
 
   const removeImage = (index: number) => {
+    if (isViewMode) return;
     setExamImages(prev => prev.filter((_, i) => i !== index));
   };
 
@@ -405,6 +415,7 @@ const Evaluation = () => {
   };
 
   const handleSave = async () => {
+    if (isViewMode) return;
     if (!validateIdentificacao()) {
       setActiveTab('identificacao');
       showAlert('warning', 'Campos Obrigatórios', 'Por favor, preencha todos os campos obrigatórios marcados em vermelho.');
@@ -506,7 +517,7 @@ const Evaluation = () => {
 
   const handleNext = () => {
     const currentIndex = tabs.findIndex(t => t.id === activeTab);
-    if (activeTab === 'identificacao') {
+    if (activeTab === 'identificacao' && !isViewMode) {
       if (!validateIdentificacao()) {
         showAlert('warning', 'Campos Obrigatórios', 'Preencha os campos marcados em vermelho antes de prosseguir.');
         return;
@@ -514,7 +525,7 @@ const Evaluation = () => {
     }
     if (currentIndex < tabs.length - 1) {
       setActiveTab(tabs[currentIndex + 1].id);
-    } else {
+    } else if (!isViewMode) {
       handleSave();
     }
   };
@@ -527,7 +538,7 @@ const Evaluation = () => {
   ];
 
   const getInputClasses = (fieldName: string) => {
-    const base = "w-full p-3 bg-slate-50 border rounded-2xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all hover:border-slate-300 placeholder:text-slate-400 appearance-none";
+    const base = "w-full p-3 bg-slate-50 border rounded-2xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all hover:border-slate-300 placeholder:text-slate-400 appearance-none disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed";
     const errorState = errors.includes(fieldName) ? "border-red-500 bg-red-50" : "border-slate-200";
     return `${base} ${errorState}`;
   };
@@ -574,7 +585,7 @@ const Evaluation = () => {
             <button
               key={tab.id}
               onClick={() => {
-                if (activeTab === 'identificacao' && tab.id !== 'identificacao' && !validateIdentificacao()) {
+                if (activeTab === 'identificacao' && tab.id !== 'identificacao' && !validateIdentificacao() && !isViewMode) {
                   showAlert('warning', 'Campos Obrigatórios', 'Preencha os campos obrigatórios antes de mudar de aba.');
                   return;
                 }
@@ -607,10 +618,10 @@ const Evaluation = () => {
           <header className="mb-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
               <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">
-                {id ? 'Ficha do Paciente' : 'Nova Avaliação'}
+                {isViewMode ? 'Visualizar Ficha' : (id ? 'Editar Ficha' : 'Nova Avaliação')}
               </h1>
               <p className="text-slate-500 mt-1">
-                {id ? `Editando dados de ${formData.patient_name}` : 'Preencha os dados clínicos do seu paciente.'}
+                {id ? `${isViewMode ? 'Visualizando' : 'Editando'} dados de ${formData.patient_name}` : 'Preencha os dados clínicos do seu paciente.'}
               </p>
             </div>
             <div className="flex gap-3">
@@ -620,14 +631,24 @@ const Evaluation = () => {
               >
                 <ArrowLeft size={20} /> Voltar
               </button>
-              <button 
-                onClick={handleSave}
-                disabled={isSaving || !isFormDirty}
-                className="bg-blue-600 text-white px-8 py-3 rounded-2xl flex items-center gap-2 hover:bg-blue-700 transition-all shadow-xl shadow-blue-100 disabled:opacity-50 disabled:shadow-none font-bold"
-              >
-                {isSaving ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
-                {id ? 'Atualizar Ficha' : 'Salvar Ficha'}
-              </button>
+              
+              {isViewMode ? (
+                <button 
+                  onClick={() => navigate(`/avaliacao/${id}`)}
+                  className="bg-blue-600 text-white px-8 py-3 rounded-2xl flex items-center gap-2 hover:bg-blue-700 transition-all shadow-xl shadow-blue-100 font-bold"
+                >
+                  <Pencil size={20} /> Editar Ficha
+                </button>
+              ) : (
+                <button 
+                  onClick={handleSave}
+                  disabled={isSaving || !isFormDirty}
+                  className="bg-blue-600 text-white px-8 py-3 rounded-2xl flex items-center gap-2 hover:bg-blue-700 transition-all shadow-xl shadow-blue-100 disabled:opacity-50 disabled:shadow-none font-bold"
+                >
+                  {isSaving ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
+                  {id ? 'Atualizar Ficha' : 'Salvar Ficha'}
+                </button>
+              )}
             </div>
           </header>
 
@@ -641,11 +662,11 @@ const Evaluation = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div>
                     <label className={labelClasses}>Nome Completo <span className="text-red-500">*</span></label>
-                    <input name="patient_name" value={formData.patient_name} onChange={handleInputChange} type="text" className={getInputClasses('patient_name')} placeholder="Ex: João da Silva Santos" />
+                    <input disabled={isViewMode} name="patient_name" value={formData.patient_name} onChange={handleInputChange} type="text" className={getInputClasses('patient_name')} placeholder="Ex: João da Silva Santos" />
                   </div>
                   <div>
                     <label className={labelClasses}>Data de Nascimento <span className="text-red-500">*</span></label>
-                    <input name="birth_date" value={formData.birth_date} onChange={handleInputChange} type="text" className={getInputClasses('birth_date')} placeholder="DD/MM/AAAA" maxLength={10} />
+                    <input disabled={isViewMode} name="birth_date" value={formData.birth_date} onChange={handleInputChange} type="text" className={getInputClasses('birth_date')} placeholder="DD/MM/AAAA" maxLength={10} />
                   </div>
                   <div>
                     <label className={labelClasses}>Gênero <span className="text-red-500">*</span></label>
@@ -677,32 +698,32 @@ const Evaluation = () => {
                   <div className="md:col-span-2 grid grid-cols-4 gap-4">
                     <div className="col-span-3">
                       <label className={labelClasses}>Endereço <span className="text-red-500">*</span></label>
-                      <input name="address" value={formData.address} onChange={handleInputChange} type="text" className={getInputClasses('address')} placeholder="Rua, bairro, cidade" />
+                      <input disabled={isViewMode} name="address" value={formData.address} onChange={handleInputChange} type="text" className={getInputClasses('address')} placeholder="Rua, bairro, cidade" />
                     </div>
                     <div className="col-span-1">
                       <label className={labelClasses}>Nº <span className="text-red-500">*</span></label>
-                      <input name="address_number" value={formData.address_number} onChange={handleInputChange} type="text" className={getInputClasses('address_number')} placeholder="123" maxLength={6} />
+                      <input disabled={isViewMode} name="address_number" value={formData.address_number} onChange={handleInputChange} type="text" className={getInputClasses('address_number')} placeholder="123" maxLength={6} />
                     </div>
                   </div>
                   <div>
                     <label className={labelClasses}>Profissão <span className="text-red-500">*</span></label>
-                    <input name="profession" value={formData.profession} onChange={handleInputChange} type="text" className={getInputClasses('profession')} placeholder="Ex: Engenheiro" />
+                    <input disabled={isViewMode} name="profession" value={formData.profession} onChange={handleInputChange} type="text" className={getInputClasses('profession')} placeholder="Ex: Engenheiro" />
                   </div>
                   <div>
                     <label className={labelClasses}>Telefone de Contato</label>
-                    <input name="phone" value={formData.phone} onChange={handleInputChange} type="tel" className={getInputClasses('phone')} placeholder="(00) 00000-0000" maxLength={15} />
+                    <input disabled={isViewMode} name="phone" value={formData.phone} onChange={handleInputChange} type="tel" className={getInputClasses('phone')} placeholder="(00) 00000-0000" maxLength={15} />
                   </div>
                   <div>
                     <label className={labelClasses}>E-mail do Paciente</label>
-                    <input name="email" value={formData.email} onChange={handleInputChange} type="email" className={getInputClasses('email')} placeholder="exemplo@email.com" />
+                    <input disabled={isViewMode} name="email" value={formData.email} onChange={handleInputChange} type="email" className={getInputClasses('email')} placeholder="exemplo@email.com" />
                   </div>
                   <div>
                     <label className={labelClasses}>Peso (kg)</label>
-                    <input name="weight" value={formData.weight} onChange={handleInputChange} type="text" className={getInputClasses('weight')} placeholder="Ex: 75" maxLength={3} />
+                    <input disabled={isViewMode} name="weight" value={formData.weight} onChange={handleInputChange} type="text" className={getInputClasses('weight')} placeholder="Ex: 75" maxLength={3} />
                   </div>
                   <div>
                     <label className={labelClasses}>Altura (m)</label>
-                    <input name="height" value={formData.height} onChange={handleInputChange} type="text" className={getInputClasses('height')} placeholder="Ex: 1.75" maxLength={4} />
+                    <input disabled={isViewMode} name="height" value={formData.height} onChange={handleInputChange} type="text" className={getInputClasses('height')} placeholder="Ex: 1.75" maxLength={4} />
                   </div>
 
                   {/* Familiar Responsável ou Cuidador */}
@@ -714,12 +735,13 @@ const Evaluation = () => {
                           <button
                             key={option}
                             type="button"
+                            disabled={isViewMode}
                             onClick={() => setFormData(prev => ({ ...prev, has_caregiver: option }))}
                             className={`px-6 py-2 rounded-xl border transition-all font-medium ${
                               formData.has_caregiver === option 
                               ? 'bg-blue-600 text-white border-blue-600 shadow-md' 
                               : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
-                            }`}
+                            } disabled:opacity-50`}
                           >
                             {option}
                           </button>
@@ -732,6 +754,7 @@ const Evaluation = () => {
                         <div>
                           <label className={labelClasses}>Nome do Responsável <span className="text-red-500">*</span></label>
                           <input 
+                            disabled={isViewMode}
                             name="caregiver_name" 
                             value={formData.caregiver_name} 
                             onChange={handleInputChange} 
@@ -743,6 +766,7 @@ const Evaluation = () => {
                         <div>
                           <label className={labelClasses}>Telefone do Responsável <span className="text-red-500">*</span></label>
                           <input 
+                            disabled={isViewMode}
                             name="caregiver_phone" 
                             value={formData.caregiver_phone} 
                             onChange={handleInputChange} 
@@ -761,11 +785,11 @@ const Evaluation = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                       <div>
                         <label className={labelClasses}>Médico Responsável</label>
-                        <input name="responsible_doctor" value={formData.responsible_doctor} onChange={handleInputChange} type="text" className={getInputClasses('responsible_doctor')} placeholder="Nome do médico" />
+                        <input disabled={isViewMode} name="responsible_doctor" value={formData.responsible_doctor} onChange={handleInputChange} type="text" className={getInputClasses('responsible_doctor')} placeholder="Nome do médico" />
                       </div>
                       <div>
                         <label className={labelClasses}>Telefone do Médico</label>
-                        <input name="doctor_phone" value={formData.doctor_phone} onChange={handleInputChange} type="tel" className={getInputClasses('doctor_phone')} placeholder="(00) 00000-0000" maxLength={15} />
+                        <input disabled={isViewMode} name="doctor_phone" value={formData.doctor_phone} onChange={handleInputChange} type="tel" className={getInputClasses('doctor_phone')} placeholder="(00) 00000-0000" maxLength={15} />
                       </div>
                     </div>
                   </div>
@@ -782,33 +806,33 @@ const Evaluation = () => {
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
                   <div>
                     <label className={labelClasses}>PA (mmHg)</label>
-                    <input name="blood_pressure" value={formData.blood_pressure} onChange={handleInputChange} type="text" className={getInputClasses('blood_pressure')} placeholder="120/80" maxLength={6} />
+                    <input disabled={isViewMode} name="blood_pressure" value={formData.blood_pressure} onChange={handleInputChange} type="text" className={getInputClasses('blood_pressure')} placeholder="120/80" maxLength={6} />
                   </div>
                   <div>
                     <label className={labelClasses}>FC (bpm)</label>
-                    <input name="heart_rate" value={formData.heart_rate} onChange={handleInputChange} type="text" className={getInputClasses('heart_rate')} placeholder="70" maxLength={3} />
+                    <input disabled={isViewMode} name="heart_rate" value={formData.heart_rate} onChange={handleInputChange} type="text" className={getInputClasses('heart_rate')} placeholder="70" maxLength={3} />
                   </div>
                   <div>
                     <label className={labelClasses}>FR (irpm)</label>
-                    <input name="respiratory_rate" value={formData.respiratory_rate} onChange={handleInputChange} type="text" className={getInputClasses('respiratory_rate')} placeholder="16" maxLength={2} />
+                    <input disabled={isViewMode} name="respiratory_rate" value={formData.respiratory_rate} onChange={handleInputChange} type="text" className={getInputClasses('respiratory_rate')} placeholder="16" maxLength={2} />
                   </div>
                   <div>
                     <label className={labelClasses}>Temp (°C)</label>
-                    <input name="temperature" value={formData.temperature} onChange={handleInputChange} type="text" className={getInputClasses('temperature')} placeholder="36.5" maxLength={4} />
+                    <input disabled={isViewMode} name="temperature" value={formData.temperature} onChange={handleInputChange} type="text" className={getInputClasses('temperature')} placeholder="36.5" maxLength={4} />
                   </div>
                   <div>
                     <label className={labelClasses}>SatO2 (%)</label>
-                    <input name="saturation" value={formData.saturation} onChange={handleInputChange} type="text" className={getInputClasses('saturation')} placeholder="98" maxLength={3} />
+                    <input disabled={isViewMode} name="saturation" value={formData.saturation} onChange={handleInputChange} type="text" className={getInputClasses('saturation')} placeholder="98" maxLength={3} />
                   </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div>
                     <label className={labelClasses}>Ausculta Cardíaca</label>
-                    <textarea name="cardiac_auscultation" value={formData.cardiac_auscultation} onChange={handleInputChange} className={`${getInputClasses('cardiac_auscultation')} h-24 resize-none`} placeholder="Bulhas rítmicas, sopros..."></textarea>
+                    <textarea disabled={isViewMode} name="cardiac_auscultation" value={formData.cardiac_auscultation} onChange={handleInputChange} className={`${getInputClasses('cardiac_auscultation')} h-24 resize-none`} placeholder="Bulhas rítmicas, sopros..."></textarea>
                   </div>
                   <div>
                     <label className={labelClasses}>Ausculta Pulmonar</label>
-                    <textarea name="pulmonary_auscultation" value={formData.pulmonary_auscultation} onChange={handleInputChange} className={`${getInputClasses('pulmonary_auscultation')} h-24 resize-none`} placeholder="Murmúrio vesicular, ruídos adventícios..."></textarea>
+                    <textarea disabled={isViewMode} name="pulmonary_auscultation" value={formData.pulmonary_auscultation} onChange={handleInputChange} className={`${getInputClasses('pulmonary_auscultation')} h-24 resize-none`} placeholder="Murmúrio vesicular, ruídos adventícios..."></textarea>
                   </div>
                 </div>
                 
@@ -821,12 +845,13 @@ const Evaluation = () => {
                         <button
                           key={option}
                           type="button"
+                          disabled={isViewMode}
                           onClick={() => setFormData(prev => ({ ...prev, auditory_alteration: option }))}
                           className={`px-6 py-2 rounded-xl border transition-all font-medium ${
                             formData.auditory_alteration === option 
                             ? 'bg-blue-600 text-white border-blue-600 shadow-md' 
                             : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
-                          }`}
+                          } disabled:opacity-50`}
                         >
                           {option}
                         </button>
@@ -835,6 +860,7 @@ const Evaluation = () => {
                     {formData.auditory_alteration === 'Sim' && (
                       <div className="animate-in fade-in slide-in-from-top-2 duration-300">
                         <input 
+                          disabled={isViewMode}
                           name="auditory_alteration_details" 
                           value={formData.auditory_alteration_details} 
                           onChange={handleInputChange} 
@@ -854,12 +880,13 @@ const Evaluation = () => {
                         <button
                           key={option}
                           type="button"
+                          disabled={isViewMode}
                           onClick={() => setFormData(prev => ({ ...prev, visual_alteration: option }))}
                           className={`px-6 py-2 rounded-xl border transition-all font-medium ${
                             formData.visual_alteration === option 
                             ? 'bg-blue-600 text-white border-blue-600 shadow-md' 
                             : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
-                          }`}
+                          } disabled:opacity-50`}
                         >
                           {option}
                         </button>
@@ -868,6 +895,7 @@ const Evaluation = () => {
                     {formData.visual_alteration === 'Sim' && (
                       <div className="animate-in fade-in slide-in-from-top-2 duration-300">
                         <input 
+                          disabled={isViewMode}
                           name="visual_alteration_details" 
                           value={formData.visual_alteration_details} 
                           onChange={handleInputChange} 
@@ -889,12 +917,13 @@ const Evaluation = () => {
                         <button
                           key={option}
                           type="button"
+                          disabled={isViewMode}
                           onClick={() => setFormData(prev => ({ ...prev, gait_aid: option }))}
                           className={`px-6 py-2 rounded-xl border transition-all font-medium ${
                             formData.gait_aid === option 
                             ? 'bg-blue-600 text-white border-blue-600 shadow-md' 
                             : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
-                          }`}
+                          } disabled:opacity-50`}
                         >
                           {option}
                         </button>
@@ -904,6 +933,7 @@ const Evaluation = () => {
                       <div className="animate-in fade-in slide-in-from-top-2 duration-300">
                         <label className={labelClasses}>Qual dispositivo?</label>
                         <input 
+                          disabled={isViewMode}
                           name="gait_aid_details" 
                           value={formData.gait_aid_details} 
                           onChange={handleInputChange} 
@@ -923,12 +953,13 @@ const Evaluation = () => {
                         <button
                           key={option}
                           type="button"
+                          disabled={isViewMode}
                           onClick={() => setFormData(prev => ({ ...prev, has_complementary_exams: option }))}
                           className={`px-6 py-2 rounded-xl border transition-all font-medium ${
                             formData.has_complementary_exams === option 
                             ? 'bg-blue-600 text-white border-blue-600 shadow-md' 
                             : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
-                          }`}
+                          } disabled:opacity-50`}
                         >
                           {option}
                         </button>
@@ -939,6 +970,7 @@ const Evaluation = () => {
                         <div>
                           <label className={labelClasses}>Descrição dos Exames</label>
                           <textarea 
+                            disabled={isViewMode}
                             name="complementary_exams_details" 
                             value={formData.complementary_exams_details} 
                             onChange={handleInputChange} 
@@ -953,16 +985,18 @@ const Evaluation = () => {
                             {examImages.map((img, index) => (
                               <div key={index} className="relative group aspect-square rounded-2xl overflow-hidden border border-slate-200 bg-slate-100">
                                 <img src={img} alt={`Exame ${index + 1}`} className="w-full h-full object-cover" />
-                                <button 
-                                  onClick={() => removeImage(index)}
-                                  className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
-                                >
-                                  <X size={14} />
-                                </button>
+                                {!isViewMode && (
+                                  <button 
+                                    onClick={() => removeImage(index)}
+                                    className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                                  >
+                                    <X size={14} />
+                                  </button>
+                                )}
                               </div>
                             ))}
                             
-                            {examImages.length < 10 && (
+                            {examImages.length < 10 && !isViewMode && (
                               <button 
                                 onClick={() => fileInputRef.current?.click()}
                                 className="aspect-square rounded-2xl border-2 border-dashed border-slate-200 flex items-center justify-center p-2 text-slate-400 hover:border-blue-400 hover:text-blue-500 hover:bg-blue-50 transition-all overflow-hidden"
@@ -987,7 +1021,7 @@ const Evaluation = () => {
 
                 <div>
                   <label className={labelClasses}>Inspeção e Palpação</label>
-                  <textarea name="inspection_palpation" value={formData.inspection_palpation} onChange={handleInputChange} className={`${getInputClasses('inspection_palpation')} h-32 resize-none`} placeholder="Avaliação postural, presença de edema, cicatrizes, pontos gatilho..."></textarea>
+                  <textarea disabled={isViewMode} name="inspection_palpation" value={formData.inspection_palpation} onChange={handleInputChange} className={`${getInputClasses('inspection_palpation')} h-32 resize-none`} placeholder="Avaliação postural, presença de edema, cicatrizes, pontos gatilho..."></textarea>
                 </div>
               </div>
             )}
@@ -1002,13 +1036,13 @@ const Evaluation = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div>
                       <label className={labelClasses}>Data da Avaliação</label>
-                      <input name="evaluation_date" value={formData.evaluation_date} onChange={handleInputChange} type="text" className={getInputClasses('evaluation_date')} placeholder="DD/MM/AAAA" maxLength={10} />
+                      <input disabled={isViewMode} name="evaluation_date" value={formData.evaluation_date} onChange={handleInputChange} type="text" className={getInputClasses('evaluation_date')} placeholder="DD/MM/AAAA" maxLength={10} />
                     </div>
                   </div>
 
                   <div>
                     <label className={labelClasses}>Queixa Principal</label>
-                    <textarea name="chief_complaint" value={formData.chief_complaint} onChange={handleInputChange} className={`${getInputClasses('chief_complaint')} h-32 resize-none`} placeholder="Descreva detalhadamente o motivo da consulta..."></textarea>
+                    <textarea disabled={isViewMode} name="chief_complaint" value={formData.chief_complaint} onChange={handleInputChange} className={`${getInputClasses('chief_complaint')} h-32 resize-none`} placeholder="Descreva detalhadamente o motivo da consulta..."></textarea>
                   </div>
                   
                   {/* Escala de Dor EVA */}
@@ -1019,12 +1053,13 @@ const Evaluation = () => {
                         <button
                           key={num}
                           type="button"
+                          disabled={isViewMode}
                           onClick={() => setFormData(prev => ({ ...prev, pain_scale: num.toString() }))}
                           className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center font-bold transition-all ${
                             formData.pain_scale === num.toString()
                             ? `${getPainColor(num)} text-white scale-110 shadow-lg ring-4 ring-white`
                             : 'bg-white text-slate-400 border border-slate-200 hover:border-slate-400'
-                          }`}
+                          } disabled:opacity-50`}
                         >
                           {num}
                         </button>
@@ -1040,27 +1075,27 @@ const Evaluation = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div>
                       <label className={labelClasses}>O que piora a dor?</label>
-                      <textarea name="pain_worsening_factors" value={formData.pain_worsening_factors} onChange={handleInputChange} className={`${getInputClasses('pain_worsening_factors')} h-24 resize-none`} placeholder="Ex: Movimentos bruscos, frio, ficar em pé..."></textarea>
+                      <textarea disabled={isViewMode} name="pain_worsening_factors" value={formData.pain_worsening_factors} onChange={handleInputChange} className={`${getInputClasses('pain_worsening_factors')} h-24 resize-none`} placeholder="Ex: Movimentos bruscos, frio, ficar em pé..."></textarea>
                     </div>
                     <div>
                       <label className={labelClasses}>O que melhora a dor?</label>
-                      <textarea name="pain_improvement_factors" value={formData.pain_improvement_factors} onChange={handleInputChange} className={`${getInputClasses('pain_improvement_factors')} h-24 resize-none`} placeholder="Ex: Repouso, calor local, medicação..."></textarea>
+                      <textarea disabled={isViewMode} name="pain_improvement_factors" value={formData.pain_improvement_factors} onChange={handleInputChange} className={`${getInputClasses('pain_improvement_factors')} h-24 resize-none`} placeholder="Ex: Repouso, calor local, medicação..."></textarea>
                     </div>
                   </div>
 
                   <div>
                     <label className={labelClasses}>História da Doença Atual (HDA)</label>
-                    <textarea name="history_present_illness" value={formData.history_present_illness} onChange={handleInputChange} className={`${getInputClasses('history_present_illness')} h-32 resize-none`} placeholder="Início dos sintomas, evolução, fatores de melhora/piora..."></textarea>
+                    <textarea disabled={isViewMode} name="history_present_illness" value={formData.history_present_illness} onChange={handleInputChange} className={`${getInputClasses('history_present_illness')} h-32 resize-none`} placeholder="Início dos sintomas, evolução, fatores de melhora/piora..."></textarea>
                   </div>
 
                   <div>
                     <label className={labelClasses}>História da Doença Pregressa (HDP)</label>
-                    <textarea name="previous_illness_history" value={formData.previous_illness_history} onChange={handleInputChange} className={`${getInputClasses('previous_illness_history')} h-32 resize-none`} placeholder="Doenças anteriores, traumas, internações..."></textarea>
+                    <textarea disabled={isViewMode} name="previous_illness_history" value={formData.previous_illness_history} onChange={handleInputChange} className={`${getInputClasses('previous_illness_history')} h-32 resize-none`} placeholder="Doenças anteriores, traumas, internações..."></textarea>
                   </div>
 
                   <div>
                     <label className={labelClasses}>Histórico Familiar</label>
-                    <textarea name="family_history" value={formData.family_history} onChange={handleInputChange} className={`${getInputClasses('family_history')} h-32 resize-none`} placeholder="Doenças hereditárias, histórico de saúde da família..."></textarea>
+                    <textarea disabled={isViewMode} name="family_history" value={formData.family_history} onChange={handleInputChange} className={`${getInputClasses('family_history')} h-32 resize-none`} placeholder="Doenças hereditárias, histórico de saúde da família..."></textarea>
                   </div>
 
                   {/* Histórico Social */}
@@ -1075,12 +1110,13 @@ const Evaluation = () => {
                           <button
                             key={option}
                             type="button"
+                            disabled={isViewMode}
                             onClick={() => setFormData(prev => ({ ...prev, drinks: option }))}
                             className={`px-6 py-2 rounded-xl border transition-all font-medium ${
                               formData.drinks === option 
                               ? 'bg-blue-600 text-white border-blue-600 shadow-md' 
                               : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
-                            }`}
+                            } disabled:opacity-50`}
                           >
                             {option}
                           </button>
@@ -1089,6 +1125,7 @@ const Evaluation = () => {
                       {formData.drinks === 'Sim' && (
                         <div className="animate-in fade-in slide-in-from-top-2 duration-300">
                           <input 
+                            disabled={isViewMode}
                             name="drinks_details" 
                             value={formData.drinks_details} 
                             onChange={handleInputChange} 
@@ -1108,12 +1145,13 @@ const Evaluation = () => {
                           <button
                             key={option}
                             type="button"
+                            disabled={isViewMode}
                             onClick={() => setFormData(prev => ({ ...prev, smokes: option }))}
                             className={`px-6 py-2 rounded-xl border transition-all font-medium ${
                               formData.smokes === option 
                               ? 'bg-blue-600 text-white border-blue-600 shadow-md' 
                               : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
-                            }`}
+                            } disabled:opacity-50`}
                           >
                             {option}
                           </button>
@@ -1122,6 +1160,7 @@ const Evaluation = () => {
                       {formData.smokes === 'Sim' && (
                         <div className="animate-in fade-in slide-in-from-top-2 duration-300">
                           <input 
+                            disabled={isViewMode}
                             name="smokes_details" 
                             value={formData.smokes_details} 
                             onChange={handleInputChange} 
@@ -1141,12 +1180,13 @@ const Evaluation = () => {
                           <button
                             key={option}
                             type="button"
+                            disabled={isViewMode}
                             onClick={() => setFormData(prev => ({ ...prev, sedentary: option }))}
                             className={`px-6 py-2 rounded-xl border transition-all font-medium ${
                               formData.sedentary === option 
                               ? 'bg-blue-600 text-white border-blue-600 shadow-md' 
                               : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
-                            }`}
+                            } disabled:opacity-50`}
                           >
                             {option}
                           </button>
@@ -1156,6 +1196,7 @@ const Evaluation = () => {
                         <div className="animate-in fade-in slide-in-from-top-2 duration-300">
                           <label className={labelClasses}>Quais atividades físicas pratica?</label>
                           <input 
+                            disabled={isViewMode}
                             name="sedentary_details" 
                             value={formData.sedentary_details} 
                             onChange={handleInputChange} 
@@ -1177,12 +1218,13 @@ const Evaluation = () => {
                           <button
                             key={option}
                             type="button"
+                            disabled={isViewMode}
                             onClick={() => setFormData(prev => ({ ...prev, has_medications: option }))}
                             className={`px-6 py-2 rounded-xl border transition-all font-medium ${
                               formData.has_medications === option 
                               ? 'bg-blue-600 text-white border-blue-600 shadow-md' 
                               : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
-                            }`}
+                            } disabled:opacity-50`}
                           >
                             {option}
                           </button>
@@ -1191,6 +1233,7 @@ const Evaluation = () => {
                       {formData.has_medications === 'Sim' && (
                         <div className="animate-in fade-in slide-in-from-top-2 duration-300">
                           <input 
+                            disabled={isViewMode}
                             name="medications" 
                             value={formData.medications} 
                             onChange={handleInputChange} 
@@ -1210,12 +1253,13 @@ const Evaluation = () => {
                           <button
                             key={option}
                             type="button"
+                            disabled={isViewMode}
                             onClick={() => setFormData(prev => ({ ...prev, has_surgeries: option }))}
                             className={`px-6 py-2 rounded-xl border transition-all font-medium ${
                               formData.has_surgeries === option 
                               ? 'bg-blue-600 text-white border-blue-600 shadow-md' 
                               : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
-                            }`}
+                            } disabled:opacity-50`}
                           >
                             {option}
                           </button>
@@ -1224,6 +1268,7 @@ const Evaluation = () => {
                       {formData.has_surgeries === 'Sim' && (
                         <div className="animate-in fade-in slide-in-from-top-2 duration-300">
                           <input 
+                            disabled={isViewMode}
                             name="previous_surgeries" 
                             value={formData.previous_surgeries} 
                             onChange={handleInputChange} 
@@ -1255,12 +1300,13 @@ const Evaluation = () => {
                           <button
                             key={option}
                             type="button"
+                            disabled={isViewMode}
                             onClick={() => setFormData(prev => ({ ...prev, muscle_tone_mmss: option }))}
                             className={`px-4 py-2 rounded-xl border transition-all font-medium text-sm ${
                               formData.muscle_tone_mmss === option 
                               ? 'bg-blue-600 text-white border-blue-600 shadow-md' 
                               : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
-                            }`}
+                            } disabled:opacity-50`}
                           >
                             {option}
                           </button>
@@ -1276,12 +1322,13 @@ const Evaluation = () => {
                           <button
                             key={option}
                             type="button"
+                            disabled={isViewMode}
                             onClick={() => setFormData(prev => ({ ...prev, muscle_tone_mmii: option }))}
                             className={`px-4 py-2 rounded-xl border transition-all font-medium text-sm ${
                               formData.muscle_tone_mmii === option 
                               ? 'bg-blue-600 text-white border-blue-600 shadow-md' 
                               : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
-                            }`}
+                            } disabled:opacity-50`}
                           >
                             {option}
                           </button>
@@ -1299,6 +1346,7 @@ const Evaluation = () => {
                           <div className="flex-1">
                             <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 mb-1 block">Movimento</label>
                             <input 
+                              disabled={isViewMode}
                               type="text" 
                               value={row.movement} 
                               onChange={(e) => handleAdmRowChange(index, 'movement', e.target.value)}
@@ -1309,6 +1357,7 @@ const Evaluation = () => {
                           <div className="w-32">
                             <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 mb-1 block">Grau</label>
                             <input 
+                              disabled={isViewMode}
                               type="text" 
                               value={row.degree} 
                               onChange={(e) => handleAdmRowChange(index, 'degree', e.target.value)}
@@ -1316,7 +1365,7 @@ const Evaluation = () => {
                               placeholder="Ex: 90°"
                             />
                           </div>
-                          {admRows.length > 1 && (
+                          {admRows.length > 1 && !isViewMode && (
                             <button 
                               onClick={() => removeAdmRow(index)}
                               className="p-3 text-slate-300 hover:text-red-500 transition-colors mb-0.5"
@@ -1327,21 +1376,23 @@ const Evaluation = () => {
                         </div>
                       ))}
                     </div>
-                    <button 
-                      onClick={addAdmRow}
-                      className="mt-2 flex items-center gap-2 text-blue-600 font-bold text-sm hover:bg-blue-50 px-4 py-2 rounded-xl transition-all"
-                    >
-                      <Plus size={18} /> Adicionar Movimento
-                    </button>
+                    {!isViewMode && (
+                      <button 
+                        onClick={addAdmRow}
+                        className="mt-2 flex items-center gap-2 text-blue-600 font-bold text-sm hover:bg-blue-50 px-4 py-2 rounded-xl transition-all"
+                      >
+                        <Plus size={18} /> Adicionar Movimento
+                      </button>
+                    )}
                   </div>
 
                   <div>
                     <label className={labelClasses}>Força Muscular (Grau 0-5)</label>
-                    <textarea name="muscle_strength" value={formData.muscle_strength} onChange={handleInputChange} className={`${getInputClasses('muscle_strength')} h-28 resize-none`} placeholder="Teste de força manual por grupos musculares..."></textarea>
+                    <textarea disabled={isViewMode} name="muscle_strength" value={formData.muscle_strength} onChange={handleInputChange} className={`${getInputClasses('muscle_strength')} h-28 resize-none`} placeholder="Teste de força manual por grupos musculares..."></textarea>
                   </div>
                   <div className="bg-blue-50/50 p-6 rounded-3xl border border-blue-100">
                     <label className="text-sm font-bold text-blue-700 mb-2 block ml-1">Diagnóstico Fisioterapêutico Final</label>
-                    <textarea name="physio_diagnosis" value={formData.physio_diagnosis} onChange={handleInputChange} className="w-full p-4 bg-white border border-blue-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all h-32 font-medium text-blue-900 placeholder:text-blue-300" placeholder="Conclusão clínica e objetivos do tratamento..."></textarea>
+                    <textarea disabled={isViewMode} name="physio_diagnosis" value={formData.physio_diagnosis} onChange={handleInputChange} className="w-full p-4 bg-white border border-blue-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all h-32 font-medium text-blue-900 placeholder:text-blue-300 disabled:bg-slate-50 disabled:text-slate-500" placeholder="Conclusão clínica e objetivos do tratamento..."></textarea>
                   </div>
                 </div>
               </div>
@@ -1370,7 +1421,7 @@ const Evaluation = () => {
                 onClick={handleNext}
                 className="bg-slate-100 text-blue-600 font-black flex items-center gap-2 px-6 py-3 rounded-2xl hover:bg-blue-600 hover:text-white transition-all group"
               >
-                {activeTab === 'funcional' ? (id ? 'Atualizar' : 'Finalizar') : 'Próximo'} 
+                {activeTab === 'funcional' ? (isViewMode ? 'Início' : (id ? 'Atualizar' : 'Finalizar')) : 'Próximo'} 
                 <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform" />
               </button>
             </div>

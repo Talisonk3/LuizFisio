@@ -13,7 +13,9 @@ import {
   Calendar, 
   Phone,
   Loader2,
-  Plus
+  Plus,
+  Pencil,
+  Share2
 } from 'lucide-react';
 
 interface PatientRecord {
@@ -53,6 +55,12 @@ const Patients = () => {
 
     fetchPatients();
   }, [user]);
+
+  const handleShare = (patient: PatientRecord) => {
+    const shareUrl = `${window.location.origin}/avaliacao/${patient.id}?mode=view`;
+    navigator.clipboard.writeText(shareUrl);
+    alert(`Link de visualização de ${patient.patient_name} copiado para a área de transferência!`);
+  };
 
   const filteredPatients = patients.filter(p => 
     p.patient_name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -107,15 +115,19 @@ const Patients = () => {
             {filteredPatients.map((patient) => (
               <div 
                 key={patient.id}
-                onClick={() => navigate(`/avaliacao/${patient.id}`)}
-                className="group bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 transition-all flex items-center justify-between cursor-pointer"
+                className="group bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 transition-all flex items-center justify-between"
               >
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 flex-1">
                   <div className="bg-blue-50 text-blue-600 p-4 rounded-2xl group-hover:bg-blue-600 group-hover:text-white transition-colors">
                     <User size={24} />
                   </div>
-                  <div>
-                    <h3 className="font-bold text-slate-800 text-lg">{patient.patient_name}</h3>
+                  <div className="flex-1">
+                    <button 
+                      onClick={() => navigate(`/avaliacao/${patient.id}?mode=view`)}
+                      className="font-bold text-slate-800 text-lg hover:text-blue-600 transition-colors text-left"
+                    >
+                      {patient.patient_name}
+                    </button>
                     <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1">
                       <span className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
                         <Calendar size={14} /> {new Date(patient.birth_date).toLocaleDateString('pt-BR')}
@@ -128,8 +140,22 @@ const Patients = () => {
                     </div>
                   </div>
                 </div>
-                <div className="text-slate-300 group-hover:text-blue-600 group-hover:translate-x-1 transition-all">
-                  <ChevronRight size={24} />
+                
+                <div className="flex items-center gap-2 ml-4">
+                  <button 
+                    onClick={() => handleShare(patient)}
+                    className="p-3 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-xl transition-all"
+                    title="Compartilhar"
+                  >
+                    <Share2 size={20} />
+                  </button>
+                  <button 
+                    onClick={() => navigate(`/avaliacao/${patient.id}`)}
+                    className="p-3 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
+                    title="Editar"
+                  >
+                    <Pencil size={20} />
+                  </button>
                 </div>
               </div>
             ))}

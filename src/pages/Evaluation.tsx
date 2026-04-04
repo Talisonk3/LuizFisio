@@ -176,9 +176,6 @@ const Evaluation = () => {
         if (error) throw error;
 
         if (data) {
-          // Guardar os dados brutos para comparação posterior
-          setOriginalData(data);
-
           let street = data.address || '';
           let number = '';
           if (street.includes(',')) {
@@ -221,6 +218,7 @@ const Evaluation = () => {
           };
 
           setFormData(loadedData);
+          setOriginalData(JSON.parse(JSON.stringify(loadedData)));
           setAdmRows(rows);
           setOriginalAdmRows(JSON.parse(JSON.stringify(rows)));
         }
@@ -237,11 +235,29 @@ const Evaluation = () => {
 
   const isFormDirty = useMemo(() => {
     if (isViewMode) return false;
-    if (!id) return Object.values(formData).some(v => v !== '' && v !== 'Não' && v !== 'Normal' && v !== '0');
     
-    // Comparação simplificada para o botão de salvar
-    return JSON.stringify(formData) !== JSON.stringify(originalData);
-  }, [formData, originalData, id, isViewMode]);
+    // Se for uma nova avaliação, habilitar se houver qualquer preenchimento básico
+    if (!id) {
+      return Object.keys(formData).some(key => {
+        if (key === 'evaluation_date') return false;
+        const val = formData[key as keyof typeof formData];
+        return val !== initialFormData[key as keyof typeof initialFormData];
+      });
+    }
+
+    // Se for edição, comparar com o estado original carregado
+    if (!originalData) return false;
+
+    const hasFormDataChanges = Object.keys(formData).some(key => {
+      if (key === 'evaluation_date') return false;
+      return formData[key as keyof typeof formData] !== originalData[key as keyof typeof originalData];
+    });
+
+    const hasAdmChanges = JSON.stringify(admRows) !== JSON.stringify(originalAdmRows);
+    const hasImagesChanges = examImages.length !== originalImages.length;
+
+    return hasFormDataChanges || hasAdmChanges || hasImagesChanges;
+  }, [formData, admRows, examImages, originalData, originalAdmRows, originalImages, id, isViewMode]);
 
   const showAlert = (type: ModalType, title: string, message: string, onConfirm?: () => void, confirmLabel?: string, cancelLabel?: string) => {
     setModalConfig({
@@ -516,6 +532,13 @@ const Evaluation = () => {
         actionDescription = 'Ficha de avaliação inicial criada.';
       } else {
         const changes = [];
+        // Para o histórico, comparamos o payload final com o originalData carregado
+        // Precisamos de uma lógica de comparação que ignore campos técnicos
+        const originalPayload = {
+          ...originalData,
+          // Ajustar campos que são processados no payload
+        };
+
         for (const key in payload) {
           if (payload[key] !== originalData[key] && fieldLabels[key]) {
             const oldValue = originalData[key] || 'Vazio';
@@ -572,8 +595,10 @@ const Evaluation = () => {
         setErrors([]);
         setActiveTab('identificacao');
       } else {
-        // Atualizar originalData após salvar para futuras comparações
-        setOriginalData(payload);
+        // Atualizar originalData após salvar para desabilitar o botão novamente
+        setOriginalData(JSON.parse(JSON.stringify(formData)));
+        setOriginalAdmRows(JSON.parse(JSON.stringify(admRows)));
+        setOriginalImages([...examImages]);
       }
       
     } catch (error: any) {

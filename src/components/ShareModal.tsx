@@ -111,7 +111,7 @@ const ShareModal = ({ isOpen, onClose, onSuccess, userId }: ShareModalProps) => 
             </div>
 
             <div>
-              <label className="text-sm font-semibold text-slate-600 mb-1 block ml-1">Senha (Visível)</label>
+              <label className="text-sm font-semibold text-slate-600 mb-1 block ml-1">Senha</label>
               <div className="relative">
                 <Lock className="absolute left-3 top-3 text-slate-400" size={20} />
                 <input

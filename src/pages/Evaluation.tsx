@@ -15,13 +15,15 @@ import {
   Plus,
   Trash2,
   ArrowLeft,
-  FileText
+  FileText,
+  History
 } from 'lucide-react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/AuthProvider';
 import CustomSelect from '@/components/CustomSelect';
 import NotificationModal, { ModalType } from '@/components/NotificationModal';
+import EvolutionHistoryTab from '@/components/EvolutionHistoryTab';
 
 const fieldLabels: Record<string, string> = {
   patient_name: 'Nome',
@@ -622,6 +624,7 @@ const Evaluation = () => {
     { id: 'exame-fisico', label: 'Sinais e Exames', icon: Activity },
     { id: 'anamnese', label: 'Anamnese', icon: ClipboardList },
     { id: 'funcional', label: 'Avaliação Funcional', icon: Dumbbell },
+    ...(id ? [{ id: 'historico-evolucoes', label: 'Histórico de Evoluções', icon: History }] : [])
   ];
 
   const getInputClasses = (fieldName: string) => {
@@ -1472,6 +1475,10 @@ const Evaluation = () => {
               </div>
             )}
 
+            {activeTab === 'historico-evolucoes' && id && (
+              <EvolutionHistoryTab evaluationId={id} />
+            )}
+
             {/* Navigation Buttons */}
             <div className="mt-12 pt-8 border-t border-slate-100 flex justify-between items-center">
               {!isViewMode ? (
@@ -1495,12 +1502,12 @@ const Evaluation = () => {
                 ))}
               </div>
 
-              {!(isViewMode && activeTab === 'funcional') && (
+              {!(isViewMode && activeTab === 'historico-evolucoes') && (
                 <button 
                   onClick={handleNext}
                   className="bg-slate-100 text-blue-600 font-black flex items-center gap-2 px-6 py-3 rounded-2xl hover:bg-blue-600 hover:text-white transition-all group"
                 >
-                  {activeTab === 'funcional' ? (id ? 'Atualizar' : 'Finalizar') : 'Próximo'} 
+                  {activeTab === 'historico-evolucoes' || activeTab === 'funcional' ? (id ? 'Atualizar' : 'Finalizar') : 'Próximo'} 
                   <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform" />
                 </button>
               )}

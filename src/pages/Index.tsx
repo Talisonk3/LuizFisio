@@ -46,6 +46,14 @@ const Index = () => {
     }
   ];
 
+  const getGreetingName = () => {
+    const fullName = user?.user_metadata?.full_name;
+    if (!fullName) return 'Doutor(a)';
+    
+    const firstName = fullName.split(' ')[0];
+    return firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
       {/* Header */}
@@ -78,7 +86,7 @@ const Index = () => {
       <main className="flex-1 p-6 md:p-12 max-w-7xl mx-auto w-full">
         <div className="mb-12">
           <h2 className="text-3xl font-extrabold text-slate-800 tracking-tight">
-            Olá, {user?.user_metadata?.full_name?.split(' ')[0] || 'Doutor(a)'}! 👋
+            Olá, {getGreetingName()}! 👋
           </h2>
           <p className="text-slate-500 mt-2 text-lg">O que deseja fazer hoje no seu consultório?</p>
         </div>

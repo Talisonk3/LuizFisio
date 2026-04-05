@@ -267,7 +267,7 @@ const SessionEvolutionModal = ({ isOpen, onClose, evaluationId, patientName, isR
             ) : evolutions.length > 0 ? (
               <div className="space-y-4">
                 {evolutions.map((evo) => (
-                  <div key={evo.id} className="bg-white border border-slate-100 p-6 rounded-3xl shadow-sm hover:shadow-md transition-all">
+                  <div key={evo.id} className="bg-white border border-slate-100 p-6 rounded-3xl shadow-sm hover:shadow-md transition-all overflow-hidden">
                     <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
                       <div className="flex items-center gap-4 text-[10px] text-slate-400 font-bold uppercase tracking-tight">
                         <span className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-lg">
@@ -288,7 +288,7 @@ const SessionEvolutionModal = ({ isOpen, onClose, evaluationId, patientName, isR
                         </div>
                       )}
                     </div>
-                    <p className="text-slate-600 leading-relaxed whitespace-pre-wrap text-sm">
+                    <p className="text-slate-600 leading-relaxed whitespace-pre-wrap text-sm break-words">
                       {evo.evolution_text}
                     </p>
                   </div>

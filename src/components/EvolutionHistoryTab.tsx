@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { Calendar, Clock, Loader2, Activity, MessageSquare } from 'lucide-react';
+import { Calendar, Clock, Loader2, Activity, MessageSquare, Pencil } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import SessionEvolutionModal from './SessionEvolutionModal';
+import { useAuth } from './AuthProvider';
 
 interface Evolution {
   id: string;
@@ -21,29 +23,31 @@ interface EvolutionHistoryTabProps {
 }
 
 const EvolutionHistoryTab = ({ evaluationId }: EvolutionHistoryTabProps) => {
+  const { user } = useAuth();
   const [evolutions, setEvolutions] = useState<Evolution[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editingEvolution, setEditingEvolution] = useState<Evolution | null>(null);
+
+  const fetchEvolutions = async () => {
+    if (!evaluationId) return;
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('session_evolutions')
+        .select('*')
+        .eq('evaluation_id', evaluationId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setEvolutions(data || []);
+    } catch (error) {
+      console.error('Erro ao buscar evoluções:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchEvolutions = async () => {
-      if (!evaluationId) return;
-      setLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from('session_evolutions')
-          .select('*')
-          .eq('evaluation_id', evaluationId)
-          .order('created_at', { ascending: false });
-
-        if (error) throw error;
-        setEvolutions(data || []);
-      } catch (error) {
-        console.error('Erro ao buscar evoluções:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchEvolutions();
   }, [evaluationId]);
 
@@ -75,10 +79,19 @@ const EvolutionHistoryTab = ({ evaluationId }: EvolutionHistoryTabProps) => {
                     <Calendar size={14} className="text-emerald-500" /> 
                     {evo.session_date ? new Date(evo.session_date + 'T00:00:00').toLocaleDateString('pt-BR') : new Date(evo.created_at).toLocaleDateString('pt-BR')}
                   </span>
-                  <span className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
-                    <Clock size={14} className="text-emerald-500" /> 
-                    {new Date(evo.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
+                      <Clock size={14} className="text-emerald-500" /> 
+                      {new Date(evo.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                    <button 
+                      onClick={() => setEditingEvolution(evo)}
+                      className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                      title="Editar Evolução"
+                    >
+                      <Pencil size={16} />
+                    </button>
+                  </div>
                 </div>
                 
                 {(evo.blood_pressure || evo.heart_rate || evo.respiratory_rate || evo.temperature || evo.saturation) && (
@@ -109,6 +122,18 @@ const EvolutionHistoryTab = ({ evaluationId }: EvolutionHistoryTabProps) => {
           <p className="text-slate-400 font-bold">Nenhuma evolução registrada para este paciente.</p>
         </div>
       )}
+
+      <SessionEvolutionModal 
+        isOpen={!!editingEvolution}
+        onClose={() => {
+          setEditingEvolution(null);
+          fetchEvolutions();
+        }}
+        evaluationId={evaluationId}
+        patientName="Editando Evolução"
+        userId={user?.id}
+        evolutionData={editingEvolution}
+      />
     </div>
   );
 };

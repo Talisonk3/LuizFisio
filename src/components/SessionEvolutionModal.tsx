@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { X, Save, Loader2, MessageSquarePlus, History } from 'lucide-react';
+import { X, Save, Loader2, MessageSquarePlus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface SessionEvolutionModalProps {
@@ -11,9 +11,18 @@ interface SessionEvolutionModalProps {
   patientName: string;
   isReadOnly?: boolean;
   userId?: string;
+  evolutionData?: any; // Dados para edição
 }
 
-const SessionEvolutionModal = ({ isOpen, onClose, evaluationId, patientName, isReadOnly, userId }: SessionEvolutionModalProps) => {
+const SessionEvolutionModal = ({ 
+  isOpen, 
+  onClose, 
+  evaluationId, 
+  patientName, 
+  isReadOnly, 
+  userId,
+  evolutionData 
+}: SessionEvolutionModalProps) => {
   const [isSaving, setIsSaving] = useState(false);
 
   const formatDate = (value: string) => {
@@ -32,7 +41,7 @@ const SessionEvolutionModal = ({ isOpen, onClose, evaluationId, patientName, isR
     return `${day}/${month}/${year}`;
   };
 
-  const initialFormData = {
+  const [formData, setFormData] = useState({
     evolution_text: '',
     blood_pressure: '',
     heart_rate: '',
@@ -40,15 +49,38 @@ const SessionEvolutionModal = ({ isOpen, onClose, evaluationId, patientName, isR
     temperature: '',
     saturation: '',
     session_date: new Date().toLocaleDateString('pt-BR')
-  };
-
-  const [formData, setFormData] = useState(initialFormData);
+  });
 
   useEffect(() => {
     if (isOpen) {
-      setFormData(initialFormData);
+      if (evolutionData) {
+        let sessionDate = '';
+        if (evolutionData.session_date) {
+          const parts = evolutionData.session_date.split('-');
+          sessionDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
+        setFormData({
+          evolution_text: evolutionData.evolution_text || '',
+          blood_pressure: evolutionData.blood_pressure || '',
+          heart_rate: evolutionData.heart_rate || '',
+          respiratory_rate: evolutionData.respiratory_rate || '',
+          temperature: evolutionData.temperature || '',
+          saturation: evolutionData.saturation || '',
+          session_date: sessionDate || new Date().toLocaleDateString('pt-BR')
+        });
+      } else {
+        setFormData({
+          evolution_text: '',
+          blood_pressure: '',
+          heart_rate: '',
+          respiratory_rate: '',
+          temperature: '',
+          saturation: '',
+          session_date: new Date().toLocaleDateString('pt-BR')
+        });
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, evolutionData]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -80,16 +112,26 @@ const SessionEvolutionModal = ({ isOpen, onClose, evaluationId, patientName, isR
 
     setIsSaving(true);
     try {
-      const { error } = await supabase
-        .from('session_evolutions')
-        .insert([{
-          evaluation_id: evaluationId,
-          user_id: userId,
-          ...formData,
-          session_date: isoDate
-        }]);
-
-      if (error) throw error;
+      if (evolutionData?.id) {
+        const { error } = await supabase
+          .from('session_evolutions')
+          .update({
+            ...formData,
+            session_date: isoDate
+          })
+          .eq('id', evolutionData.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('session_evolutions')
+          .insert([{
+            evaluation_id: evaluationId,
+            user_id: userId,
+            ...formData,
+            session_date: isoDate
+          }]);
+        if (error) throw error;
+      }
       
       onClose();
     } catch (error) {
@@ -113,7 +155,9 @@ const SessionEvolutionModal = ({ isOpen, onClose, evaluationId, patientName, isR
               <MessageSquarePlus size={24} />
             </div>
             <div>
-              <h3 className="text-xl font-bold text-slate-800 tracking-tight">Nova Evolução</h3>
+              <h3 className="text-xl font-bold text-slate-800 tracking-tight">
+                {evolutionData ? 'Editar Evolução' : 'Nova Evolução'}
+              </h3>
               <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">{patientName}</p>
             </div>
           </div>
@@ -214,7 +258,7 @@ const SessionEvolutionModal = ({ isOpen, onClose, evaluationId, patientName, isR
             className="flex-1 bg-emerald-600 text-white py-4 rounded-2xl flex items-center justify-center gap-2 hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-100 disabled:opacity-50 font-bold"
           >
             {isSaving ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
-            Salvar Evolução
+            {evolutionData ? 'Atualizar Evolução' : 'Salvar Evolução'}
           </button>
           <button
             onClick={onClose}

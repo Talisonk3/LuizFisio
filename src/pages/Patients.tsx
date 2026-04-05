@@ -10,15 +10,11 @@ import {
   ArrowLeft, 
   User, 
   Calendar, 
-  Phone,
   Loader2,
   Pencil,
-  Share2,
-  History,
-  Eye
+  Eye,
+  Trash2
 } from 'lucide-react';
-import HistoryModal from '@/components/HistoryModal';
-import ShareModal from '@/components/ShareModal';
 import NotificationModal, { ModalType } from '@/components/NotificationModal';
 
 interface PatientRecord {
@@ -36,33 +32,90 @@ const Patients = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   
+  const [modalConfig, setModalConfig] = useState<{
+    isOpen: boolean;
+    type: ModalType;
+    title: string;
+    message: string;
+    onConfirm?: () => void;
+  }>({
+    isOpen: false,
+    type: 'info',
+    title: '',
+    message: ''
+  });
+
   const visitorAccess = sessionStorage.getItem('visitor_access');
   const visitorOwner = sessionStorage.getItem('visitor_owner');
   const isVisitor = visitorAccess === 'general';
 
+  const fetchPatients = async () => {
+    const targetUserId = isVisitor ? visitorOwner : user?.id;
+    if (!targetUserId) return;
+    
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('evaluations')
+        .select('id, patient_name, birth_date, phone, created_at')
+        .eq('user_id', targetUserId)
+        .order('patient_name', { ascending: true });
+
+      if (error) throw error;
+      setPatients(data || []);
+    } catch (error) {
+      console.error('Erro ao buscar pacientes:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchPatients = async () => {
-      const targetUserId = isVisitor ? visitorOwner : user?.id;
-      if (!targetUserId) return;
-      
-      try {
-        const { data, error } = await supabase
-          .from('evaluations')
-          .select('id, patient_name, birth_date, phone, created_at')
-          .eq('user_id', targetUserId)
-          .order('patient_name', { ascending: true });
-
-        if (error) throw error;
-        setPatients(data || []);
-      } catch (error) {
-        console.error('Erro ao buscar pacientes:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchPatients();
   }, [user, isVisitor, visitorOwner]);
+
+  const handleDeleteClick = (patient: PatientRecord) => {
+    setModalConfig({
+      isOpen: true,
+      type: 'warning',
+      title: 'Excluir Ficha?',
+      message: `Você está prestes a excluir permanentemente a ficha de ${patient.patient_name}. Esta ação não pode ser desfeita. Deseja continuar?`,
+      onConfirm: () => confirmDelete(patient.id)
+    });
+  };
+
+  const confirmDelete = async (id: string) => {
+    setModalConfig(prev => ({ ...prev, isOpen: false }));
+    
+    try {
+      // Primeiro removemos o histórico (se houver) para evitar erros de chave estrangeira
+      await supabase.from('evaluation_history').delete().eq('evaluation_id', id);
+      
+      const { error } = await supabase
+        .from('evaluations')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setPatients(prev => prev.filter(p => p.id !== id));
+      
+      setModalConfig({
+        isOpen: true,
+        type: 'success',
+        title: 'Excluído!',
+        message: 'A ficha do paciente foi removida com sucesso.'
+      });
+    } catch (error: any) {
+      console.error('Erro ao excluir:', error);
+      setModalConfig({
+        isOpen: true,
+        type: 'error',
+        title: 'Erro ao Excluir',
+        message: 'Não foi possível excluir a ficha. Tente novamente mais tarde.'
+      });
+    }
+  };
 
   const filteredPatients = patients.filter(p => 
     p.patient_name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -129,13 +182,30 @@ const Patients = () => {
                 </div>
                 
                 <div className="flex items-center gap-2 ml-4">
-                  <button onClick={() => navigate(`/avaliacao/${patient.id}?mode=view`)} className="p-3 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all">
+                  <button 
+                    onClick={() => navigate(`/avaliacao/${patient.id}?mode=view`)} 
+                    className="p-3 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
+                    title="Visualizar"
+                  >
                     <Eye size={20} />
                   </button>
                   {!isVisitor && (
-                    <button onClick={() => navigate(`/avaliacao/${patient.id}`)} className="p-3 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all">
-                      <Pencil size={20} />
-                    </button>
+                    <>
+                      <button 
+                        onClick={() => navigate(`/avaliacao/${patient.id}`)} 
+                        className="p-3 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
+                        title="Editar"
+                      >
+                        <Pencil size={20} />
+                      </button>
+                      <button 
+                        onClick={() => handleDeleteClick(patient)} 
+                        className="p-3 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
+                        title="Excluir"
+                      >
+                        <Trash2 size={20} />
+                      </button>
+                    </>
                   )}
                 </div>
               </div>
@@ -147,6 +217,17 @@ const Patients = () => {
           </div>
         )}
       </div>
+
+      <NotificationModal 
+        isOpen={modalConfig.isOpen}
+        onClose={() => setModalConfig(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={modalConfig.onConfirm}
+        type={modalConfig.type}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        confirmLabel="Sim, excluir"
+        cancelLabel="Cancelar"
+      />
     </div>
   );
 };

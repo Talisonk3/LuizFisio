@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { Calendar, Clock, Loader2, Activity, MessageSquare, Pencil } from 'lucide-react';
+import { Calendar, Clock, Loader2, Activity, MessageSquare, Pencil, History } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import SessionEvolutionModal from './SessionEvolutionModal';
+import SessionHistoryModal from './SessionHistoryModal';
 import { useAuth } from './AuthProvider';
 
 interface Evolution {
@@ -27,6 +28,7 @@ const EvolutionHistoryTab = ({ evaluationId }: EvolutionHistoryTabProps) => {
   const [evolutions, setEvolutions] = useState<Evolution[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingEvolution, setEditingEvolution] = useState<Evolution | null>(null);
+  const [historyEvolution, setHistoryEvolution] = useState<Evolution | null>(null);
 
   const fetchEvolutions = async () => {
     if (!evaluationId) return;
@@ -84,13 +86,22 @@ const EvolutionHistoryTab = ({ evaluationId }: EvolutionHistoryTabProps) => {
                       <Clock size={14} className="text-emerald-500" /> 
                       {new Date(evo.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                     </span>
-                    <button 
-                      onClick={() => setEditingEvolution(evo)}
-                      className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-                      title="Editar Evolução"
-                    >
-                      <Pencil size={16} />
-                    </button>
+                    <div className="flex items-center gap-1 ml-2">
+                      <button 
+                        onClick={() => setHistoryEvolution(evo)}
+                        className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all"
+                        title="Histórico de Edições"
+                      >
+                        <History size={16} />
+                      </button>
+                      <button 
+                        onClick={() => setEditingEvolution(evo)}
+                        className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                        title="Editar Evolução"
+                      >
+                        <Pencil size={16} />
+                      </button>
+                    </div>
                   </div>
                 </div>
                 
@@ -133,6 +144,13 @@ const EvolutionHistoryTab = ({ evaluationId }: EvolutionHistoryTabProps) => {
         patientName="Editando Evolução"
         userId={user?.id}
         evolutionData={editingEvolution}
+      />
+
+      <SessionHistoryModal 
+        isOpen={!!historyEvolution}
+        onClose={() => setHistoryEvolution(null)}
+        evolutionId={historyEvolution?.id || ''}
+        patientName={historyEvolution?.session_date ? `Sessão de ${new Date(historyEvolution.session_date + 'T00:00:00').toLocaleDateString('pt-BR')}` : 'Histórico'}
       />
     </div>
   );

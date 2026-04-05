@@ -84,11 +84,9 @@ const SessionEvolutionModal = ({
 
   const isDirty = useMemo(() => {
     if (!evolutionData) {
-      // Para nova evolução, basta ter texto
       return formData.evolution_text.trim() !== '';
     }
     
-    // Para edição, compara com os dados originais
     let originalSessionDate = '';
     if (evolutionData.session_date) {
       const parts = evolutionData.session_date.split('-');
@@ -137,6 +135,26 @@ const SessionEvolutionModal = ({
     setIsSaving(true);
     try {
       if (evolutionData?.id) {
+        // Capturar valores antigos para o histórico
+        const oldValues: any = {};
+        const newValues: any = {};
+        
+        let originalSessionDate = '';
+        if (evolutionData.session_date) {
+          const p = evolutionData.session_date.split('-');
+          originalSessionDate = `${p[2]}/${p[1]}/${p[0]}`;
+        }
+
+        const fields = ['evolution_text', 'blood_pressure', 'heart_rate', 'respiratory_rate', 'temperature', 'saturation', 'session_date'];
+        fields.forEach(field => {
+          const oldVal = field === 'session_date' ? originalSessionDate : (evolutionData[field] || '');
+          const newVal = formData[field as keyof typeof formData];
+          if (oldVal !== newVal) {
+            oldValues[field] = oldVal;
+            newValues[field] = newVal;
+          }
+        });
+
         const { error } = await supabase
           .from('session_evolutions')
           .update({
@@ -144,7 +162,18 @@ const SessionEvolutionModal = ({
             session_date: isoDate
           })
           .eq('id', evolutionData.id);
+        
         if (error) throw error;
+
+        // Registrar histórico se houver mudanças
+        if (Object.keys(newValues).length > 0) {
+          await supabase.from('session_evolution_history').insert([{
+            evolution_id: evolutionData.id,
+            user_id: userId,
+            old_values: oldValues,
+            new_values: newValues
+          }]);
+        }
       } else {
         const { error } = await supabase
           .from('session_evolutions')

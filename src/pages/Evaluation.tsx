@@ -15,7 +15,7 @@ import {
   Plus,
   Trash2,
   ArrowLeft,
-  Pencil
+  FileText
 } from 'lucide-react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -80,7 +80,7 @@ const Evaluation = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(!!id);
   const [errors, setErrors] = useState<string[]>([]);
-  const [examImages, setExamImages] = useState<string[]>([]);
+  const [examFiles, setExamFiles] = useState<string[]>([]);
   
   const [modalConfig, setModalConfig] = useState<{
     isOpen: boolean;
@@ -100,7 +100,7 @@ const Evaluation = () => {
   const [admRows, setAdmRows] = useState([{ movement: '', degree: '' }]);
   const [originalData, setOriginalData] = useState<any>(null);
   const [originalAdmRows, setOriginalAdmRows] = useState<any>([]);
-  const [originalImages, setOriginalImages] = useState<string[]>([]);
+  const [originalFiles, setOriginalFiles] = useState<string[]>([]);
 
   const initialFormData = {
     patient_name: '',
@@ -236,7 +236,6 @@ const Evaluation = () => {
   const isFormDirty = useMemo(() => {
     if (isViewMode) return false;
     
-    // Se for uma nova avaliação, habilitar se houver qualquer preenchimento básico
     if (!id) {
       return Object.keys(formData).some(key => {
         if (key === 'evaluation_date') return false;
@@ -245,7 +244,6 @@ const Evaluation = () => {
       });
     }
 
-    // Se for edição, comparar com o estado original carregado
     if (!originalData) return false;
 
     const hasFormDataChanges = Object.keys(formData).some(key => {
@@ -254,10 +252,10 @@ const Evaluation = () => {
     });
 
     const hasAdmChanges = JSON.stringify(admRows) !== JSON.stringify(originalAdmRows);
-    const hasImagesChanges = examImages.length !== originalImages.length;
+    const hasFilesChanges = examFiles.length !== originalFiles.length;
 
-    return hasFormDataChanges || hasAdmChanges || hasImagesChanges;
-  }, [formData, admRows, examImages, originalData, originalAdmRows, originalImages, id, isViewMode]);
+    return hasFormDataChanges || hasAdmChanges || hasFilesChanges;
+  }, [formData, admRows, examFiles, originalData, originalAdmRows, originalFiles, id, isViewMode]);
 
   const showAlert = (type: ModalType, title: string, message: string, onConfirm?: () => void, confirmLabel?: string, cancelLabel?: string) => {
     setModalConfig({
@@ -421,29 +419,32 @@ const Evaluation = () => {
     }
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (isViewMode) return;
     const files = Array.from(e.target.files || []);
-    if (examImages.length + files.length > 10) {
-      showAlert('warning', 'Limite de Imagens', 'Você pode enviar no máximo 10 imagens.');
+    if (examFiles.length + files.length > 10) {
+      showAlert('warning', 'Limite de Arquivos', 'Você pode enviar no máximo 10 arquivos.');
       return;
     }
     files.forEach(file => {
-      if (!file.type.startsWith('image/')) {
-        showAlert('error', 'Arquivo Inválido', 'Apenas arquivos de imagem são permitidos.');
+      const isImage = file.type.startsWith('image/');
+      const isPDF = file.type === 'application/pdf';
+      
+      if (!isImage && !isPDF) {
+        showAlert('error', 'Arquivo Inválido', 'Apenas imagens e arquivos PDF são permitidos.');
         return;
       }
       const reader = new FileReader();
       reader.onloadend = () => {
-        setExamImages(prev => [...prev, reader.result as string]);
+        setExamFiles(prev => [...prev, reader.result as string]);
       };
       reader.readAsDataURL(file);
     });
   };
 
-  const removeImage = (index: number) => {
+  const removeFile = (index: number) => {
     if (isViewMode) return;
-    setExamImages(prev => prev.filter((_, i) => i !== index));
+    setExamFiles(prev => prev.filter((_, i) => i !== index));
   };
 
   const validateIdentificacao = () => {
@@ -526,19 +527,11 @@ const Evaluation = () => {
         sedentary_details: formData.sedentary === 'Sim' ? formData.sedentary_details : '',
       };
 
-      // Gerar descrição das mudanças para o histórico
       let actionDescription = '';
       if (!id) {
         actionDescription = 'Ficha de avaliação inicial criada.';
       } else {
         const changes = [];
-        // Para o histórico, comparamos o payload final com o originalData carregado
-        // Precisamos de uma lógica de comparação que ignore campos técnicos
-        const originalPayload = {
-          ...originalData,
-          // Ajustar campos que são processados no payload
-        };
-
         for (const key in payload) {
           if (payload[key] !== originalData[key] && fieldLabels[key]) {
             const oldValue = originalData[key] || 'Vazio';
@@ -570,7 +563,6 @@ const Evaluation = () => {
 
       if (error) throw error;
 
-      // Registrar Histórico Detalhado
       if (savedId) {
         await supabase.from('evaluation_history').insert([{
           evaluation_id: savedId,
@@ -591,14 +583,13 @@ const Evaluation = () => {
       if (!id) {
         setFormData(initialFormData);
         setAdmRows([{ movement: '', degree: '' }]);
-        setExamImages([]);
+        setExamFiles([]);
         setErrors([]);
         setActiveTab('identificacao');
       } else {
-        // Atualizar originalData após salvar para desabilitar o botão novamente
         setOriginalData(JSON.parse(JSON.stringify(formData)));
         setOriginalAdmRows(JSON.parse(JSON.stringify(admRows)));
-        setOriginalImages([...examImages]);
+        setOriginalFiles([...examFiles]);
       }
       
     } catch (error: any) {
@@ -815,7 +806,6 @@ const Evaluation = () => {
                     <input disabled={isViewMode} name="height" value={formData.height} onChange={handleInputChange} type="text" className={getInputClasses('height')} placeholder="Ex: 1.75" maxLength={4} />
                   </div>
 
-                  {/* Familiar Responsável ou Cuidador */}
                   <div className="md:col-span-2 space-y-4 border-t border-slate-100 pt-8">
                     <div>
                       <label className={labelClasses}>Possui Familiar Responsável ou Cuidador?</label>
@@ -926,7 +916,6 @@ const Evaluation = () => {
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-slate-100 pt-8">
-                  {/* Alterações Auditivas */}
                   <div className="space-y-4">
                     <label className={labelClasses}>Alterações Auditivas</label>
                     <div className="flex gap-4">
@@ -961,7 +950,6 @@ const Evaluation = () => {
                     )}
                   </div>
 
-                  {/* Alterações Visuais */}
                   <div className="space-y-4">
                     <label className={labelClasses}>Alterações Visuais</label>
                     <div className="flex gap-4">
@@ -998,7 +986,6 @@ const Evaluation = () => {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-slate-100 pt-8">
-                  {/* Dispositivo para Auxílio de Marcha */}
                   <div className="space-y-4">
                     <label className={labelClasses}>Dispositivo para Auxílio de Marcha</label>
                     <div className="flex gap-4">
@@ -1034,7 +1021,6 @@ const Evaluation = () => {
                     )}
                   </div>
 
-                  {/* Exames Complementares */}
                   <div className="space-y-4">
                     <label className={labelClasses}>Exames Complementares?</label>
                     <div className="flex gap-4">
@@ -1069,14 +1055,21 @@ const Evaluation = () => {
                         </div>
                         
                         <div>
-                          <label className={labelClasses}>Imagens dos Exames (Máx. 10)</label>
+                          <label className={labelClasses}>Arquivos dos Exames (Imagens ou PDF - Máx. 10)</label>
                           <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-2">
-                            {examImages.map((img, index) => (
-                              <div key={index} className="relative group aspect-square rounded-2xl overflow-hidden border border-slate-200 bg-slate-100">
-                                <img src={img} alt={`Exame ${index + 1}`} className="w-full h-full object-cover" />
+                            {examFiles.map((file, index) => (
+                              <div key={index} className="relative group aspect-square rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 flex items-center justify-center">
+                                {file.startsWith('data:application/pdf') ? (
+                                  <div className="flex flex-col items-center gap-1 text-slate-400">
+                                    <FileText size={32} />
+                                    <span className="text-[10px] font-bold uppercase">PDF</span>
+                                  </div>
+                                ) : (
+                                  <img src={file} alt={`Exame ${index + 1}`} className="w-full h-full object-cover" />
+                                )}
                                 {!isViewMode && (
                                   <button 
-                                    onClick={() => removeImage(index)}
+                                    onClick={() => removeFile(index)}
                                     className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
                                   >
                                     <X size={14} />
@@ -1085,7 +1078,7 @@ const Evaluation = () => {
                               </div>
                             ))}
                             
-                            {examImages.length < 10 && !isViewMode && (
+                            {examFiles.length < 10 && !isViewMode && (
                               <button 
                                 onClick={() => fileInputRef.current?.click()}
                                 className="aspect-square rounded-2xl border-2 border-dashed border-slate-200 flex items-center justify-center p-2 text-slate-400 hover:border-blue-400 hover:text-blue-500 hover:bg-blue-50 transition-all overflow-hidden"
@@ -1097,8 +1090,8 @@ const Evaluation = () => {
                           <input 
                             type="file" 
                             ref={fileInputRef} 
-                            onChange={handleImageUpload} 
-                            accept="image/*" 
+                            onChange={handleFileUpload} 
+                            accept="image/*,application/pdf" 
                             multiple 
                             className="hidden" 
                           />
@@ -1134,7 +1127,6 @@ const Evaluation = () => {
                     <textarea disabled={isViewMode} name="chief_complaint" value={formData.chief_complaint} onChange={handleInputChange} className={`${getInputClasses('chief_complaint')} h-32 resize-none`} placeholder="Descreva detalhadamente o motivo da consulta..."></textarea>
                   </div>
                   
-                  {/* Escala de Dor EVA */}
                   <div className="bg-slate-50 p-6 rounded-3xl border border-slate-200">
                     <label className="text-sm font-bold text-slate-700 mb-4 block ml-1">Escala Visual Analógica de Dor (EVA)</label>
                     <div className="flex flex-wrap gap-2 justify-between">
@@ -1187,11 +1179,9 @@ const Evaluation = () => {
                     <textarea disabled={isViewMode} name="family_history" value={formData.family_history} onChange={handleInputChange} className={`${getInputClasses('family_history')} h-32 resize-none`} placeholder="Doenças hereditárias, histórico de saúde da família..."></textarea>
                   </div>
 
-                  {/* Histórico Social */}
                   <div className="border-t border-slate-100 pt-8 space-y-8">
                     <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider">Histórico Social</h4>
                     
-                    {/* Álcool */}
                     <div className="space-y-4">
                       <label className={labelClasses}>Consome bebida alcoólica?</label>
                       <div className="flex gap-4">
@@ -1226,7 +1216,6 @@ const Evaluation = () => {
                       )}
                     </div>
 
-                    {/* Fumo */}
                     <div className="space-y-4">
                       <label className={labelClasses}>É fumante ou ex-fumante?</label>
                       <div className="flex gap-4">
@@ -1261,7 +1250,6 @@ const Evaluation = () => {
                       )}
                     </div>
 
-                    {/* Atividade Física */}
                     <div className="space-y-4">
                       <label className={labelClasses}>Pratica atividade física?</label>
                       <div className="flex gap-4">
@@ -1299,7 +1287,6 @@ const Evaluation = () => {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-slate-100 pt-8">
-                    {/* Medicamentos */}
                     <div className="space-y-4">
                       <label className={labelClasses}>Faz uso de medicamentos?</label>
                       <div className="flex gap-4">
@@ -1334,7 +1321,6 @@ const Evaluation = () => {
                       )}
                     </div>
 
-                    {/* Cirurgias */}
                     <div className="space-y-4">
                       <label className={labelClasses}>Cirurgias Prévias?</label>
                       <div className="flex gap-4">
@@ -1381,7 +1367,6 @@ const Evaluation = () => {
                 </div>
                 <div className="space-y-8">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    {/* Tônus Muscular MMSS */}
                     <div className="space-y-4">
                       <label className={labelClasses}>Tônus Muscular MMSS</label>
                       <div className="flex flex-wrap gap-3">
@@ -1403,7 +1388,6 @@ const Evaluation = () => {
                       </div>
                     </div>
 
-                    {/* Tônus Muscular MMII */}
                     <div className="space-y-4">
                       <label className={labelClasses}>Tônus Muscular MMII</label>
                       <div className="flex flex-wrap gap-3">
@@ -1426,7 +1410,6 @@ const Evaluation = () => {
                     </div>
                   </div>
 
-                  {/* Amplitude de Movimento Dinâmica */}
                   <div className="space-y-4">
                     <label className={labelClasses}>Amplitude de Movimento (ADM)</label>
                     <div className="space-y-3">
@@ -1489,16 +1472,20 @@ const Evaluation = () => {
 
             {/* Navigation Buttons */}
             <div className="mt-12 pt-8 border-t border-slate-100 flex justify-between items-center">
-              <button 
-                disabled={activeTab === 'identificacao'}
-                onClick={() => {
-                  const currentIndex = tabs.findIndex(t => t.id === activeTab);
-                  setActiveTab(tabs[currentIndex - 1].id);
-                }}
-                className="flex items-center gap-2 text-slate-400 font-bold hover:text-slate-600 disabled:opacity-20 transition-all px-4 py-2 rounded-xl hover:bg-slate-50"
-              >
-                <ChevronLeft size={20} /> Voltar
-              </button>
+              {!isViewMode ? (
+                <button 
+                  disabled={activeTab === 'identificacao'}
+                  onClick={() => {
+                    const currentIndex = tabs.findIndex(t => t.id === activeTab);
+                    setActiveTab(tabs[currentIndex - 1].id);
+                  }}
+                  className="flex items-center gap-2 text-slate-400 font-bold hover:text-slate-600 disabled:opacity-20 transition-all px-4 py-2 rounded-xl hover:bg-slate-50"
+                >
+                  <ChevronLeft size={20} /> Voltar
+                </button>
+              ) : (
+                <div /> // Espaçador para manter o alinhamento
+              )}
               
               <div className="flex gap-2">
                 {tabs.map((tab) => (
@@ -1518,7 +1505,6 @@ const Evaluation = () => {
         </div>
       </main>
 
-      {/* Modal de Notificação Reutilizável */}
       <NotificationModal 
         isOpen={modalConfig.isOpen}
         onClose={() => setModalConfig(prev => ({ ...prev, isOpen: false }))}

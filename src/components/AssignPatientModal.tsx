@@ -41,8 +41,20 @@ const AssignPatientModal = ({ isOpen, onClose, visitorId, visitorName, userId }:
         .select('evaluation_id')
         .eq('visitor_id', visitorId);
 
-      setPatients(allPatients || []);
-      setAssignedIds(assigned?.map(a => a.evaluation_id) || []);
+      const assignedIdsList = assigned?.map(a => a.evaluation_id) || [];
+      
+      // Ordenar: primeiro os autorizados, depois por nome
+      const sortedPatients = allPatients ? [...allPatients].sort((a, b) => {
+        const aAssigned = assignedIdsList.includes(a.id);
+        const bAssigned = assignedIdsList.includes(b.id);
+        
+        if (aAssigned && !bAssigned) return -1;
+        if (!aAssigned && bAssigned) return 1;
+        return a.patient_name.localeCompare(b.patient_name);
+      }) : [];
+
+      setPatients(sortedPatients);
+      setAssignedIds(assignedIdsList);
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
     } finally {

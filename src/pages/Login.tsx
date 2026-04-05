@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/AuthProvider';
-import { Stethoscope, User, Lock, Mail, Loader2, Eye, EyeOff, UserCircle } from 'lucide-react';
+import { Stethoscope, User, Lock, Mail, Loader2, Eye, EyeOff, UserCircle, CheckSquare, Square } from 'lucide-react';
 
 const Login = () => {
   const { session } = useAuth();
@@ -13,8 +13,8 @@ const Login = () => {
   const [isVisitor, setIsVisitor] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // Senha oculta por padrão conforme solicitado
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
 
   const [formData, setFormData] = useState({
     username: '',
@@ -26,6 +26,21 @@ const Login = () => {
   useEffect(() => {
     if (session) {
       navigate('/');
+    }
+
+    // Carregar credenciais salvas se existirem
+    const savedUsername = localStorage.getItem('fisio_username');
+    const savedPassword = localStorage.getItem('fisio_password');
+    const savedVisitor = localStorage.getItem('fisio_is_visitor') === 'true';
+
+    if (savedUsername && savedPassword) {
+      setFormData(prev => ({
+        ...prev,
+        username: savedUsername,
+        password: savedPassword
+      }));
+      setRememberMe(true);
+      setIsVisitor(savedVisitor);
     }
   }, [session, navigate]);
 
@@ -40,8 +55,18 @@ const Login = () => {
     setError(null);
 
     try {
+      // Salvar ou limpar credenciais baseado no checkbox
+      if (rememberMe) {
+        localStorage.setItem('fisio_username', formData.username);
+        localStorage.setItem('fisio_password', formData.password);
+        localStorage.setItem('fisio_is_visitor', isVisitor.toString());
+      } else {
+        localStorage.removeItem('fisio_username');
+        localStorage.removeItem('fisio_password');
+        localStorage.removeItem('fisio_is_visitor');
+      }
+
       if (isVisitor) {
-        // 1. Tentar login como visitante geral
         const { data: generalVisitor, error: genError } = await supabase
           .from('visitors')
           .select('id, created_by, is_active')
@@ -59,7 +84,6 @@ const Login = () => {
           return;
         }
 
-        // 2. Tentar login como visitante de paciente específico (legado)
         const { data: evaluation, error: visitorError } = await supabase
           .from('evaluations')
           .select('id')
@@ -161,6 +185,21 @@ const Login = () => {
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
             </div>
+          </div>
+
+          <div className="flex items-center justify-between px-1">
+            <button 
+              type="button"
+              onClick={() => setRememberMe(!rememberMe)}
+              className="flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-700 transition-colors"
+            >
+              {rememberMe ? (
+                <CheckSquare className="text-blue-600" size={18} />
+              ) : (
+                <Square className="text-slate-300" size={18} />
+              )}
+              Manter logado
+            </button>
           </div>
 
           {error && <p className="text-red-600 text-xs text-center font-medium">{error}</p>}

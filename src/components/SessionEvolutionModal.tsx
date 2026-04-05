@@ -30,6 +30,22 @@ const SessionEvolutionModal = ({ isOpen, onClose, evaluationId, patientName, isR
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
+  const formatDate = (value: string) => {
+    const numbers = value.replace(/\D/g, '');
+    const currentYear = new Date().getFullYear();
+    let day = numbers.slice(0, 2);
+    let month = numbers.slice(2, 4);
+    let year = numbers.slice(4, 8);
+    if (day && parseInt(day) > 31) day = '31';
+    if (day && day !== '0' && day !== '00' && parseInt(day) === 0) day = '01';
+    if (month && parseInt(month) > 12) month = '12';
+    if (month && month !== '0' && month !== '00' && parseInt(month) === 0) month = '01';
+    if (year && year.length === 4 && parseInt(year) > currentYear) year = currentYear.toString();
+    if (numbers.length <= 2) return day;
+    if (numbers.length <= 4) return `${day}/${month}`;
+    return `${day}/${month}/${year}`;
+  };
+
   const initialFormData = {
     evolution_text: '',
     blood_pressure: '',
@@ -37,7 +53,7 @@ const SessionEvolutionModal = ({ isOpen, onClose, evaluationId, patientName, isR
     respiratory_rate: '',
     temperature: '',
     saturation: '',
-    session_date: new Date().toISOString().split('T')[0]
+    session_date: new Date().toLocaleDateString('pt-BR')
   };
 
   const [formData, setFormData] = useState(initialFormData);
@@ -69,8 +85,9 @@ const SessionEvolutionModal = ({ isOpen, onClose, evaluationId, patientName, isR
     const { name, value } = e.target;
     let filteredValue = value;
 
-    // Formatações básicas
-    if (name === 'blood_pressure') {
+    if (name === 'session_date') {
+      filteredValue = formatDate(value);
+    } else if (name === 'blood_pressure') {
       const numbers = value.replace(/\D/g, '').substring(0, 5);
       filteredValue = numbers.length > 2 ? `${numbers.slice(0, 2)}/${numbers.slice(2)}` : numbers;
     } else if (['heart_rate', 'respiratory_rate', 'saturation'].includes(name)) {
@@ -86,6 +103,12 @@ const SessionEvolutionModal = ({ isOpen, onClose, evaluationId, patientName, isR
   const handleSave = async () => {
     if (!formData.evolution_text.trim() || !userId) return;
     
+    let isoDate = null;
+    const parts = formData.session_date.split('/');
+    if (parts.length === 3) {
+      isoDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+    }
+
     setIsSaving(true);
     try {
       const { error } = await supabase
@@ -93,7 +116,8 @@ const SessionEvolutionModal = ({ isOpen, onClose, evaluationId, patientName, isR
         .insert([{
           evaluation_id: evaluationId,
           user_id: userId,
-          ...formData
+          ...formData,
+          session_date: isoDate
         }]);
 
       if (error) throw error;
@@ -142,10 +166,12 @@ const SessionEvolutionModal = ({ isOpen, onClose, evaluationId, patientName, isR
                 <div className="col-span-2 md:col-span-1">
                   <label className={labelClasses}>Data da Sessão</label>
                   <input 
-                    type="date" 
+                    type="text" 
                     name="session_date"
                     value={formData.session_date}
                     onChange={handleInputChange}
+                    placeholder="DD/MM/AAAA"
+                    maxLength={10}
                     className={inputClasses}
                   />
                 </div>

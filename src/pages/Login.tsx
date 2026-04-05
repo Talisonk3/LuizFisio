@@ -13,7 +13,8 @@ const Login = () => {
   const [isVisitor, setIsVisitor] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showPassword, setShowPassword] = useState(true);
+  // Senha oculta por padrão conforme solicitado
+  const [showPassword, setShowPassword] = useState(false);
 
   const [formData, setFormData] = useState({
     username: '',

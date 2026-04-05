@@ -13,9 +13,11 @@ import {
   Loader2,
   Pencil,
   Eye,
-  Trash2
+  Trash2,
+  History
 } from 'lucide-react';
 import NotificationModal, { ModalType } from '@/components/NotificationModal';
+import SessionEvolutionModal from '@/components/SessionEvolutionModal';
 
 interface PatientRecord {
   id: string;
@@ -45,8 +47,17 @@ const Patients = () => {
     message: ''
   });
 
+  const [evolutionModal, setEvolutionModal] = useState<{
+    isOpen: boolean;
+    patientId: string;
+    patientName: string;
+  }>({
+    isOpen: false,
+    patientId: '',
+    patientName: ''
+  });
+
   const visitorAccess = sessionStorage.getItem('visitor_access');
-  const visitorOwner = sessionStorage.getItem('visitor_owner');
   const visitorId = sessionStorage.getItem('visitor_id');
   const isVisitor = visitorAccess === 'general';
 
@@ -54,7 +65,6 @@ const Patients = () => {
     setLoading(true);
     try {
       if (isVisitor && visitorId) {
-        // Buscar apenas pacientes associados a este visitante
         const { data, error } = await supabase
           .from('visitor_evaluations')
           .select(`
@@ -70,7 +80,6 @@ const Patients = () => {
         const formattedData = data?.map((item: any) => item.evaluations).filter(Boolean) || [];
         setPatients(formattedData);
       } else if (user) {
-        // Profissional vê todos os seus pacientes
         const { data, error } = await supabase
           .from('evaluations')
           .select('id, patient_name, birth_date, phone, created_at')
@@ -106,6 +115,7 @@ const Patients = () => {
     
     try {
       await supabase.from('evaluation_history').delete().eq('evaluation_id', id);
+      await supabase.from('session_evolutions').delete().eq('evaluation_id', id);
       
       const { error } = await supabase
         .from('evaluations')
@@ -199,9 +209,16 @@ const Patients = () => {
                 
                 <div className="flex items-center gap-2 ml-4">
                   <button 
+                    onClick={() => setEvolutionModal({ isOpen: true, patientId: patient.id, patientName: patient.patient_name })}
+                    className="p-3 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all"
+                    title="Evolução de Sessão"
+                  >
+                    <History size={20} />
+                  </button>
+                  <button 
                     onClick={() => navigate(`/avaliacao/${patient.id}?mode=view`)} 
                     className="p-3 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
-                    title="Visualizar"
+                    title="Visualizar Ficha"
                   >
                     <Eye size={20} />
                   </button>
@@ -210,7 +227,7 @@ const Patients = () => {
                       <button 
                         onClick={() => navigate(`/avaliacao/${patient.id}`)} 
                         className="p-3 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
-                        title="Editar"
+                        title="Editar Ficha"
                       >
                         <Pencil size={20} />
                       </button>
@@ -233,6 +250,15 @@ const Patients = () => {
           </div>
         )}
       </div>
+
+      <SessionEvolutionModal 
+        isOpen={evolutionModal.isOpen}
+        onClose={() => setEvolutionModal(prev => ({ ...prev, isOpen: false }))}
+        evaluationId={evolutionModal.patientId}
+        patientName={evolutionModal.patientName}
+        isReadOnly={isVisitor}
+        userId={user?.id}
+      />
 
       <NotificationModal 
         isOpen={modalConfig.isOpen}

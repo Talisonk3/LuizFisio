@@ -187,7 +187,9 @@ const Evaluation = () => {
           let birthDate = '';
           if (data.birth_date) {
             const parts = data.birth_date.split('-');
-            birthDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+            birthDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+            const dateParts = data.birth_date.split('-');
+            birthDate = `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
           }
 
           let rows = [{ movement: '', degree: '' }];
@@ -1493,13 +1495,15 @@ const Evaluation = () => {
                 ))}
               </div>
 
-              <button 
-                onClick={handleNext}
-                className="bg-slate-100 text-blue-600 font-black flex items-center gap-2 px-6 py-3 rounded-2xl hover:bg-blue-600 hover:text-white transition-all group"
-              >
-                {activeTab === 'funcional' ? (isViewMode ? 'Início' : (id ? 'Atualizar' : 'Finalizar')) : 'Próximo'} 
-                <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform" />
-              </button>
+              {!(isViewMode && activeTab === 'funcional') && (
+                <button 
+                  onClick={handleNext}
+                  className="bg-slate-100 text-blue-600 font-black flex items-center gap-2 px-6 py-3 rounded-2xl hover:bg-blue-600 hover:text-white transition-all group"
+                >
+                  {activeTab === 'funcional' ? (id ? 'Atualizar' : 'Finalizar') : 'Próximo'} 
+                  <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                </button>
+              )}
             </div>
           </div>
         </div>

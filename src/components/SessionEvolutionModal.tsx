@@ -1,12 +1,18 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { X, Save, Loader2, Calendar, Clock, MessageSquarePlus, History } from 'lucide-react';
+import { X, Save, Loader2, Calendar, Clock, MessageSquarePlus, History, Activity } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface Evolution {
   id: string;
   evolution_text: string;
+  blood_pressure?: string;
+  heart_rate?: string;
+  respiratory_rate?: string;
+  temperature?: string;
+  saturation?: string;
+  session_date?: string;
   created_at: string;
 }
 
@@ -21,9 +27,20 @@ interface SessionEvolutionModalProps {
 
 const SessionEvolutionModal = ({ isOpen, onClose, evaluationId, patientName, isReadOnly, userId }: SessionEvolutionModalProps) => {
   const [evolutions, setEvolutions] = useState<Evolution[]>([]);
-  const [newEvolution, setNewEvolution] = useState('');
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+
+  const initialFormData = {
+    evolution_text: '',
+    blood_pressure: '',
+    heart_rate: '',
+    respiratory_rate: '',
+    temperature: '',
+    saturation: '',
+    session_date: new Date().toISOString().split('T')[0]
+  };
+
+  const [formData, setFormData] = useState(initialFormData);
 
   const fetchEvolutions = async () => {
     if (!isOpen || !evaluationId) return;
@@ -31,7 +48,7 @@ const SessionEvolutionModal = ({ isOpen, onClose, evaluationId, patientName, isR
     try {
       const { data, error } = await supabase
         .from('session_evolutions')
-        .select('id, evolution_text, created_at')
+        .select('*')
         .eq('evaluation_id', evaluationId)
         .order('created_at', { ascending: false });
 
@@ -48,8 +65,26 @@ const SessionEvolutionModal = ({ isOpen, onClose, evaluationId, patientName, isR
     fetchEvolutions();
   }, [isOpen, evaluationId]);
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    let filteredValue = value;
+
+    // Formatações básicas
+    if (name === 'blood_pressure') {
+      const numbers = value.replace(/\D/g, '').substring(0, 5);
+      filteredValue = numbers.length > 2 ? `${numbers.slice(0, 2)}/${numbers.slice(2)}` : numbers;
+    } else if (['heart_rate', 'respiratory_rate', 'saturation'].includes(name)) {
+      filteredValue = value.replace(/\D/g, '').substring(0, 3);
+    } else if (name === 'temperature') {
+      const numbers = value.replace(/\D/g, '').substring(0, 3);
+      filteredValue = numbers.length > 2 ? `${numbers.slice(0, 2)}.${numbers.slice(2)}` : numbers;
+    }
+
+    setFormData(prev => ({ ...prev, [name]: filteredValue }));
+  };
+
   const handleSave = async () => {
-    if (!newEvolution.trim() || !userId) return;
+    if (!formData.evolution_text.trim() || !userId) return;
     
     setIsSaving(true);
     try {
@@ -58,12 +93,12 @@ const SessionEvolutionModal = ({ isOpen, onClose, evaluationId, patientName, isR
         .insert([{
           evaluation_id: evaluationId,
           user_id: userId,
-          evolution_text: newEvolution.trim()
+          ...formData
         }]);
 
       if (error) throw error;
       
-      setNewEvolution('');
+      setFormData(initialFormData);
       fetchEvolutions();
     } catch (error) {
       console.error('Erro ao salvar evolução:', error);
@@ -73,6 +108,9 @@ const SessionEvolutionModal = ({ isOpen, onClose, evaluationId, patientName, isR
   };
 
   if (!isOpen) return null;
+
+  const labelClasses = "text-[10px] font-bold text-slate-400 uppercase ml-1 mb-1 block";
+  const inputClasses = "w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-sm";
 
   return (
     <div className="fixed inset-0 z-[140] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
@@ -94,21 +132,95 @@ const SessionEvolutionModal = ({ isOpen, onClose, evaluationId, patientName, isR
 
         <div className="flex-1 overflow-y-auto p-8 space-y-8">
           {!isReadOnly && (
-            <div className="space-y-4">
-              <label className="text-sm font-bold text-slate-700 ml-1 flex items-center gap-2">
-                <MessageSquarePlus size={18} className="text-emerald-600" />
+            <div className="space-y-6 bg-slate-50/30 p-6 rounded-[2rem] border border-slate-100">
+              <div className="flex items-center gap-2 text-emerald-600 font-bold text-sm mb-2">
+                <MessageSquarePlus size={18} />
                 Nova Evolução
-              </label>
-              <textarea
-                value={newEvolution}
-                onChange={(e) => setNewEvolution(e.target.value)}
-                placeholder="Descreva o atendimento de hoje, condutas realizadas e resposta do paciente..."
-                className="w-full p-5 bg-slate-50 border border-slate-200 rounded-3xl focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 outline-none transition-all h-32 resize-none text-slate-700"
-              />
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="col-span-2 md:col-span-1">
+                  <label className={labelClasses}>Data da Sessão</label>
+                  <input 
+                    type="date" 
+                    name="session_date"
+                    value={formData.session_date}
+                    onChange={handleInputChange}
+                    className={inputClasses}
+                  />
+                </div>
+                <div>
+                  <label className={labelClasses}>PA (mmHg)</label>
+                  <input 
+                    type="text" 
+                    name="blood_pressure"
+                    value={formData.blood_pressure}
+                    onChange={handleInputChange}
+                    placeholder="120/80"
+                    className={inputClasses}
+                  />
+                </div>
+                <div>
+                  <label className={labelClasses}>FC (bpm)</label>
+                  <input 
+                    type="text" 
+                    name="heart_rate"
+                    value={formData.heart_rate}
+                    onChange={handleInputChange}
+                    placeholder="70"
+                    className={inputClasses}
+                  />
+                </div>
+                <div>
+                  <label className={labelClasses}>FR (irpm)</label>
+                  <input 
+                    type="text" 
+                    name="respiratory_rate"
+                    value={formData.respiratory_rate}
+                    onChange={handleInputChange}
+                    placeholder="16"
+                    className={inputClasses}
+                  />
+                </div>
+                <div>
+                  <label className={labelClasses}>Temp (°C)</label>
+                  <input 
+                    type="text" 
+                    name="temperature"
+                    value={formData.temperature}
+                    onChange={handleInputChange}
+                    placeholder="36.5"
+                    className={inputClasses}
+                  />
+                </div>
+                <div>
+                  <label className={labelClasses}>SatO2 (%)</label>
+                  <input 
+                    type="text" 
+                    name="saturation"
+                    value={formData.saturation}
+                    onChange={handleInputChange}
+                    placeholder="98"
+                    className={inputClasses}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className={labelClasses}>Descrição da Evolução</label>
+                <textarea
+                  name="evolution_text"
+                  value={formData.evolution_text}
+                  onChange={handleInputChange}
+                  placeholder="Descreva o atendimento, condutas e resposta do paciente..."
+                  className="w-full p-4 bg-white border border-slate-200 rounded-2xl focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 outline-none transition-all h-32 resize-none text-sm text-slate-700"
+                />
+              </div>
+
               <div className="flex justify-end">
                 <button
                   onClick={handleSave}
-                  disabled={isSaving || !newEvolution.trim()}
+                  disabled={isSaving || !formData.evolution_text.trim()}
                   className="bg-emerald-600 text-white px-8 py-3 rounded-2xl flex items-center gap-2 hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-100 disabled:opacity-50 font-bold"
                 >
                   {isSaving ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
@@ -130,13 +242,25 @@ const SessionEvolutionModal = ({ isOpen, onClose, evaluationId, patientName, isR
               <div className="space-y-4">
                 {evolutions.map((evo) => (
                   <div key={evo.id} className="bg-white border border-slate-100 p-6 rounded-3xl shadow-sm hover:shadow-md transition-all">
-                    <div className="flex items-center gap-4 text-[10px] text-slate-400 font-bold uppercase tracking-tight mb-3">
-                      <span className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-lg">
-                        <Calendar size={12} /> {new Date(evo.created_at).toLocaleDateString('pt-BR')}
-                      </span>
-                      <span className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-lg">
-                        <Clock size={12} /> {new Date(evo.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                      </span>
+                    <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+                      <div className="flex items-center gap-4 text-[10px] text-slate-400 font-bold uppercase tracking-tight">
+                        <span className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-lg">
+                          <Calendar size={12} /> {evo.session_date ? new Date(evo.session_date + 'T00:00:00').toLocaleDateString('pt-BR') : new Date(evo.created_at).toLocaleDateString('pt-BR')}
+                        </span>
+                        <span className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-lg">
+                          <Clock size={12} /> {new Date(evo.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                      
+                      {(evo.blood_pressure || evo.heart_rate || evo.respiratory_rate || evo.temperature || evo.saturation) && (
+                        <div className="flex flex-wrap gap-2">
+                          {evo.blood_pressure && <span className="bg-blue-50 text-blue-600 px-2 py-1 rounded-lg text-[10px] font-bold">PA: {evo.blood_pressure}</span>}
+                          {evo.heart_rate && <span className="bg-blue-50 text-blue-600 px-2 py-1 rounded-lg text-[10px] font-bold">FC: {evo.heart_rate}</span>}
+                          {evo.respiratory_rate && <span className="bg-blue-50 text-blue-600 px-2 py-1 rounded-lg text-[10px] font-bold">FR: {evo.respiratory_rate}</span>}
+                          {evo.temperature && <span className="bg-blue-50 text-blue-600 px-2 py-1 rounded-lg text-[10px] font-bold">T: {evo.temperature}°C</span>}
+                          {evo.saturation && <span className="bg-blue-50 text-blue-600 px-2 py-1 rounded-lg text-[10px] font-bold">Sat: {evo.saturation}%</span>}
+                        </div>
+                      )}
                     </div>
                     <p className="text-slate-600 leading-relaxed whitespace-pre-wrap text-sm">
                       {evo.evolution_text}

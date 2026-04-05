@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { X, Save, Loader2, MessageSquarePlus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -81,6 +81,30 @@ const SessionEvolutionModal = ({
       }
     }
   }, [isOpen, evolutionData]);
+
+  const isDirty = useMemo(() => {
+    if (!evolutionData) {
+      // Para nova evolução, basta ter texto
+      return formData.evolution_text.trim() !== '';
+    }
+    
+    // Para edição, compara com os dados originais
+    let originalSessionDate = '';
+    if (evolutionData.session_date) {
+      const parts = evolutionData.session_date.split('-');
+      originalSessionDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+    } else {
+      originalSessionDate = new Date(evolutionData.created_at).toLocaleDateString('pt-BR');
+    }
+
+    return formData.evolution_text !== (evolutionData.evolution_text || '') ||
+           formData.blood_pressure !== (evolutionData.blood_pressure || '') ||
+           formData.heart_rate !== (evolutionData.heart_rate || '') ||
+           formData.respiratory_rate !== (evolutionData.respiratory_rate || '') ||
+           formData.temperature !== (evolutionData.temperature || '') ||
+           formData.saturation !== (evolutionData.saturation || '') ||
+           formData.session_date !== originalSessionDate;
+  }, [formData, evolutionData]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -254,7 +278,7 @@ const SessionEvolutionModal = ({
         <div className="p-8 bg-slate-50/50 border-t border-slate-100 flex gap-3">
           <button
             onClick={handleSave}
-            disabled={isSaving || !formData.evolution_text.trim()}
+            disabled={isSaving || !isDirty}
             className="flex-1 bg-emerald-600 text-white py-4 rounded-2xl flex items-center justify-center gap-2 hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-100 disabled:opacity-50 font-bold"
           >
             {isSaving ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}

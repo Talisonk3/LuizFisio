@@ -9,9 +9,11 @@ import {
   Loader2,
   ShieldCheck,
   Plus,
-  User
+  User,
+  UserPlus
 } from 'lucide-react';
 import ShareModal from '@/components/ShareModal';
+import AssignPatientModal from '@/components/AssignPatientModal';
 import NotificationModal, { ModalType } from '@/components/NotificationModal';
 
 interface Visitor {
@@ -27,6 +29,11 @@ const Share = () => {
   const [visitors, setVisitors] = useState<Visitor[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [assignModal, setAssignModal] = useState<{ isOpen: boolean; visitorId: string; visitorName: string }>({
+    isOpen: false,
+    visitorId: '',
+    visitorName: ''
+  });
 
   const [alertConfig, setAlertConfig] = useState<{
     isOpen: boolean;
@@ -145,22 +152,32 @@ const Share = () => {
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-3">
-                    <span className={`text-xs font-black uppercase tracking-wider ${visitor.is_active ? 'text-emerald-500' : 'text-slate-400'}`}>
-                      {visitor.is_active ? 'Ativo' : 'Inativo'}
-                    </span>
-                    <button 
-                      onClick={() => toggleVisitorStatus(visitor.id, visitor.is_active)}
-                      className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors focus:outline-none ${
-                        visitor.is_active ? 'bg-emerald-500' : 'bg-slate-200'
-                      }`}
+                  <div className="flex items-center gap-4">
+                    <button
+                      onClick={() => setAssignModal({ isOpen: true, visitorId: visitor.id, visitorName: visitor.username })}
+                      className="p-3 bg-purple-50 text-purple-600 rounded-xl hover:bg-purple-600 hover:text-white transition-all shadow-sm"
+                      title="Autorizar Pacientes"
                     >
-                      <span
-                        className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${
-                          visitor.is_active ? 'translate-x-7' : 'translate-x-1'
-                        }`}
-                      />
+                      <UserPlus size={20} />
                     </button>
+
+                    <div className="flex items-center gap-3 border-l border-slate-100 pl-4">
+                      <span className={`text-xs font-black uppercase tracking-wider ${visitor.is_active ? 'text-emerald-500' : 'text-slate-400'}`}>
+                        {visitor.is_active ? 'Ativo' : 'Inativo'}
+                      </span>
+                      <button 
+                        onClick={() => toggleVisitorStatus(visitor.id, visitor.is_active)}
+                        className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors focus:outline-none ${
+                          visitor.is_active ? 'bg-emerald-500' : 'bg-slate-200'
+                        }`}
+                      >
+                        <span
+                          className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${
+                            visitor.is_active ? 'translate-x-7' : 'translate-x-1'
+                          }`}
+                        />
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -184,6 +201,14 @@ const Share = () => {
         onClose={() => setIsModalOpen(false)}
         onSuccess={handleSuccess}
         userId={user?.id}
+      />
+
+      <AssignPatientModal 
+        isOpen={assignModal.isOpen}
+        onClose={() => setAssignModal(prev => ({ ...prev, isOpen: false }))}
+        visitorId={assignModal.visitorId}
+        visitorName={assignModal.visitorName}
+        userId={user?.id || ''}
       />
 
       <NotificationModal 

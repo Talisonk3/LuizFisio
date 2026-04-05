@@ -47,22 +47,39 @@ const Patients = () => {
 
   const visitorAccess = sessionStorage.getItem('visitor_access');
   const visitorOwner = sessionStorage.getItem('visitor_owner');
+  const visitorId = sessionStorage.getItem('visitor_id');
   const isVisitor = visitorAccess === 'general';
 
   const fetchPatients = async () => {
-    const targetUserId = isVisitor ? visitorOwner : user?.id;
-    if (!targetUserId) return;
-    
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('evaluations')
-        .select('id, patient_name, birth_date, phone, created_at')
-        .eq('user_id', targetUserId)
-        .order('patient_name', { ascending: true });
+      if (isVisitor && visitorId) {
+        // Buscar apenas pacientes associados a este visitante
+        const { data, error } = await supabase
+          .from('visitor_evaluations')
+          .select(`
+            evaluation_id,
+            evaluations (
+              id, patient_name, birth_date, phone, created_at
+            )
+          `)
+          .eq('visitor_id', visitorId);
 
-      if (error) throw error;
-      setPatients(data || []);
+        if (error) throw error;
+        
+        const formattedData = data?.map((item: any) => item.evaluations).filter(Boolean) || [];
+        setPatients(formattedData);
+      } else if (user) {
+        // Profissional vê todos os seus pacientes
+        const { data, error } = await supabase
+          .from('evaluations')
+          .select('id, patient_name, birth_date, phone, created_at')
+          .eq('user_id', user.id)
+          .order('patient_name', { ascending: true });
+
+        if (error) throw error;
+        setPatients(data || []);
+      }
     } catch (error) {
       console.error('Erro ao buscar pacientes:', error);
     } finally {
@@ -72,7 +89,7 @@ const Patients = () => {
 
   useEffect(() => {
     fetchPatients();
-  }, [user, isVisitor, visitorOwner]);
+  }, [user, isVisitor, visitorId]);
 
   const handleDeleteClick = (patient: PatientRecord) => {
     setModalConfig({
@@ -88,7 +105,6 @@ const Patients = () => {
     setModalConfig(prev => ({ ...prev, isOpen: false }));
     
     try {
-      // Primeiro removemos o histórico (se houver) para evitar erros de chave estrangeira
       await supabase.from('evaluation_history').delete().eq('evaluation_id', id);
       
       const { error } = await supabase
@@ -133,10 +149,10 @@ const Patients = () => {
             )}
             <div>
               <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">
-                {isVisitor ? 'Pacientes Disponíveis' : 'Meus Pacientes'}
+                {isVisitor ? 'Pacientes Autorizados' : 'Meus Pacientes'}
               </h1>
               <p className="text-slate-500">
-                {isVisitor ? 'Visualize as fichas clínicas autorizadas.' : 'Gerencie o histórico clínico de seus atendimentos.'}
+                {isVisitor ? 'Visualize as fichas clínicas autorizadas pelo profissional.' : 'Gerencie o histórico clínico de seus atendimentos.'}
               </p>
             </div>
           </div>
@@ -213,7 +229,7 @@ const Patients = () => {
           </div>
         ) : (
           <div className="bg-white rounded-[2.5rem] p-12 text-center border border-dashed border-slate-200">
-            <p className="text-slate-500">Nenhum paciente encontrado.</p>
+            <p className="text-slate-500">Nenhum paciente autorizado encontrado.</p>
           </div>
         )}
       </div>

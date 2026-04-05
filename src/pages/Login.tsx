@@ -80,6 +80,7 @@ const Login = () => {
           }
           sessionStorage.setItem('visitor_access', 'general');
           sessionStorage.setItem('visitor_owner', generalVisitor.created_by);
+          sessionStorage.setItem('visitor_id', generalVisitor.id);
           navigate('/pacientes');
           return;
         }

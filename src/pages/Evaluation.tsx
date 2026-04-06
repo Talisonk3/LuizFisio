@@ -452,6 +452,15 @@ const Evaluation = () => {
     setExamFiles(prev => prev.filter((_, i) => i !== index));
   };
 
+  const isFutureDate = (dateStr: string) => {
+    if (dateStr.length !== 10) return false;
+    const [d, m, y] = dateStr.split('/').map(Number);
+    const date = new Date(y, m - 1, d);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return date > today;
+  };
+
   const validateCurrentTab = () => {
     const newErrors: string[] = [];
     
@@ -474,7 +483,10 @@ const Evaluation = () => {
           newErrors.push(field);
         }
       });
+      
       if (formData.birth_date.length < 10 && !newErrors.includes('birth_date')) {
+        newErrors.push('birth_date');
+      } else if (isFutureDate(formData.birth_date)) {
         newErrors.push('birth_date');
       }
     }
@@ -505,7 +517,12 @@ const Evaluation = () => {
     const idFields = ['patient_name', 'birth_date', 'gender', 'marital_status', 'address', 'address_number', 'profession'];
     if (formData.has_caregiver === 'Sim') idFields.push('caregiver_name', 'caregiver_phone');
     idFields.forEach(f => { if (!formData[f as keyof typeof formData]?.toString().trim()) newErrors.push(f); });
-    if (formData.birth_date.length < 10 && !newErrors.includes('birth_date')) newErrors.push('birth_date');
+    
+    if (formData.birth_date.length < 10 && !newErrors.includes('birth_date')) {
+      newErrors.push('birth_date');
+    } else if (isFutureDate(formData.birth_date)) {
+      newErrors.push('birth_date');
+    }
 
     // Exame Fisico
     if (formData.auditory_alteration === 'Sim' && !formData.auditory_alteration_details.trim()) newErrors.push('auditory_alteration_details');
@@ -527,7 +544,12 @@ const Evaluation = () => {
   const handleSave = async () => {
     if (isViewMode) return;
     if (!validateAll()) {
-      showAlert('warning', 'Campos Obrigatórios', 'Por favor, preencha todos os campos obrigatórios marcados em vermelho antes de salvar.');
+      const hasFutureDate = isFutureDate(formData.birth_date);
+      const message = hasFutureDate 
+        ? 'A data de nascimento não pode ser posterior à data de hoje.' 
+        : 'Por favor, preencha todos os campos obrigatórios marcados em vermelho antes de salvar.';
+      
+      showAlert('warning', hasFutureDate ? 'Data Inválida' : 'Campos Obrigatórios', message);
       return;
     }
 
@@ -656,7 +678,12 @@ const Evaluation = () => {
     const currentIndex = tabs.findIndex(t => t.id === activeTab);
     if (!isViewMode) {
       if (!validateCurrentTab()) {
-        showAlert('warning', 'Campos Obrigatórios', 'Preencha os campos obrigatórios marcados em vermelho antes de prosseguir.');
+        const hasFutureDate = isFutureDate(formData.birth_date);
+        const message = hasFutureDate 
+          ? 'A data de nascimento não pode ser posterior à data de hoje.' 
+          : 'Preencha os campos obrigatórios marcados em vermelho antes de prosseguir.';
+        
+        showAlert('warning', hasFutureDate ? 'Data Inválida' : 'Campos Obrigatórios', message);
         return;
       }
     }
@@ -724,7 +751,12 @@ const Evaluation = () => {
               key={tab.id}
               onClick={() => {
                 if (!isViewMode && !validateCurrentTab()) {
-                  showAlert('warning', 'Campos Obrigatórios', 'Preencha os campos obrigatórios antes de mudar de aba.');
+                  const hasFutureDate = isFutureDate(formData.birth_date);
+                  const message = hasFutureDate 
+                    ? 'A data de nascimento não pode ser posterior à data de hoje.' 
+                    : 'Preencha os campos obrigatórios antes de mudar de aba.';
+                  
+                  showAlert('warning', hasFutureDate ? 'Data Inválida' : 'Campos Obrigatórios', message);
                   return;
                 }
                 setActiveTab(tab.id);

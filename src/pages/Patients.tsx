@@ -14,7 +14,8 @@ import {
   Pencil,
   Eye,
   Trash2,
-  MessageSquarePlus
+  MessageSquarePlus,
+  Home
 } from 'lucide-react';
 import NotificationModal, { ModalType } from '@/components/NotificationModal';
 import SessionEvolutionModal from '@/components/SessionEvolutionModal';
@@ -153,9 +154,22 @@ const Patients = () => {
         <header className="mb-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div className="flex items-center gap-4">
             {!isVisitor && (
-              <button onClick={() => navigate('/')} className="p-3 bg-white border border-slate-200 rounded-2xl text-slate-400 hover:text-blue-600 transition-all shadow-sm">
-                <ArrowLeft size={20} />
-              </button>
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => navigate('/')} 
+                  className="p-3 bg-white border border-slate-200 rounded-2xl text-slate-400 hover:text-blue-600 transition-all shadow-sm"
+                  title="Início"
+                >
+                  <Home size={20} />
+                </button>
+                <button 
+                  onClick={() => navigate(-1)} 
+                  className="p-3 bg-white border border-slate-200 rounded-2xl text-slate-400 hover:text-blue-600 transition-all shadow-sm"
+                  title="Voltar"
+                >
+                  <ArrowLeft size={20} />
+                </button>
+              </div>
             )}
             <div>
               <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">

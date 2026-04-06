@@ -10,7 +10,8 @@ import {
   ShieldCheck,
   Plus,
   User,
-  UserPlus
+  UserPlus,
+  Home
 } from 'lucide-react';
 import ShareModal from '@/components/ShareModal';
 import AssignPatientModal from '@/components/AssignPatientModal';
@@ -102,12 +103,22 @@ const Share = () => {
       <div className="max-w-4xl mx-auto">
         <header className="mb-12 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div className="flex items-center gap-4">
-            <button 
-              onClick={() => navigate('/')}
-              className="p-3 bg-white border border-slate-200 rounded-2xl text-slate-400 hover:text-purple-600 hover:border-purple-100 transition-all shadow-sm"
-            >
-              <ArrowLeft size={20} />
-            </button>
+            <div className="flex gap-2">
+              <button 
+                onClick={() => navigate('/')} 
+                className="p-3 bg-white border border-slate-200 rounded-2xl text-slate-400 hover:text-purple-600 hover:border-purple-100 transition-all shadow-sm"
+                title="Início"
+              >
+                <Home size={20} />
+              </button>
+              <button 
+                onClick={() => navigate(-1)}
+                className="p-3 bg-white border border-slate-200 rounded-2xl text-slate-400 hover:text-purple-600 hover:border-purple-100 transition-all shadow-sm"
+                title="Voltar"
+              >
+                <ArrowLeft size={20} />
+              </button>
+            </div>
             <div>
               <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">Gerenciar Usuários</h1>
               <p className="text-slate-500">Controle quem pode acessar seu sistema como visitante.</p>

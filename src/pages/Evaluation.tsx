@@ -489,6 +489,15 @@ const Evaluation = () => {
       } else if (isFutureDate(formData.birth_date)) {
         newErrors.push('birth_date');
       }
+
+      // Validação de telefone incompleto
+      const phoneFields = ['phone', 'caregiver_phone', 'doctor_phone'];
+      phoneFields.forEach(field => {
+        const val = formData[field as keyof typeof formData] as string;
+        if (val && val.trim() !== '' && val.length < 15) {
+          if (!newErrors.includes(field)) newErrors.push(field);
+        }
+      });
     }
     
     if (activeTab === 'exame-fisico') {
@@ -524,6 +533,15 @@ const Evaluation = () => {
       newErrors.push('birth_date');
     }
 
+    // Validação de telefone incompleto
+    const phoneFields = ['phone', 'caregiver_phone', 'doctor_phone'];
+    phoneFields.forEach(field => {
+      const val = formData[field as keyof typeof formData] as string;
+      if (val && val.trim() !== '' && val.length < 15) {
+        if (!newErrors.includes(field)) newErrors.push(field);
+      }
+    });
+
     // Exame Fisico
     if (formData.auditory_alteration === 'Sim' && !formData.auditory_alteration_details.trim()) newErrors.push('auditory_alteration_details');
     if (formData.visual_alteration === 'Sim' && !formData.visual_alteration_details.trim()) newErrors.push('visual_alteration_details');
@@ -545,11 +563,23 @@ const Evaluation = () => {
     if (isViewMode) return;
     if (!validateAll()) {
       const hasFutureDate = isFutureDate(formData.birth_date);
-      const message = hasFutureDate 
-        ? 'A data de nascimento não pode ser posterior à data de hoje.' 
-        : 'Por favor, preencha todos os campos obrigatórios marcados em vermelho antes de salvar.';
+      const hasIncompletePhone = ['phone', 'caregiver_phone', 'doctor_phone'].some(f => {
+        const val = formData[f as keyof typeof formData] as string;
+        return val && val.trim() !== '' && val.length < 15;
+      });
+
+      let message = 'Por favor, preencha todos os campos obrigatórios marcados em vermelho antes de salvar.';
+      let title = 'Campos Obrigatórios';
       
-      showAlert('warning', hasFutureDate ? 'Data Inválida' : 'Campos Obrigatórios', message);
+      if (hasFutureDate) {
+        title = 'Data Inválida';
+        message = 'A data de nascimento não pode ser posterior à data de hoje.';
+      } else if (hasIncompletePhone) {
+        title = 'Telefone Incompleto';
+        message = 'Os números de telefone devem ser preenchidos completamente no formato (00) 00000-0000.';
+      }
+      
+      showAlert('warning', title, message);
       return;
     }
 
@@ -679,11 +709,23 @@ const Evaluation = () => {
     if (!isViewMode) {
       if (!validateCurrentTab()) {
         const hasFutureDate = isFutureDate(formData.birth_date);
-        const message = hasFutureDate 
-          ? 'A data de nascimento não pode ser posterior à data de hoje.' 
-          : 'Preencha os campos obrigatórios marcados em vermelho antes de prosseguir.';
+        const hasIncompletePhone = ['phone', 'caregiver_phone', 'doctor_phone'].some(f => {
+          const val = formData[f as keyof typeof formData] as string;
+          return val && val.trim() !== '' && val.length < 15;
+        });
+
+        let message = 'Preencha os campos obrigatórios marcados em vermelho antes de prosseguir.';
+        let title = 'Campos Obrigatórios';
         
-        showAlert('warning', hasFutureDate ? 'Data Inválida' : 'Campos Obrigatórios', message);
+        if (hasFutureDate) {
+          title = 'Data Inválida';
+          message = 'A data de nascimento não pode ser posterior à data de hoje.';
+        } else if (hasIncompletePhone) {
+          title = 'Telefone Incompleto';
+          message = 'Os números de telefone devem ser preenchidos completamente no formato (00) 00000-0000.';
+        }
+        
+        showAlert('warning', title, message);
         return;
       }
     }
@@ -752,11 +794,23 @@ const Evaluation = () => {
               onClick={() => {
                 if (!isViewMode && !validateCurrentTab()) {
                   const hasFutureDate = isFutureDate(formData.birth_date);
-                  const message = hasFutureDate 
-                    ? 'A data de nascimento não pode ser posterior à data de hoje.' 
-                    : 'Preencha os campos obrigatórios antes de mudar de aba.';
+                  const hasIncompletePhone = ['phone', 'caregiver_phone', 'doctor_phone'].some(f => {
+                    const val = formData[f as keyof typeof formData] as string;
+                    return val && val.trim() !== '' && val.length < 15;
+                  });
+
+                  let message = 'Preencha os campos obrigatórios antes de mudar de aba.';
+                  let title = 'Campos Obrigatórios';
                   
-                  showAlert('warning', hasFutureDate ? 'Data Inválida' : 'Campos Obrigatórios', message);
+                  if (hasFutureDate) {
+                    title = 'Data Inválida';
+                    message = 'A data de nascimento não pode ser posterior à data de hoje.';
+                  } else if (hasIncompletePhone) {
+                    title = 'Telefone Incompleto';
+                    message = 'Os números de telefone devem ser preenchidos completamente no formato (00) 00000-0000.';
+                  }
+                  
+                  showAlert('warning', title, message);
                   return;
                 }
                 setActiveTab(tab.id);

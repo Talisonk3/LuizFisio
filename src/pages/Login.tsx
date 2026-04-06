@@ -64,7 +64,7 @@ const Login = () => {
 
     try {
       // Salvar ou limpar credenciais baseado no checkbox
-      if (rememberMe) {
+      if (rememberMe && !isSignUp) {
         localStorage.setItem('fisio_username', formData.username);
         localStorage.setItem('fisio_password', formData.password);
         localStorage.setItem('fisio_is_visitor', isVisitor.toString());
@@ -196,20 +196,22 @@ const Login = () => {
             </div>
           </div>
 
-          <div className="flex items-center justify-between px-1">
-            <button 
-              type="button"
-              onClick={() => setRememberMe(!rememberMe)}
-              className="flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-700 transition-colors"
-            >
-              {rememberMe ? (
-                <CheckSquare className="text-blue-600" size={18} />
-              ) : (
-                <Square className="text-slate-300" size={18} />
-              )}
-              Manter logado
-            </button>
-          </div>
+          {!isSignUp && (
+            <div className="flex items-center justify-between px-1">
+              <button 
+                type="button"
+                onClick={() => setRememberMe(!rememberMe)}
+                className="flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-700 transition-colors"
+              >
+                {rememberMe ? (
+                  <CheckSquare className="text-blue-600" size={18} />
+                ) : (
+                  <Square className="text-slate-300" size={18} />
+                )}
+                Manter logado
+              </button>
+            </div>
+          )}
 
           {error && <p className="text-red-600 text-xs text-center font-medium">{error}</p>}
 

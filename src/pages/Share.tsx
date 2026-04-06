@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import ShareModal from '@/components/ShareModal';
 import AssignPatientModal from '@/components/AssignPatientModal';
-import ManagePasswordsModal from '@/components/ManagePasswordsModal';
+import ManagePasswordModal from '@/components/ManagePasswordModal';
 import NotificationModal, { ModalType } from '@/components/NotificationModal';
 
 interface Visitor {
@@ -31,8 +31,22 @@ const Share = () => {
   const [visitors, setVisitors] = useState<Visitor[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
-  const [assignModal, setAssignModal] = useState<{ isOpen: boolean; visitorId: string; visitorName: string }>({
+  
+  const [passwordModal, setPasswordModal] = useState<{ 
+    isOpen: boolean; 
+    visitorId: string; 
+    visitorName: string 
+  }>({
+    isOpen: false,
+    visitorId: '',
+    visitorName: ''
+  });
+
+  const [assignModal, setAssignModal] = useState<{ 
+    isOpen: boolean; 
+    visitorId: string; 
+    visitorName: string 
+  }>({
     isOpen: false,
     visitorId: '',
     visitorName: ''
@@ -122,13 +136,6 @@ const Share = () => {
 
           <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
             <button 
-              onClick={() => setIsPasswordModalOpen(true)}
-              className="bg-white text-purple-600 border border-purple-200 px-6 py-4 rounded-2xl flex items-center gap-3 hover:bg-purple-50 transition-all shadow-sm font-bold"
-            >
-              <Lock size={20} />
-              Ver e Redefinir Senha
-            </button>
-            <button 
               onClick={() => setIsModalOpen(true)}
               className="bg-purple-600 text-white px-8 py-4 rounded-2xl flex items-center gap-3 hover:bg-purple-700 transition-all shadow-xl shadow-purple-100 font-bold"
             >
@@ -167,7 +174,15 @@ const Share = () => {
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => setPasswordModal({ isOpen: true, visitorId: visitor.id, visitorName: visitor.username })}
+                      className="p-3 bg-amber-50 text-amber-600 rounded-xl hover:bg-amber-600 hover:text-white transition-all shadow-sm"
+                      title="Ver/Redefinir Senha"
+                    >
+                      <Lock size={20} />
+                    </button>
+
                     <button
                       onClick={() => setAssignModal({ isOpen: true, visitorId: visitor.id, visitorName: visitor.username })}
                       className="p-3 bg-purple-50 text-purple-600 rounded-xl hover:bg-purple-600 hover:text-white transition-all shadow-sm"
@@ -218,10 +233,11 @@ const Share = () => {
         userId={user?.id}
       />
 
-      <ManagePasswordsModal 
-        isOpen={isPasswordModalOpen}
-        onClose={() => setIsPasswordModalOpen(false)}
-        userId={user?.id}
+      <ManagePasswordModal 
+        isOpen={passwordModal.isOpen}
+        onClose={() => setPasswordModal(prev => ({ ...prev, isOpen: false }))}
+        visitorId={passwordModal.visitorId}
+        visitorName={passwordModal.visitorName}
         onSuccess={handleSuccess}
       />
 

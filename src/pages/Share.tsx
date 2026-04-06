@@ -5,16 +5,17 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/AuthProvider';
 import { 
-  ArrowLeft, 
   Loader2,
   ShieldCheck,
   Plus,
   User,
   UserPlus,
-  Home
+  Home,
+  Lock
 } from 'lucide-react';
 import ShareModal from '@/components/ShareModal';
 import AssignPatientModal from '@/components/AssignPatientModal';
+import ManagePasswordsModal from '@/components/ManagePasswordsModal';
 import NotificationModal, { ModalType } from '@/components/NotificationModal';
 
 interface Visitor {
@@ -30,6 +31,7 @@ const Share = () => {
   const [visitors, setVisitors] = useState<Visitor[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [assignModal, setAssignModal] = useState<{ isOpen: boolean; visitorId: string; visitorName: string }>({
     isOpen: false,
     visitorId: '',
@@ -111,13 +113,6 @@ const Share = () => {
               >
                 <Home size={20} />
               </button>
-              <button 
-                onClick={() => navigate(-1)}
-                className="p-3 bg-white border border-slate-200 rounded-2xl text-slate-400 hover:text-purple-600 hover:border-purple-100 transition-all shadow-sm"
-                title="Voltar"
-              >
-                <ArrowLeft size={20} />
-              </button>
             </div>
             <div>
               <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">Gerenciar Usuários</h1>
@@ -125,13 +120,22 @@ const Share = () => {
             </div>
           </div>
 
-          <button 
-            onClick={() => setIsModalOpen(true)}
-            className="bg-purple-600 text-white px-8 py-4 rounded-2xl flex items-center gap-3 hover:bg-purple-700 transition-all shadow-xl shadow-purple-100 font-bold"
-          >
-            <Plus size={20} strokeWidth={3} />
-            Adicionar usuário
-          </button>
+          <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+            <button 
+              onClick={() => setIsPasswordModalOpen(true)}
+              className="bg-white text-purple-600 border border-purple-200 px-6 py-4 rounded-2xl flex items-center gap-3 hover:bg-purple-50 transition-all shadow-sm font-bold"
+            >
+              <Lock size={20} />
+              Ver e Redefinir Senha
+            </button>
+            <button 
+              onClick={() => setIsModalOpen(true)}
+              className="bg-purple-600 text-white px-8 py-4 rounded-2xl flex items-center gap-3 hover:bg-purple-700 transition-all shadow-xl shadow-purple-100 font-bold"
+            >
+              <Plus size={20} strokeWidth={3} />
+              Adicionar usuário
+            </button>
+          </div>
         </header>
 
         <div className="space-y-6">
@@ -212,6 +216,13 @@ const Share = () => {
         onClose={() => setIsModalOpen(false)}
         onSuccess={handleSuccess}
         userId={user?.id}
+      />
+
+      <ManagePasswordsModal 
+        isOpen={isPasswordModalOpen}
+        onClose={() => setIsPasswordModalOpen(false)}
+        userId={user?.id}
+        onSuccess={handleSuccess}
       />
 
       <AssignPatientModal 

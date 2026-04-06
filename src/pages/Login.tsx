@@ -13,7 +13,7 @@ const Login = () => {
   const [isVisitor, setIsVisitor] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showPassword, setShowPassword] = useState(true); // Senha visível por padrão
+  const [showPassword, setShowPassword]= useState(true); // Senha visível por padrão
   const [rememberMe, setRememberMe] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -23,31 +23,32 @@ const Login = () => {
     fullName: ''
   });
 
+  // Efeito para carregar credenciais apenas no modo de login profissional inicial
   useEffect(() => {
     if (session) {
       navigate('/');
+      return;
     }
 
-    // Carregar credenciais salvas se existirem
-    const savedUsername = localStorage.getItem('fisio_username');
-    const savedPassword = localStorage.getItem('fisio_password');
-    const savedVisitor = localStorage.getItem('fisio_is_visitor') === 'true';
+    if (!isSignUp && !isVisitor) {
+      const savedUsername = localStorage.getItem('fisio_username');
+      const savedPassword = localStorage.getItem('fisio_password');
+      const savedVisitor = localStorage.getItem('fisio_is_visitor') === 'true';
 
-    if (savedUsername && savedPassword) {
-      setFormData(prev => ({
-        ...prev,
-        username: savedUsername,
-        password: savedPassword
-      }));
-      setRememberMe(true);
-      setIsVisitor(savedVisitor);
+      if (savedUsername && savedPassword && !savedVisitor) {
+        setFormData(prev => ({
+          ...prev,
+          username: savedUsername,
+          password: savedPassword
+        }));
+        setRememberMe(true);
+      }
     }
-  }, [session, navigate]);
+  }, [session, navigate, isSignUp, isVisitor]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     
-    // Restrição para o campo de nome (apenas letras e espaços)
     if (name === 'fullName') {
       const filteredValue = value.replace(/[^a-zA-ZÀ-ÿ\s]/g, '');
       setFormData(prev => ({ ...prev, [name]: filteredValue }));
@@ -63,12 +64,11 @@ const Login = () => {
     setError(null);
 
     try {
-      // Salvar ou limpar credenciais baseado no checkbox
-      if (rememberMe && !isSignUp) {
+      if (rememberMe && !isSignUp && !isVisitor) {
         localStorage.setItem('fisio_username', formData.username);
         localStorage.setItem('fisio_password', formData.password);
-        localStorage.setItem('fisio_is_visitor', isVisitor.toString());
-      } else {
+        localStorage.setItem('fisio_is_visitor', 'false');
+      } else if (!isSignUp && !isVisitor) {
         localStorage.removeItem('fisio_username');
         localStorage.removeItem('fisio_password');
         localStorage.removeItem('fisio_is_visitor');
@@ -146,12 +146,16 @@ const Login = () => {
     setIsSignUp(!isSignUp);
     setIsVisitor(false);
     setError(null);
+    // Limpar formulário ao mudar de modo
+    setFormData({ username: '', email: '', password: '', fullName: '' });
   };
 
   const toggleVisitorMode = () => {
     setIsVisitor(!isVisitor);
     setIsSignUp(false);
     setError(null);
+    // Limpar formulário ao mudar de modo
+    setFormData({ username: '', email: '', password: '', fullName: '' });
   };
 
   return (
@@ -196,7 +200,7 @@ const Login = () => {
             </div>
           </div>
 
-          {!isSignUp && (
+          {!isSignUp && !isVisitor && (
             <div className="flex items-center justify-between px-1">
               <button 
                 type="button"

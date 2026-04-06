@@ -811,8 +811,7 @@ const Evaluation = () => {
                     <CustomSelect 
                       options={[
                         { value: 'Masculino', label: 'Masculino' },
-                        { value: 'Feminino', label: 'Feminino' },
-                        { value: 'Outro', label: 'Outro' }
+                        { value: 'Feminino', label: 'Feminino' }
                       ]}
                       value={formData.gender}
                       onChange={(val) => handleSelectChange('gender', val)}

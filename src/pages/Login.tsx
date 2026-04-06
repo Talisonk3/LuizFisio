@@ -13,7 +13,7 @@ const Login = () => {
   const [isVisitor, setIsVisitor] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showPassword, setShowPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(true); // Senha visível por padrão
   const [rememberMe, setRememberMe] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -46,6 +46,14 @@ const Login = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+    
+    // Restrição para o campo de nome (apenas letras e espaços)
+    if (name === 'fullName') {
+      const filteredValue = value.replace(/[^a-zA-ZÀ-ÿ\s]/g, '');
+      setFormData(prev => ({ ...prev, [name]: filteredValue }));
+      return;
+    }
+
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 

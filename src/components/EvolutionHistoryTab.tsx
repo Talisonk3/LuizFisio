@@ -21,9 +21,10 @@ interface Evolution {
 
 interface EvolutionHistoryTabProps {
   evaluationId: string;
+  isReadOnly?: boolean;
 }
 
-const EvolutionHistoryTab = ({ evaluationId }: EvolutionHistoryTabProps) => {
+const EvolutionHistoryTab = ({ evaluationId, isReadOnly }: EvolutionHistoryTabProps) => {
   const { user } = useAuth();
   const [evolutions, setEvolutions] = useState<Evolution[]>([]);
   const [loading, setLoading] = useState(true);
@@ -94,13 +95,15 @@ const EvolutionHistoryTab = ({ evaluationId }: EvolutionHistoryTabProps) => {
                       >
                         <History size={16} />
                       </button>
-                      <button 
-                        onClick={() => setEditingEvolution(evo)}
-                        className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-                        title="Editar Evolução"
-                      >
-                        <Pencil size={16} />
-                      </button>
+                      {!isReadOnly && (
+                        <button 
+                          onClick={() => setEditingEvolution(evo)}
+                          className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                          title="Editar Evolução"
+                        >
+                          <Pencil size={16} />
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -144,6 +147,7 @@ const EvolutionHistoryTab = ({ evaluationId }: EvolutionHistoryTabProps) => {
         patientName="Editando Evolução"
         userId={user?.id}
         evolutionData={editingEvolution}
+        isReadOnly={isReadOnly}
       />
 
       <SessionHistoryModal 

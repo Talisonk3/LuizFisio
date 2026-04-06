@@ -1476,7 +1476,7 @@ const Evaluation = () => {
             )}
 
             {activeTab === 'historico-evolucoes' && id && (
-              <EvolutionHistoryTab evaluationId={id} />
+              <EvolutionHistoryTab evaluationId={id} isReadOnly={isViewMode} />
             )}
 
             {/* Navigation Buttons */}

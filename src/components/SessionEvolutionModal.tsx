@@ -143,19 +143,24 @@ const SessionEvolutionModal = ({
         if (evolutionData.session_date) {
           const p = evolutionData.session_date.split('-');
           originalSessionDate = `${p[2]}/${p[1]}/${p[0]}`;
+        } else {
+          originalSessionDate = new Date(evolutionData.created_at).toLocaleDateString('pt-BR');
         }
 
         const fields = ['evolution_text', 'blood_pressure', 'heart_rate', 'respiratory_rate', 'temperature', 'saturation', 'session_date'];
         fields.forEach(field => {
           const oldVal = field === 'session_date' ? originalSessionDate : (evolutionData[field] || '');
           const newVal = formData[field as keyof typeof formData];
-          if (oldVal !== newVal) {
-            oldValues[field] = oldVal;
-            newValues[field] = newVal;
+          
+          // Só registra se houver diferença real
+          if (oldVal.toString().trim() !== newVal.toString().trim()) {
+            oldValues[field] = oldVal || 'Vazio';
+            newValues[field] = newVal || 'Vazio';
           }
         });
 
-        const { error } = await supabase
+        // Atualizar a evolução
+        const { error: updateError } = await supabase
           .from('session_evolutions')
           .update({
             ...formData,
@@ -163,19 +168,24 @@ const SessionEvolutionModal = ({
           })
           .eq('id', evolutionData.id);
         
-        if (error) throw error;
+        if (updateError) throw updateError;
 
-        // Registrar histórico se houver mudanças
+        // Registrar histórico se houver mudanças detectadas
         if (Object.keys(newValues).length > 0) {
-          await supabase.from('session_evolution_history').insert([{
-            evolution_id: evolutionData.id,
-            user_id: userId,
-            old_values: oldValues,
-            new_values: newValues
-          }]);
+          const { error: historyError } = await supabase
+            .from('session_evolution_history')
+            .insert([{
+              evolution_id: evolutionData.id,
+              user_id: userId,
+              old_values: oldValues,
+              new_values: newValues
+            }]);
+          
+          if (historyError) console.error('Erro ao salvar histórico:', historyError);
         }
       } else {
-        const { error } = await supabase
+        // Inserir nova evolução
+        const { error: insertError } = await supabase
           .from('session_evolutions')
           .insert([{
             evaluation_id: evaluationId,
@@ -183,7 +193,7 @@ const SessionEvolutionModal = ({
             ...formData,
             session_date: isoDate
           }]);
-        if (error) throw error;
+        if (insertError) throw insertError;
       }
       
       onClose();
@@ -197,7 +207,7 @@ const SessionEvolutionModal = ({
   if (!isOpen || isReadOnly) return null;
 
   const labelClasses = "text-[10px] font-bold text-slate-400 uppercase ml-1 mb-1 block";
-  const inputClasses = "w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-sm";
+  const inputClasses = "w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-sm";
 
   return (
     <div className="fixed inset-0 z-[140] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">

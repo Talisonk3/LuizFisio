@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { History, X, Clock, Calendar, Loader2, ArrowRight } from 'lucide-react';
+import { History, X, Clock, Calendar, Loader2, ArrowRight, Activity } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface HistoryEntry {
@@ -19,12 +19,12 @@ interface SessionHistoryModalProps {
 }
 
 const fieldLabels: Record<string, string> = {
-  evolution_text: 'Descrição',
-  blood_pressure: 'PA',
-  heart_rate: 'FC',
-  respiratory_rate: 'FR',
-  temperature: 'Temp',
-  saturation: 'SatO2',
+  evolution_text: 'Descrição da Evolução',
+  blood_pressure: 'Pressão Arterial',
+  heart_rate: 'Frequência Cardíaca',
+  respiratory_rate: 'Frequência Respiratória',
+  temperature: 'Temperatura',
+  saturation: 'Saturação (SatO2)',
   session_date: 'Data da Sessão'
 };
 
@@ -82,12 +82,20 @@ const SessionHistoryModal = ({ isOpen, onClose, evolutionId, patientName }: Sess
               <p className="text-sm font-medium">Carregando histórico...</p>
             </div>
           ) : history.length > 0 ? (
-            <div className="space-y-8">
+            <div className="space-y-10">
               {history.map((entry) => (
-                <div key={entry.id} className="relative pl-8 before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1 before:bg-slate-100 before:rounded-full">
-                  <div className="flex items-center gap-4 text-[10px] text-slate-400 font-bold uppercase tracking-tight mb-4">
-                    <span className="flex items-center gap-1"><Calendar size={12} /> {new Date(entry.created_at).toLocaleDateString('pt-BR')}</span>
-                    <span className="flex items-center gap-1"><Clock size={12} /> {new Date(entry.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                <div key={entry.id} className="relative pl-8 border-l-2 border-slate-100">
+                  <div className="absolute -left-[9px] top-0 w-4 h-4 bg-white border-2 border-amber-500 rounded-full" />
+                  
+                  <div className="flex items-center gap-4 text-[10px] text-slate-400 font-black uppercase tracking-widest mb-6">
+                    <span className="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100">
+                      <Calendar size={12} className="text-amber-500" /> 
+                      {new Date(entry.created_at).toLocaleDateString('pt-BR')}
+                    </span>
+                    <span className="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100">
+                      <Clock size={12} className="text-amber-500" /> 
+                      {new Date(entry.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                    </span>
                   </div>
                   
                   <div className="space-y-4">
@@ -97,16 +105,22 @@ const SessionHistoryModal = ({ isOpen, onClose, evolutionId, patientName }: Sess
                       if (oldVal === newVal) return null;
 
                       return (
-                        <div key={key} className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
-                          <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest block mb-2">
-                            {fieldLabels[key] || key}
-                          </span>
+                        <div key={key} className="bg-slate-50/50 rounded-2xl p-5 border border-slate-100">
+                          <div className="flex items-center gap-2 mb-3">
+                            <Activity size={14} className="text-blue-600" />
+                            <span className="text-xs font-bold text-slate-700 uppercase tracking-tight">
+                              {fieldLabels[key] || key}
+                            </span>
+                          </div>
+                          
                           <div className="grid grid-cols-1 md:grid-cols-[1fr,auto,1fr] items-center gap-4">
-                            <div className="text-sm text-slate-500 line-through bg-white p-2 rounded-lg border border-slate-100">
+                            <div className="text-sm text-slate-400 line-through bg-white p-3 rounded-xl border border-slate-100 italic">
                               {oldVal}
                             </div>
-                            <ArrowRight size={16} className="text-slate-300 hidden md:block" />
-                            <div className="text-sm text-slate-800 font-bold bg-blue-50 p-2 rounded-lg border border-blue-100">
+                            <div className="flex justify-center">
+                              <ArrowRight size={18} className="text-slate-300 rotate-90 md:rotate-0" />
+                            </div>
+                            <div className="text-sm text-slate-800 font-bold bg-blue-50 p-3 rounded-xl border border-blue-100">
                               {newVal}
                             </div>
                           </div>
@@ -119,13 +133,17 @@ const SessionHistoryModal = ({ isOpen, onClose, evolutionId, patientName }: Sess
             </div>
           ) : (
             <div className="text-center py-12">
-              <p className="text-slate-400 font-medium">Nenhum registro de edição encontrado.</p>
+              <div className="bg-slate-50 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 text-slate-300">
+                <History size={32} />
+              </div>
+              <p className="text-slate-400 font-bold">Nenhum registro de edição encontrado.</p>
+              <p className="text-xs text-slate-400 mt-1">As alterações aparecerão aqui após você editar uma evolução.</p>
             </div>
           )}
         </div>
 
         <div className="p-6 bg-slate-50/50 border-t border-slate-100">
-          <button onClick={onClose} className="w-full bg-white text-slate-600 py-3 rounded-xl font-bold border border-slate-200 hover:bg-slate-100 transition-all">
+          <button onClick={onClose} className="w-full bg-white text-slate-600 py-4 rounded-2xl font-bold border border-slate-200 hover:bg-slate-100 transition-all shadow-sm">
             Fechar Histórico
           </button>
         </div>

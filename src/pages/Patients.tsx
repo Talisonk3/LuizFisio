@@ -101,6 +101,16 @@ const Patients = () => {
     fetchPatients();
   }, [user, isVisitor, visitorId]);
 
+  const formatDisplayName = (name: string) => {
+    if (!name) return '';
+    const parts = name.trim().split(/\s+/);
+    // Pega apenas o nome e o primeiro sobrenome (se existir)
+    const firstTwo = parts.slice(0, 2);
+    return firstTwo
+      .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+      .join(' ');
+  };
+
   const handleDeleteClick = (patient: PatientRecord) => {
     setModalConfig({
       isOpen: true,
@@ -204,7 +214,7 @@ const Patients = () => {
                   </div>
                   <div className="flex-1">
                     <button onClick={() => navigate(`/avaliacao/${patient.id}?mode=view`)} className="font-bold text-slate-800 text-lg hover:text-blue-600 transition-colors text-left">
-                      {patient.patient_name}
+                      {formatDisplayName(patient.patient_name)}
                     </button>
                   </div>
                 </div>

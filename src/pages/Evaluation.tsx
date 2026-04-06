@@ -380,7 +380,7 @@ const Evaluation = () => {
     } else if (name === 'saturation') {
       filteredValue = filteredValue.replace(/\D/g, '').substring(0, 3);
     } else if (name === 'address_number') {
-      filteredValue = filteredValue.replace(/\D/g, '').substring(0, 6);
+      filteredValue = filteredValue.replace(/\D/g, '').substring(0, 4);
     }
 
     if (errors.includes(name)) {
@@ -873,7 +873,7 @@ const Evaluation = () => {
                     </div>
                     <div className="col-span-1">
                       <label className={labelClasses}>Nº <span className="text-red-500">*</span></label>
-                      <input disabled={isViewMode} name="address_number" value={formData.address_number} onChange={handleInputChange} type="text" className={getInputClasses('address_number')} placeholder="123" maxLength={6} />
+                      <input disabled={isViewMode} name="address_number" value={formData.address_number} onChange={handleInputChange} type="text" className={getInputClasses('address_number')} placeholder="123" maxLength={4} />
                     </div>
                   </div>
                   <div>

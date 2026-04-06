@@ -235,15 +235,15 @@ const Patients = () => {
                 </div>
                 
                 <div className="flex items-center gap-2 ml-4">
-                  {!isVisitor && (
-                    <button 
-                      onClick={() => setEvolutionModal({ isOpen: true, patientId: patient.id, patientName: patient.patient_name })}
-                      className="p-3 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all"
-                      title="Nova Evolução"
-                    >
-                      <MessageSquarePlus size={20} />
-                    </button>
-                  )}
+                  {/* Botão de Evolução visível para Profissional e Visitante */}
+                  <button 
+                    onClick={() => setEvolutionModal({ isOpen: true, patientId: patient.id, patientName: patient.patient_name })}
+                    className="p-3 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all"
+                    title="Nova Evolução"
+                  >
+                    <MessageSquarePlus size={20} />
+                  </button>
+
                   <button 
                     onClick={() => navigate(`/avaliacao/${patient.id}?mode=view`)} 
                     className="p-3 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
@@ -285,8 +285,8 @@ const Patients = () => {
         onClose={() => setEvolutionModal(prev => ({ ...prev, isOpen: false }))}
         evaluationId={evolutionModal.patientId}
         patientName={evolutionModal.patientName}
-        isReadOnly={isVisitor}
-        userId={user?.id}
+        isReadOnly={false}
+        userId={user?.id || visitorId || ''}
       />
 
       <NotificationModal 

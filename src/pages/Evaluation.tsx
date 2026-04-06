@@ -16,7 +16,8 @@ import {
   Trash2,
   ArrowLeft,
   FileText,
-  History
+  History,
+  Home
 } from 'lucide-react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -715,6 +716,13 @@ const Evaluation = () => {
               </p>
             </div>
             <div className="flex gap-3">
+              <button 
+                onClick={handleGoHome}
+                className="p-3 bg-white border border-slate-200 rounded-2xl text-slate-400 hover:text-blue-600 transition-all shadow-sm"
+                title="Início"
+              >
+                <Home size={20} />
+              </button>
               <button 
                 onClick={handleGoBack}
                 className="bg-white text-slate-600 border border-slate-200 px-6 py-3 rounded-2xl flex items-center gap-2 hover:bg-slate-50 transition-all font-bold shadow-sm"

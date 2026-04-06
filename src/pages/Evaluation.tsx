@@ -452,35 +452,82 @@ const Evaluation = () => {
     setExamFiles(prev => prev.filter((_, i) => i !== index));
   };
 
-  const validateIdentificacao = () => {
-    const requiredFields = [
-      'patient_name', 
-      'birth_date', 
-      'gender', 
-      'marital_status', 
-      'address', 
-      'address_number',
-      'profession'
-    ];
-    if (formData.has_caregiver === 'Sim') {
-      requiredFields.push('caregiver_name', 'caregiver_phone');
+  const validateCurrentTab = () => {
+    const newErrors: string[] = [];
+    
+    if (activeTab === 'identificacao') {
+      const requiredFields = [
+        'patient_name', 
+        'birth_date', 
+        'gender', 
+        'marital_status', 
+        'address', 
+        'address_number',
+        'profession'
+      ];
+      if (formData.has_caregiver === 'Sim') {
+        requiredFields.push('caregiver_name', 'caregiver_phone');
+      }
+      requiredFields.forEach(field => {
+        const val = formData[field as keyof typeof formData];
+        if (!val || val.toString().trim() === '') {
+          newErrors.push(field);
+        }
+      });
+      if (formData.birth_date.length < 10 && !newErrors.includes('birth_date')) {
+        newErrors.push('birth_date');
+      }
     }
-    const newErrors = requiredFields.filter(field => {
-      const val = formData[field as keyof typeof formData];
-      return !val || val.toString().trim() === '';
-    });
-    if (formData.birth_date.length < 10 && !newErrors.includes('birth_date')) {
-      newErrors.push('birth_date');
+    
+    if (activeTab === 'exame-fisico') {
+      if (formData.auditory_alteration === 'Sim' && !formData.auditory_alteration_details.trim()) newErrors.push('auditory_alteration_details');
+      if (formData.visual_alteration === 'Sim' && !formData.visual_alteration_details.trim()) newErrors.push('visual_alteration_details');
+      if (formData.gait_aid === 'Sim' && !formData.gait_aid_details.trim()) newErrors.push('gait_aid_details');
+      if (formData.has_complementary_exams === 'Sim' && !formData.complementary_exams_details.trim()) newErrors.push('complementary_exams_details');
     }
+    
+    if (activeTab === 'anamnese') {
+      if (formData.drinks === 'Sim' && !formData.drinks_details.trim()) newErrors.push('drinks_details');
+      if (formData.smokes === 'Sim' && !formData.smokes_details.trim()) newErrors.push('smokes_details');
+      if (formData.sedentary === 'Sim' && !formData.sedentary_details.trim()) newErrors.push('sedentary_details');
+      if (formData.has_medications === 'Sim' && !formData.medications.trim()) newErrors.push('medications');
+      if (formData.has_surgeries === 'Sim' && !formData.previous_surgeries.trim()) newErrors.push('previous_surgeries');
+    }
+
+    setErrors(newErrors);
+    return newErrors.length === 0;
+  };
+
+  const validateAll = () => {
+    const newErrors: string[] = [];
+    
+    // Identificacao
+    const idFields = ['patient_name', 'birth_date', 'gender', 'marital_status', 'address', 'address_number', 'profession'];
+    if (formData.has_caregiver === 'Sim') idFields.push('caregiver_name', 'caregiver_phone');
+    idFields.forEach(f => { if (!formData[f as keyof typeof formData]?.toString().trim()) newErrors.push(f); });
+    if (formData.birth_date.length < 10 && !newErrors.includes('birth_date')) newErrors.push('birth_date');
+
+    // Exame Fisico
+    if (formData.auditory_alteration === 'Sim' && !formData.auditory_alteration_details.trim()) newErrors.push('auditory_alteration_details');
+    if (formData.visual_alteration === 'Sim' && !formData.visual_alteration_details.trim()) newErrors.push('visual_alteration_details');
+    if (formData.gait_aid === 'Sim' && !formData.gait_aid_details.trim()) newErrors.push('gait_aid_details');
+    if (formData.has_complementary_exams === 'Sim' && !formData.complementary_exams_details.trim()) newErrors.push('complementary_exams_details');
+
+    // Anamnese
+    if (formData.drinks === 'Sim' && !formData.drinks_details.trim()) newErrors.push('drinks_details');
+    if (formData.smokes === 'Sim' && !formData.smokes_details.trim()) newErrors.push('smokes_details');
+    if (formData.sedentary === 'Sim' && !formData.sedentary_details.trim()) newErrors.push('sedentary_details');
+    if (formData.has_medications === 'Sim' && !formData.medications.trim()) newErrors.push('medications');
+    if (formData.has_surgeries === 'Sim' && !formData.previous_surgeries.trim()) newErrors.push('previous_surgeries');
+
     setErrors(newErrors);
     return newErrors.length === 0;
   };
 
   const handleSave = async () => {
     if (isViewMode) return;
-    if (!validateIdentificacao()) {
-      setActiveTab('identificacao');
-      showAlert('warning', 'Campos Obrigatórios', 'Por favor, preencha todos os campos obrigatórios marcados em vermelho.');
+    if (!validateAll()) {
+      showAlert('warning', 'Campos Obrigatórios', 'Por favor, preencha todos os campos obrigatórios marcados em vermelho antes de salvar.');
       return;
     }
 
@@ -607,9 +654,9 @@ const Evaluation = () => {
 
   const handleNext = () => {
     const currentIndex = tabs.findIndex(t => t.id === activeTab);
-    if (activeTab === 'identificacao' && !isViewMode) {
-      if (!validateIdentificacao()) {
-        showAlert('warning', 'Campos Obrigatórios', 'Preencha os campos marcados em vermelho antes de prosseguir.');
+    if (!isViewMode) {
+      if (!validateCurrentTab()) {
+        showAlert('warning', 'Campos Obrigatórios', 'Preencha os campos obrigatórios marcados em vermelho antes de prosseguir.');
         return;
       }
     }
@@ -676,7 +723,7 @@ const Evaluation = () => {
             <button
               key={tab.id}
               onClick={() => {
-                if (activeTab === 'identificacao' && tab.id !== 'identificacao' && !validateIdentificacao() && !isViewMode) {
+                if (!isViewMode && !validateCurrentTab()) {
                   showAlert('warning', 'Campos Obrigatórios', 'Preencha os campos obrigatórios antes de mudar de aba.');
                   return;
                 }
@@ -950,6 +997,7 @@ const Evaluation = () => {
                     </div>
                     {formData.auditory_alteration === 'Sim' && (
                       <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                        <label className={labelClasses}>Descreva as alterações <span className="text-red-500">*</span></label>
                         <input 
                           disabled={isViewMode}
                           name="auditory_alteration_details" 
@@ -984,6 +1032,7 @@ const Evaluation = () => {
                     </div>
                     {formData.visual_alteration === 'Sim' && (
                       <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                        <label className={labelClasses}>Descreva as alterações <span className="text-red-500">*</span></label>
                         <input 
                           disabled={isViewMode}
                           name="visual_alteration_details" 
@@ -1020,7 +1069,7 @@ const Evaluation = () => {
                     </div>
                     {formData.gait_aid === 'Sim' && (
                       <div className="animate-in fade-in slide-in-from-top-2 duration-300">
-                        <label className={labelClasses}>Qual dispositivo?</label>
+                        <label className={labelClasses}>Qual dispositivo? <span className="text-red-500">*</span></label>
                         <input 
                           disabled={isViewMode}
                           name="gait_aid_details" 
@@ -1056,7 +1105,7 @@ const Evaluation = () => {
                     {formData.has_complementary_exams === 'Sim' && (
                       <div className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
                         <div>
-                          <label className={labelClasses}>Descrição dos Exames</label>
+                          <label className={labelClasses}>Descrição dos Exames <span className="text-red-500">*</span></label>
                           <textarea 
                             disabled={isViewMode}
                             name="complementary_exams_details" 
@@ -1216,6 +1265,7 @@ const Evaluation = () => {
                       </div>
                       {formData.drinks === 'Sim' && (
                         <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                          <label className={labelClasses}>Frequência e tipo <span className="text-red-500">*</span></label>
                           <input 
                             disabled={isViewMode}
                             name="drinks_details" 
@@ -1250,6 +1300,7 @@ const Evaluation = () => {
                       </div>
                       {formData.smokes === 'Sim' && (
                         <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                          <label className={labelClasses}>Quantidade e tempo <span className="text-red-500">*</span></label>
                           <input 
                             disabled={isViewMode}
                             name="smokes_details" 
@@ -1284,7 +1335,7 @@ const Evaluation = () => {
                       </div>
                       {formData.sedentary === 'Sim' && (
                         <div className="animate-in fade-in slide-in-from-top-2 duration-300">
-                          <label className={labelClasses}>Quais atividades físicas pratica?</label>
+                          <label className={labelClasses}>Quais atividades? <span className="text-red-500">*</span></label>
                           <input 
                             disabled={isViewMode}
                             name="sedentary_details" 
@@ -1321,6 +1372,7 @@ const Evaluation = () => {
                       </div>
                       {formData.has_medications === 'Sim' && (
                         <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                          <label className={labelClasses}>Quais medicamentos? <span className="text-red-500">*</span></label>
                           <input 
                             disabled={isViewMode}
                             name="medications" 
@@ -1355,6 +1407,7 @@ const Evaluation = () => {
                       </div>
                       {formData.has_surgeries === 'Sim' && (
                         <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                          <label className={labelClasses}>Quais cirurgias? <span className="text-red-500">*</span></label>
                           <input 
                             disabled={isViewMode}
                             name="previous_surgeries" 

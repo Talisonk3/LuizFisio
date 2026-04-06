@@ -162,13 +162,6 @@ const Patients = () => {
                 >
                   <Home size={20} />
                 </button>
-                <button 
-                  onClick={() => navigate(-1)} 
-                  className="p-3 bg-white border border-slate-200 rounded-2xl text-slate-400 hover:text-blue-600 transition-all shadow-sm"
-                  title="Voltar"
-                >
-                  <ArrowLeft size={20} />
-                </button>
               </div>
             )}
             <div>
@@ -213,11 +206,6 @@ const Patients = () => {
                     <button onClick={() => navigate(`/avaliacao/${patient.id}?mode=view`)} className="font-bold text-slate-800 text-lg hover:text-blue-600 transition-colors text-left">
                       {patient.patient_name}
                     </button>
-                    <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1">
-                      <span className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
-                        <Calendar size={14} /> {new Date(patient.birth_date).toLocaleDateString('pt-BR')}
-                      </span>
-                    </div>
                   </div>
                 </div>
                 

@@ -124,7 +124,11 @@ const SessionEvolutionModal = ({
   };
 
   const handleSave = async () => {
-    if (!formData.evolution_text.trim() || !userId) return;
+    // Permitir salvar se houver texto e algum identificador (userId ou visitorId do sessionStorage)
+    const visitorId = sessionStorage.getItem('visitor_id');
+    const effectiveUserId = userId || visitorId;
+
+    if (!formData.evolution_text.trim() || !evaluationId) return;
     
     let isoDate = null;
     const parts = formData.session_date.split('/');
@@ -135,7 +139,6 @@ const SessionEvolutionModal = ({
     setIsSaving(true);
     try {
       if (evolutionData?.id) {
-        // Capturar valores antigos para o histórico
         const oldValues: any = {};
         const newValues: any = {};
         
@@ -152,14 +155,12 @@ const SessionEvolutionModal = ({
           const oldVal = field === 'session_date' ? originalSessionDate : (evolutionData[field] || '');
           const newVal = formData[field as keyof typeof formData];
           
-          // Só registra se houver diferença real
           if (oldVal.toString().trim() !== newVal.toString().trim()) {
             oldValues[field] = oldVal || 'Vazio';
             newValues[field] = newVal || 'Vazio';
           }
         });
 
-        // Atualizar a evolução
         const { error: updateError } = await supabase
           .from('session_evolutions')
           .update({
@@ -170,26 +171,22 @@ const SessionEvolutionModal = ({
         
         if (updateError) throw updateError;
 
-        // Registrar histórico se houver mudanças detectadas
-        if (Object.keys(newValues).length > 0) {
-          const { error: historyError } = await supabase
+        if (Object.keys(newValues).length > 0 && effectiveUserId) {
+          await supabase
             .from('session_evolution_history')
             .insert([{
               evolution_id: evolutionData.id,
-              user_id: userId,
+              user_id: effectiveUserId,
               old_values: oldValues,
               new_values: newValues
             }]);
-          
-          if (historyError) console.error('Erro ao salvar histórico:', historyError);
         }
       } else {
-        // Inserir nova evolução
         const { error: insertError } = await supabase
           .from('session_evolutions')
           .insert([{
             evaluation_id: evaluationId,
-            user_id: userId,
+            user_id: effectiveUserId,
             ...formData,
             session_date: isoDate
           }]);

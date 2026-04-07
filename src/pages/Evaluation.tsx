@@ -37,8 +37,12 @@ const fieldLabels: Record<string, string> = {
   profession: 'Profissão',
   weight: 'Peso',
   height: 'Altura',
-  caregiver_name: 'Cuidador',
-  caregiver_phone: 'Tel. Cuidador',
+  caregiver_name: 'Responsável 1',
+  caregiver_phone: 'Tel. Responsável 1',
+  caregiver2_name: 'Responsável 2',
+  caregiver2_phone: 'Tel. Responsável 2',
+  caregiver3_name: 'Responsável 3',
+  caregiver3_phone: 'Tel. Responsável 3',
   responsible_doctor: 'Médico',
   doctor_phone: 'Tel. Médico',
   chief_complaint: 'Queixa',
@@ -84,6 +88,7 @@ const Evaluation = () => {
   const [isLoading, setIsLoading] = useState(!!id);
   const [errors, setErrors] = useState<string[]>([]);
   const [examFiles, setExamFiles] = useState<string[]>([]);
+  const [visibleCaregivers, setVisibleCaregivers] = useState(1);
   
   const [modalConfig, setModalConfig] = useState<{
     isOpen: boolean;
@@ -120,6 +125,10 @@ const Evaluation = () => {
     has_caregiver: 'Não',
     caregiver_name: '',
     caregiver_phone: '',
+    caregiver2_name: '',
+    caregiver2_phone: '',
+    caregiver3_name: '',
+    caregiver3_phone: '',
     responsible_doctor: '',
     doctor_phone: '',
     evaluation_date: new Date().toLocaleDateString('pt-BR'),
@@ -190,9 +199,7 @@ const Evaluation = () => {
           let birthDate = '';
           if (data.birth_date) {
             const parts = data.birth_date.split('-');
-            birthDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
-            const dateParts = data.birth_date.split('-');
-            birthDate = `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
+            birthDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
           }
 
           let rows = [{ movement: '', degree: '' }];
@@ -209,7 +216,7 @@ const Evaluation = () => {
             address: street,
             address_number: number,
             birth_date: birthDate,
-            has_caregiver: data.caregiver_name ? 'Sim' : 'Não',
+            has_caregiver: (data.caregiver_name || data.caregiver2_name || data.caregiver3_name) ? 'Sim' : 'Não',
             has_medications: data.medications ? 'Sim' : 'Não',
             has_surgeries: data.previous_surgeries ? 'Sim' : 'Não',
             drinks: data.drinks_details ? 'Sim' : 'Não',
@@ -226,6 +233,11 @@ const Evaluation = () => {
           setOriginalData(JSON.parse(JSON.stringify(loadedData)));
           setAdmRows(rows);
           setOriginalAdmRows(JSON.parse(JSON.stringify(rows)));
+          
+          // Determinar quantos responsáveis mostrar
+          if (data.caregiver3_name) setVisibleCaregivers(3);
+          else if (data.caregiver2_name) setVisibleCaregivers(2);
+          else setVisibleCaregivers(1);
         }
       } catch (error) {
         console.error('Erro ao carregar avaliação:', error);
@@ -355,7 +367,7 @@ const Evaluation = () => {
     const { name, value } = e.target;
     let filteredValue = value.trimStart();
     
-    if (name === 'patient_name' || name === 'responsible_doctor' || name === 'caregiver_name') {
+    if (name === 'patient_name' || name === 'responsible_doctor' || name.includes('caregiver_name')) {
       filteredValue = filteredValue.replace(/[^a-zA-ZÀ-ÿ\s]/g, '');
     } else if (name === 'profession') {
       filteredValue = filteredValue.replace(/[^a-zA-ZÀ-ÿ\s]/g, '');
@@ -365,7 +377,7 @@ const Evaluation = () => {
       filteredValue = filteredValue.replace(/\D/g, '').substring(0, 3);
     } else if (name === 'height') {
       filteredValue = formatHeight(filteredValue);
-    } else if (name === 'phone' || name === 'doctor_phone' || name === 'caregiver_phone') {
+    } else if (name === 'phone' || name === 'doctor_phone' || name.includes('caregiver_phone')) {
       filteredValue = formatPhone(filteredValue);
     } else if (name === 'birth_date' || name === 'evaluation_date') {
       filteredValue = formatDate(filteredValue);
@@ -490,8 +502,7 @@ const Evaluation = () => {
         newErrors.push('birth_date');
       }
 
-      // Validação de telefone incompleto
-      const phoneFields = ['phone', 'caregiver_phone', 'doctor_phone'];
+      const phoneFields = ['phone', 'caregiver_phone', 'caregiver2_phone', 'caregiver3_phone', 'doctor_phone'];
       phoneFields.forEach(field => {
         const val = formData[field as keyof typeof formData] as string;
         if (val && val.trim() !== '' && val.length < 15) {
@@ -522,7 +533,6 @@ const Evaluation = () => {
   const validateAll = () => {
     const newErrors: string[] = [];
     
-    // Identificacao
     const idFields = ['patient_name', 'birth_date', 'gender', 'marital_status', 'address', 'address_number', 'profession'];
     if (formData.has_caregiver === 'Sim') idFields.push('caregiver_name', 'caregiver_phone');
     idFields.forEach(f => { if (!formData[f as keyof typeof formData]?.toString().trim()) newErrors.push(f); });
@@ -533,8 +543,7 @@ const Evaluation = () => {
       newErrors.push('birth_date');
     }
 
-    // Validação de telefone incompleto
-    const phoneFields = ['phone', 'caregiver_phone', 'doctor_phone'];
+    const phoneFields = ['phone', 'caregiver_phone', 'caregiver2_phone', 'caregiver3_phone', 'doctor_phone'];
     phoneFields.forEach(field => {
       const val = formData[field as keyof typeof formData] as string;
       if (val && val.trim() !== '' && val.length < 15) {
@@ -542,13 +551,11 @@ const Evaluation = () => {
       }
     });
 
-    // Exame Fisico
     if (formData.auditory_alteration === 'Sim' && !formData.auditory_alteration_details.trim()) newErrors.push('auditory_alteration_details');
     if (formData.visual_alteration === 'Sim' && !formData.visual_alteration_details.trim()) newErrors.push('visual_alteration_details');
     if (formData.gait_aid === 'Sim' && !formData.gait_aid_details.trim()) newErrors.push('gait_aid_details');
     if (formData.has_complementary_exams === 'Sim' && !formData.complementary_exams_details.trim()) newErrors.push('complementary_exams_details');
 
-    // Anamnese
     if (formData.drinks === 'Sim' && !formData.drinks_details.trim()) newErrors.push('drinks_details');
     if (formData.smokes === 'Sim' && !formData.smokes_details.trim()) newErrors.push('smokes_details');
     if (formData.sedentary === 'Sim' && !formData.sedentary_details.trim()) newErrors.push('sedentary_details');
@@ -563,7 +570,7 @@ const Evaluation = () => {
     if (isViewMode) return;
     if (!validateAll()) {
       const hasFutureDate = isFutureDate(formData.birth_date);
-      const hasIncompletePhone = ['phone', 'caregiver_phone', 'doctor_phone'].some(f => {
+      const hasIncompletePhone = ['phone', 'caregiver_phone', 'caregiver2_phone', 'caregiver3_phone', 'doctor_phone'].some(f => {
         const val = formData[f as keyof typeof formData] as string;
         return val && val.trim() !== '' && val.length < 15;
       });
@@ -626,6 +633,10 @@ const Evaluation = () => {
         previous_surgeries: has_surgeries === 'Sim' ? formData.previous_surgeries : '',
         caregiver_name: has_caregiver === 'Sim' ? formData.caregiver_name : '',
         caregiver_phone: has_caregiver === 'Sim' ? formData.caregiver_phone : '',
+        caregiver2_name: (has_caregiver === 'Sim' && visibleCaregivers >= 2) ? formData.caregiver2_name : '',
+        caregiver2_phone: (has_caregiver === 'Sim' && visibleCaregivers >= 2) ? formData.caregiver2_phone : '',
+        caregiver3_name: (has_caregiver === 'Sim' && visibleCaregivers >= 3) ? formData.caregiver3_name : '',
+        caregiver3_phone: (has_caregiver === 'Sim' && visibleCaregivers >= 3) ? formData.caregiver3_phone : '',
         drinks_details: formData.drinks === 'Sim' ? formData.drinks_details : '',
         smokes_details: formData.smokes === 'Sim' ? formData.smokes_details : '',
         sedentary_details: formData.sedentary === 'Sim' ? formData.sedentary_details : '',
@@ -637,9 +648,9 @@ const Evaluation = () => {
       } else {
         const changes = [];
         for (const key in payload) {
-          if (payload[key] !== originalData[key] && fieldLabels[key]) {
-            const oldValue = originalData[key] || 'Vazio';
-            const newValue = payload[key] || 'Vazio';
+          if (payload[key as keyof typeof payload] !== originalData[key as keyof typeof originalData] && fieldLabels[key]) {
+            const oldValue = originalData[key as keyof typeof originalData] || 'Vazio';
+            const newValue = payload[key as keyof typeof payload] || 'Vazio';
             changes.push(`[${fieldLabels[key]}: ${oldValue} → ${newValue}]`);
           }
         }
@@ -690,6 +701,7 @@ const Evaluation = () => {
         setExamFiles([]);
         setErrors([]);
         setActiveTab('identificacao');
+        setVisibleCaregivers(1);
       } else {
         setOriginalData(JSON.parse(JSON.stringify(formData)));
         setOriginalAdmRows(JSON.parse(JSON.stringify(admRows)));
@@ -709,7 +721,7 @@ const Evaluation = () => {
     if (!isViewMode) {
       if (!validateCurrentTab()) {
         const hasFutureDate = isFutureDate(formData.birth_date);
-        const hasIncompletePhone = ['phone', 'caregiver_phone', 'doctor_phone'].some(f => {
+        const hasIncompletePhone = ['phone', 'caregiver_phone', 'caregiver2_phone', 'caregiver3_phone', 'doctor_phone'].some(f => {
           const val = formData[f as keyof typeof formData] as string;
           return val && val.trim() !== '' && val.length < 15;
         });
@@ -773,7 +785,6 @@ const Evaluation = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 flex">
-      {/* Sidebar */}
       <aside className="w-72 bg-white border-r border-slate-200 hidden lg:flex flex-col shadow-sm">
         <div className="p-8 border-b border-slate-100 flex justify-center">
           <button 
@@ -791,7 +802,7 @@ const Evaluation = () => {
               onClick={() => {
                 if (!isViewMode && !validateCurrentTab()) {
                   const hasFutureDate = isFutureDate(formData.birth_date);
-                  const hasIncompletePhone = ['phone', 'caregiver_phone', 'doctor_phone'].some(f => {
+                  const hasIncompletePhone = ['phone', 'caregiver_phone', 'caregiver2_phone', 'caregiver3_phone', 'doctor_phone'].some(f => {
                     const val = formData[f as keyof typeof formData] as string;
                     return val && val.trim() !== '' && val.length < 15;
                   });
@@ -833,7 +844,6 @@ const Evaluation = () => {
         </div>
       </aside>
 
-      {/* Main Content */}
       <main className="flex-1 overflow-y-auto p-6 md:p-12">
         <div className="max-w-4xl mx-auto">
           <header className="mb-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -949,54 +959,147 @@ const Evaluation = () => {
                   </div>
 
                   <div className="md:col-span-2 space-y-4 border-t border-slate-100 pt-8">
-                    <div>
+                    <div className="flex justify-between items-center">
                       <label className={labelClasses}>Possui Familiar Responsável ou Cuidador?</label>
-                      <div className="flex gap-4">
-                        {['Não', 'Sim'].map((option) => (
-                          <button
-                            key={option}
-                            type="button"
-                            disabled={isViewMode}
-                            onClick={() => setFormData(prev => ({ ...prev, has_caregiver: option }))}
-                            className={`px-6 py-2 rounded-xl border transition-all font-medium ${
-                              formData.has_caregiver === option 
-                              ? 'bg-blue-600 text-white border-blue-600 shadow-md' 
-                              : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
-                            } disabled:opacity-50`}
-                          >
-                            {option}
-                          </button>
-                        ))}
-                      </div>
+                      {formData.has_caregiver === 'Sim' && visibleCaregivers < 3 && !isViewMode && (
+                        <button 
+                          onClick={() => setVisibleCaregivers(prev => prev + 1)}
+                          className="flex items-center gap-1 text-xs font-bold text-blue-600 hover:bg-blue-50 px-3 py-1.5 rounded-lg transition-all"
+                        >
+                          <Plus size={14} /> Adicionar Responsável
+                        </button>
+                      )}
+                    </div>
+                    <div className="flex gap-4">
+                      {['Não', 'Sim'].map((option) => (
+                        <button
+                          key={option}
+                          type="button"
+                          disabled={isViewMode}
+                          onClick={() => setFormData(prev => ({ ...prev, has_caregiver: option }))}
+                          className={`px-6 py-2 rounded-xl border transition-all font-medium ${
+                            formData.has_caregiver === option 
+                            ? 'bg-blue-600 text-white border-blue-600 shadow-md' 
+                            : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
+                          } disabled:opacity-50`}
+                        >
+                          {option}
+                        </button>
+                      ))}
                     </div>
                     
                     {formData.has_caregiver === 'Sim' && (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in slide-in-from-top-2 duration-300">
-                        <div>
-                          <label className={labelClasses}>Nome do Responsável <span className="text-red-500">*</span></label>
-                          <input 
-                            disabled={isViewMode}
-                            name="caregiver_name" 
-                            value={formData.caregiver_name} 
-                            onChange={handleInputChange} 
-                            type="text" 
-                            className={getInputClasses('caregiver_name')} 
-                            placeholder="Nome completo" 
-                          />
+                      <div className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
+                        {/* Responsável 1 */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                          <div>
+                            <label className={labelClasses}>Nome do Responsável 1 <span className="text-red-500">*</span></label>
+                            <input 
+                              disabled={isViewMode}
+                              name="caregiver_name" 
+                              value={formData.caregiver_name} 
+                              onChange={handleInputChange} 
+                              type="text" 
+                              className={getInputClasses('caregiver_name')} 
+                              placeholder="Nome completo" 
+                            />
+                          </div>
+                          <div>
+                            <label className={labelClasses}>Telefone do Responsável 1 <span className="text-red-500">*</span></label>
+                            <input 
+                              disabled={isViewMode}
+                              name="caregiver_phone" 
+                              value={formData.caregiver_phone} 
+                              onChange={handleInputChange} 
+                              type="tel" 
+                              className={getInputClasses('caregiver_phone')} 
+                              placeholder="(00) 00000-0000" 
+                              maxLength={15}
+                            />
+                          </div>
                         </div>
-                        <div>
-                          <label className={labelClasses}>Telefone do Responsável <span className="text-red-500">*</span></label>
-                          <input 
-                            disabled={isViewMode}
-                            name="caregiver_phone" 
-                            value={formData.caregiver_phone} 
-                            onChange={handleInputChange} 
-                            type="tel" 
-                            className={getInputClasses('caregiver_phone')} 
-                            placeholder="(00) 00000-0000" 
-                            maxLength={15}
-                          />
-                        </div>
+
+                        {/* Responsável 2 */}
+                        {visibleCaregivers >= 2 && (
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in slide-in-from-top-2 duration-300">
+                            <div>
+                              <label className={labelClasses}>Nome do Responsável 2</label>
+                              <input 
+                                disabled={isViewMode}
+                                name="caregiver2_name" 
+                                value={formData.caregiver2_name} 
+                                onChange={handleInputChange} 
+                                type="text" 
+                                className={getInputClasses('caregiver2_name')} 
+                                placeholder="Nome completo" 
+                              />
+                            </div>
+                            <div className="relative">
+                              <label className={labelClasses}>Telefone do Responsável 2</label>
+                              <div className="flex gap-2">
+                                <input 
+                                  disabled={isViewMode}
+                                  name="caregiver2_phone" 
+                                  value={formData.caregiver2_phone} 
+                                  onChange={handleInputChange} 
+                                  type="tel" 
+                                  className={getInputClasses('caregiver2_phone')} 
+                                  placeholder="(00) 00000-0000" 
+                                  maxLength={15}
+                                />
+                                {visibleCaregivers === 2 && !isViewMode && (
+                                  <button 
+                                    onClick={() => setVisibleCaregivers(1)}
+                                    className="p-3 text-slate-300 hover:text-red-500 transition-colors"
+                                  >
+                                    <Trash2 size={20} />
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Responsável 3 */}
+                        {visibleCaregivers >= 3 && (
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in slide-in-from-top-2 duration-300">
+                            <div>
+                              <label className={labelClasses}>Nome do Responsável 3</label>
+                              <input 
+                                disabled={isViewMode}
+                                name="caregiver3_name" 
+                                value={formData.caregiver3_name} 
+                                onChange={handleInputChange} 
+                                type="text" 
+                                className={getInputClasses('caregiver3_name')} 
+                                placeholder="Nome completo" 
+                              />
+                            </div>
+                            <div className="relative">
+                              <label className={labelClasses}>Telefone do Responsável 3</label>
+                              <div className="flex gap-2">
+                                <input 
+                                  disabled={isViewMode}
+                                  name="caregiver3_phone" 
+                                  value={formData.caregiver3_phone} 
+                                  onChange={handleInputChange} 
+                                  type="tel" 
+                                  className={getInputClasses('caregiver3_phone')} 
+                                  placeholder="(00) 00000-0000" 
+                                  maxLength={15}
+                                />
+                                {!isViewMode && (
+                                  <button 
+                                    onClick={() => setVisibleCaregivers(2)}
+                                    className="p-3 text-slate-300 hover:text-red-500 transition-colors"
+                                  >
+                                    <Trash2 size={20} />
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -1622,7 +1725,6 @@ const Evaluation = () => {
               <EvolutionHistoryTab evaluationId={id} isReadOnly={isViewMode} />
             )}
 
-            {/* Navigation Buttons */}
             <div className="mt-12 pt-8 border-t border-slate-100 flex justify-between items-center">
               {!isViewMode ? (
                 <button 
@@ -1636,7 +1738,7 @@ const Evaluation = () => {
                   <ChevronLeft size={20} /> Voltar
                 </button>
               ) : (
-                <div /> // Espaçador para manter o alinhamento
+                <div />
               )}
               
               <div className="flex gap-2">

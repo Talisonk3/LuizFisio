@@ -488,6 +488,8 @@ const Evaluation = () => {
       ];
       if (formData.has_caregiver === 'Sim') {
         requiredFields.push('caregiver_name', 'caregiver_phone');
+        if (visibleCaregivers >= 2) requiredFields.push('caregiver2_name', 'caregiver2_phone');
+        if (visibleCaregivers >= 3) requiredFields.push('caregiver3_name', 'caregiver3_phone');
       }
       requiredFields.forEach(field => {
         const val = formData[field as keyof typeof formData];
@@ -534,7 +536,11 @@ const Evaluation = () => {
     const newErrors: string[] = [];
     
     const idFields = ['patient_name', 'birth_date', 'gender', 'marital_status', 'address', 'address_number', 'profession'];
-    if (formData.has_caregiver === 'Sim') idFields.push('caregiver_name', 'caregiver_phone');
+    if (formData.has_caregiver === 'Sim') {
+      idFields.push('caregiver_name', 'caregiver_phone');
+      if (visibleCaregivers >= 2) idFields.push('caregiver2_name', 'caregiver2_phone');
+      if (visibleCaregivers >= 3) idFields.push('caregiver3_name', 'caregiver3_phone');
+    }
     idFields.forEach(f => { if (!formData[f as keyof typeof formData]?.toString().trim()) newErrors.push(f); });
     
     if (formData.birth_date.length < 10 && !newErrors.includes('birth_date')) {
@@ -1023,7 +1029,7 @@ const Evaluation = () => {
                         {visibleCaregivers >= 2 && (
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in slide-in-from-top-2 duration-300">
                             <div>
-                              <label className={labelClasses}>Nome do Responsável 2</label>
+                              <label className={labelClasses}>Nome do Responsável 2 <span className="text-red-500">*</span></label>
                               <input 
                                 disabled={isViewMode}
                                 name="caregiver2_name" 
@@ -1035,7 +1041,7 @@ const Evaluation = () => {
                               />
                             </div>
                             <div className="relative">
-                              <label className={labelClasses}>Telefone do Responsável 2</label>
+                              <label className={labelClasses}>Telefone do Responsável 2 <span className="text-red-500">*</span></label>
                               <div className="flex gap-2">
                                 <input 
                                   disabled={isViewMode}
@@ -1064,7 +1070,7 @@ const Evaluation = () => {
                         {visibleCaregivers >= 3 && (
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in slide-in-from-top-2 duration-300">
                             <div>
-                              <label className={labelClasses}>Nome do Responsável 3</label>
+                              <label className={labelClasses}>Nome do Responsável 3 <span className="text-red-500">*</span></label>
                               <input 
                                 disabled={isViewMode}
                                 name="caregiver3_name" 
@@ -1076,7 +1082,7 @@ const Evaluation = () => {
                               />
                             </div>
                             <div className="relative">
-                              <label className={labelClasses}>Telefone do Responsável 3</label>
+                              <label className={labelClasses}>Telefone do Responsável 3 <span className="text-red-500">*</span></label>
                               <div className="flex gap-2">
                                 <input 
                                   disabled={isViewMode}

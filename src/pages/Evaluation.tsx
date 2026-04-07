@@ -367,7 +367,8 @@ const Evaluation = () => {
     const { name, value } = e.target;
     let filteredValue = value.trimStart();
     
-    if (name === 'patient_name' || name === 'responsible_doctor' || name.includes('caregiver_name')) {
+    // Filtro para nomes (apenas letras e espaços)
+    if (name === 'patient_name' || name === 'responsible_doctor' || name.includes('caregiver') && name.includes('name')) {
       filteredValue = filteredValue.replace(/[^a-zA-ZÀ-ÿ\s]/g, '');
     } else if (name === 'profession') {
       filteredValue = filteredValue.replace(/[^a-zA-ZÀ-ÿ\s]/g, '');
@@ -377,7 +378,7 @@ const Evaluation = () => {
       filteredValue = filteredValue.replace(/\D/g, '').substring(0, 3);
     } else if (name === 'height') {
       filteredValue = formatHeight(filteredValue);
-    } else if (name === 'phone' || name === 'doctor_phone' || name.includes('caregiver_phone')) {
+    } else if (name === 'phone' || name === 'doctor_phone' || name.includes('caregiver') && name.includes('phone')) {
       filteredValue = formatPhone(filteredValue);
     } else if (name === 'birth_date' || name === 'evaluation_date') {
       filteredValue = formatDate(filteredValue);

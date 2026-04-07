@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { X, Save, Loader2, MessageSquarePlus } from 'lucide-react';
+import { X, Save, Loader2, MessageSquarePlus, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface SessionEvolutionModalProps {
@@ -11,7 +11,7 @@ interface SessionEvolutionModalProps {
   patientName: string;
   isReadOnly?: boolean;
   userId?: string;
-  evolutionData?: any; // Dados para edição
+  evolutionData?: any;
 }
 
 const SessionEvolutionModal = ({ 
@@ -24,6 +24,7 @@ const SessionEvolutionModal = ({
   evolutionData 
 }: SessionEvolutionModalProps) => {
   const [isSaving, setIsSaving] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const formatDate = (value: string) => {
     const numbers = value.replace(/\D/g, '');
@@ -54,6 +55,7 @@ const SessionEvolutionModal = ({
 
   useEffect(() => {
     if (isOpen) {
+      setErrorMessage(null);
       if (evolutionData) {
         let sessionDate = '';
         if (evolutionData.session_date) {
@@ -128,10 +130,14 @@ const SessionEvolutionModal = ({
   };
 
   const handleSave = async () => {
+    setErrorMessage(null);
     const visitorId = sessionStorage.getItem('visitor_id');
     const effectiveUserId = userId || visitorId;
 
-    if (!formData.evolution_text.trim() || !evaluationId) return;
+    if (!formData.evolution_text.trim() || !evaluationId) {
+      setErrorMessage("A descrição da evolução é obrigatória.");
+      return;
+    }
     
     let isoDate = null;
     const parts = formData.session_date.split('/');
@@ -197,8 +203,9 @@ const SessionEvolutionModal = ({
       }
       
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao salvar evolução:', error);
+      setErrorMessage(error.message || "Erro ao salvar. Verifique se a coluna 'pain_scale' existe no banco.");
     } finally {
       setIsSaving(false);
     }
@@ -238,6 +245,13 @@ const SessionEvolutionModal = ({
         </div>
 
         <div className="flex-1 overflow-y-auto p-8">
+          {errorMessage && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-2xl flex items-center gap-3 text-red-600 text-sm font-bold animate-in fade-in slide-in-from-top-2">
+              <AlertCircle size={20} />
+              {errorMessage}
+            </div>
+          )}
+
           <div className="space-y-6">
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               <div className="col-span-2 md:col-span-1">

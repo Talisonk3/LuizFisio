@@ -25,6 +25,7 @@ const fieldLabels: Record<string, string> = {
   respiratory_rate: 'Frequência Respiratória',
   temperature: 'Temperatura',
   saturation: 'Saturação (SatO2)',
+  pain_scale: 'Dor (EVA)',
   session_date: 'Data da Sessão'
 };
 

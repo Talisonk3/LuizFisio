@@ -1,0 +1,1 @@
+ALTER TABLE public.session_evolutions ADD COLUMN IF NOT EXISTS pain_scale TEXT;

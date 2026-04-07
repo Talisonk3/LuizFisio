@@ -48,6 +48,7 @@ const SessionEvolutionModal = ({
     respiratory_rate: '',
     temperature: '',
     saturation: '',
+    pain_scale: '0',
     session_date: new Date().toLocaleDateString('pt-BR')
   });
 
@@ -66,6 +67,7 @@ const SessionEvolutionModal = ({
           respiratory_rate: evolutionData.respiratory_rate || '',
           temperature: evolutionData.temperature || '',
           saturation: evolutionData.saturation || '',
+          pain_scale: evolutionData.pain_scale || '0',
           session_date: sessionDate || new Date().toLocaleDateString('pt-BR')
         });
       } else {
@@ -76,6 +78,7 @@ const SessionEvolutionModal = ({
           respiratory_rate: '',
           temperature: '',
           saturation: '',
+          pain_scale: '0',
           session_date: new Date().toLocaleDateString('pt-BR')
         });
       }
@@ -101,6 +104,7 @@ const SessionEvolutionModal = ({
            formData.respiratory_rate !== (evolutionData.respiratory_rate || '') ||
            formData.temperature !== (evolutionData.temperature || '') ||
            formData.saturation !== (evolutionData.saturation || '') ||
+           formData.pain_scale !== (evolutionData.pain_scale || '0') ||
            formData.session_date !== originalSessionDate;
   }, [formData, evolutionData]);
 
@@ -124,7 +128,6 @@ const SessionEvolutionModal = ({
   };
 
   const handleSave = async () => {
-    // Permitir salvar se houver texto e algum identificador (userId ou visitorId do sessionStorage)
     const visitorId = sessionStorage.getItem('visitor_id');
     const effectiveUserId = userId || visitorId;
 
@@ -150,9 +153,9 @@ const SessionEvolutionModal = ({
           originalSessionDate = new Date(evolutionData.created_at).toLocaleDateString('pt-BR');
         }
 
-        const fields = ['evolution_text', 'blood_pressure', 'heart_rate', 'respiratory_rate', 'temperature', 'saturation', 'session_date'];
+        const fields = ['evolution_text', 'blood_pressure', 'heart_rate', 'respiratory_rate', 'temperature', 'saturation', 'pain_scale', 'session_date'];
         fields.forEach(field => {
-          const oldVal = field === 'session_date' ? originalSessionDate : (evolutionData[field] || '');
+          const oldVal = field === 'session_date' ? originalSessionDate : (evolutionData[field] || (field === 'pain_scale' ? '0' : ''));
           const newVal = formData[field as keyof typeof formData];
           
           if (oldVal.toString().trim() !== newVal.toString().trim()) {
@@ -199,6 +202,14 @@ const SessionEvolutionModal = ({
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const getPainColor = (value: number) => {
+    if (value === 0) return 'bg-green-500';
+    if (value <= 3) return 'bg-yellow-400';
+    if (value <= 6) return 'bg-orange-500';
+    if (value <= 8) return 'bg-red-500';
+    return 'bg-red-700';
   };
 
   if (!isOpen || isReadOnly) return null;
@@ -295,6 +306,31 @@ const SessionEvolutionModal = ({
                   placeholder="98"
                   className={inputClasses}
                 />
+              </div>
+            </div>
+
+            <div className="bg-slate-50 p-6 rounded-3xl border border-slate-200">
+              <label className="text-sm font-bold text-slate-700 mb-4 block ml-1">Escala Visual Analógica de Dor (EVA)</label>
+              <div className="flex flex-wrap gap-2 justify-between">
+                {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
+                  <button
+                    key={num}
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, pain_scale: num.toString() }))}
+                    className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${
+                      formData.pain_scale === num.toString()
+                      ? `${getPainColor(num)} text-white scale-110 shadow-lg ring-4 ring-white`
+                      : 'bg-white text-slate-400 border border-slate-200 hover:border-slate-400'
+                    }`}
+                  >
+                    {num}
+                  </button>
+                ))}
+              </div>
+              <div className="flex justify-between mt-3 px-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                <span>Sem Dor</span>
+                <span>Dor Moderada</span>
+                <span>Dor Máxima</span>
               </div>
             </div>
 

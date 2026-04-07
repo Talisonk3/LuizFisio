@@ -15,6 +15,7 @@ interface Evolution {
   respiratory_rate?: string;
   temperature?: string;
   saturation?: string;
+  pain_scale?: string;
   session_date?: string;
   created_at: string;
 }
@@ -108,15 +109,23 @@ const EvolutionHistoryTab = ({ evaluationId, isReadOnly }: EvolutionHistoryTabPr
                   </div>
                 </div>
                 
-                {(evo.blood_pressure || evo.heart_rate || evo.respiratory_rate || evo.temperature || evo.saturation) && (
-                  <div className="flex flex-wrap gap-2">
-                    {evo.blood_pressure && <span className="bg-blue-50 text-blue-600 px-3 py-1.5 rounded-xl text-[10px] font-black border border-blue-100">PA: {evo.blood_pressure}</span>}
-                    {evo.heart_rate && <span className="bg-blue-50 text-blue-600 px-3 py-1.5 rounded-xl text-[10px] font-black border border-blue-100">FC: {evo.heart_rate}</span>}
-                    {evo.respiratory_rate && <span className="bg-blue-50 text-blue-600 px-3 py-1.5 rounded-xl text-[10px] font-black border border-blue-100">FR: {evo.respiratory_rate}</span>}
-                    {evo.temperature && <span className="bg-blue-50 text-blue-600 px-3 py-1.5 rounded-xl text-[10px] font-black border border-blue-100">T: {evo.temperature}°C</span>}
-                    {evo.saturation && <span className="bg-blue-50 text-blue-600 px-3 py-1.5 rounded-xl text-[10px] font-black border border-blue-100">Sat: {evo.saturation}%</span>}
-                  </div>
-                )}
+                <div className="flex flex-wrap gap-2">
+                  {evo.pain_scale !== undefined && (
+                    <span className={`px-3 py-1.5 rounded-xl text-[10px] font-black border ${
+                      parseInt(evo.pain_scale) === 0 ? 'bg-green-50 text-green-600 border-green-100' :
+                      parseInt(evo.pain_scale) <= 3 ? 'bg-yellow-50 text-yellow-600 border-yellow-100' :
+                      parseInt(evo.pain_scale) <= 7 ? 'bg-orange-50 text-orange-600 border-orange-100' :
+                      'bg-red-50 text-red-600 border-red-100'
+                    }`}>
+                      DOR: {evo.pain_scale}/10
+                    </span>
+                  )}
+                  {evo.blood_pressure && <span className="bg-blue-50 text-blue-600 px-3 py-1.5 rounded-xl text-[10px] font-black border border-blue-100">PA: {evo.blood_pressure}</span>}
+                  {evo.heart_rate && <span className="bg-blue-50 text-blue-600 px-3 py-1.5 rounded-xl text-[10px] font-black border border-blue-100">FC: {evo.heart_rate}</span>}
+                  {evo.respiratory_rate && <span className="bg-blue-50 text-blue-600 px-3 py-1.5 rounded-xl text-[10px] font-black border border-blue-100">FR: {evo.respiratory_rate}</span>}
+                  {evo.temperature && <span className="bg-blue-50 text-blue-600 px-3 py-1.5 rounded-xl text-[10px] font-black border border-blue-100">T: {evo.temperature}°C</span>}
+                  {evo.saturation && <span className="bg-blue-50 text-blue-600 px-3 py-1.5 rounded-xl text-[10px] font-black border border-blue-100">Sat: {evo.saturation}%</span>}
+                </div>
               </div>
               
               <div className="relative">

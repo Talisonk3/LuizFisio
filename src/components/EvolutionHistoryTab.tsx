@@ -81,10 +81,9 @@ const EvolutionHistoryTab = ({ evaluationId, isReadOnly }: EvolutionHistoryTabPr
       {evolutions.length > 0 ? (
         <div className="space-y-6">
           {evolutions.map((evo) => {
-            // Só pode editar se:
-            // 1. Não for modo apenas leitura (isReadOnly)
-            // 2. O usuário atual for o autor da evolução (evo.user_id === currentUserId)
-            const canEdit = !isReadOnly && evo.user_id === currentUserId;
+            // O autor sempre pode editar sua própria evolução, 
+            // independente se a ficha principal está em modo de visualização.
+            const canEdit = evo.user_id === currentUserId;
 
             return (
               <div key={evo.id} className="bg-white border border-slate-100 p-8 rounded-[2rem] shadow-sm hover:shadow-md transition-all">
@@ -168,7 +167,7 @@ const EvolutionHistoryTab = ({ evaluationId, isReadOnly }: EvolutionHistoryTabPr
         patientName="Editando Evolução"
         userId={user?.id}
         evolutionData={editingEvolution}
-        isReadOnly={isReadOnly}
+        isReadOnly={false}
       />
 
       <SessionHistoryModal 

@@ -79,7 +79,11 @@ const Patients = () => {
         if (error) throw error;
         
         const formattedData = data?.map((item: any) => item.evaluations).filter(Boolean) || [];
-        setPatients(formattedData);
+        // Ordenar alfabeticamente no frontend para garantir a ordem correta
+        const sortedData = [...formattedData].sort((a, b) => 
+          a.patient_name.localeCompare(b.patient_name)
+        );
+        setPatients(sortedData);
       } else if (user) {
         const { data, error } = await supabase
           .from('evaluations')

@@ -42,10 +42,12 @@ const EvolutionHistoryTab = ({ evaluationId, isReadOnly }: EvolutionHistoryTabPr
     if (!evaluationId) return;
     setLoading(true);
     try {
+      // Ordenando primeiro pela data da sessão e depois pela data de criação como desempate
       const { data, error } = await supabase
         .from('session_evolutions')
         .select('*')
         .eq('evaluation_id', evaluationId)
+        .order('session_date', { ascending: false })
         .order('created_at', { ascending: false });
 
       if (error) throw error;

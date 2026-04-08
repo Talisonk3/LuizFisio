@@ -36,6 +36,7 @@ const EvolutionHistoryTab = ({ evaluationId, isReadOnly }: EvolutionHistoryTabPr
   // Identificar o usuário atual (Profissional ou Visitante)
   const visitorId = sessionStorage.getItem('visitor_id');
   const currentUserId = user?.id || visitorId;
+  const isVisitor = !!visitorId;
 
   const fetchEvolutions = async () => {
     if (!evaluationId) return;
@@ -60,6 +61,28 @@ const EvolutionHistoryTab = ({ evaluationId, isReadOnly }: EvolutionHistoryTabPr
     fetchEvolutions();
   }, [evaluationId]);
 
+  const checkCanEdit = (evo: Evolution) => {
+    // Se não for o autor, não pode editar
+    if (evo.user_id !== currentUserId) return false;
+    
+    // Se for profissional (dono), pode editar sempre
+    if (!isVisitor) return true;
+
+    // Se for visitante, verificar o prazo de 10 dias
+    const evolutionDate = evo.session_date 
+      ? new Date(evo.session_date + 'T00:00:00') 
+      : new Date(evo.created_at);
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    evolutionDate.setHours(0, 0, 0, 0);
+
+    const diffTime = today.getTime() - evolutionDate.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+    return diffDays <= 10;
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-slate-400">
@@ -81,9 +104,7 @@ const EvolutionHistoryTab = ({ evaluationId, isReadOnly }: EvolutionHistoryTabPr
       {evolutions.length > 0 ? (
         <div className="space-y-6">
           {evolutions.map((evo) => {
-            // O autor sempre pode editar sua própria evolução, 
-            // independente se a ficha principal está em modo de visualização.
-            const canEdit = evo.user_id === currentUserId;
+            const canEdit = checkCanEdit(evo);
 
             return (
               <div key={evo.id} className="bg-white border border-slate-100 p-8 rounded-[2rem] shadow-sm hover:shadow-md transition-all">

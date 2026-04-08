@@ -17,7 +17,8 @@ import {
   ArrowLeft,
   FileText,
   History,
-  Home
+  Home,
+  Download
 } from 'lucide-react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -25,6 +26,7 @@ import { useAuth } from '@/components/AuthProvider';
 import CustomSelect from '@/components/CustomSelect';
 import NotificationModal, { ModalType } from '@/components/NotificationModal';
 import EvolutionHistoryTab from '@/components/EvolutionHistoryTab';
+import DownloadModal from '@/components/DownloadModal';
 
 const fieldLabels: Record<string, string> = {
   patient_name: 'Nome',
@@ -89,7 +91,11 @@ const Evaluation = () => {
   const [errors, setErrors] = useState<string[]>([]);
   const [examFiles, setExamFiles] = useState<string[]>([]);
   const [visibleCaregivers, setVisibleCaregivers] = useState(1);
+  const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
   
+  const visitorId = sessionStorage.getItem('visitor_id');
+  const isVisitor = !!visitorId;
+
   const [modalConfig, setModalConfig] = useState<{
     isOpen: boolean;
     type: ModalType;
@@ -861,6 +867,15 @@ const Evaluation = () => {
               </p>
             </div>
             <div className="flex gap-3">
+              {isViewMode && !isVisitor && (
+                <button 
+                  onClick={() => setIsDownloadModalOpen(true)}
+                  className="bg-blue-600 text-white px-6 py-3 rounded-2xl flex items-center gap-2 hover:bg-blue-700 transition-all shadow-xl shadow-blue-100 font-bold"
+                >
+                  <Download size={20} /> Baixar Ficha
+                </button>
+              )}
+              
               {!isViewMode && (
                 <>
                   <button 
@@ -1764,6 +1779,13 @@ const Evaluation = () => {
           </div>
         </div>
       </main>
+
+      <DownloadModal 
+        isOpen={isDownloadModalOpen}
+        onClose={() => setIsDownloadModalOpen(false)}
+        evaluationData={{ ...formData, id }}
+        patientName={formData.patient_name}
+      />
 
       <NotificationModal 
         isOpen={modalConfig.isOpen}

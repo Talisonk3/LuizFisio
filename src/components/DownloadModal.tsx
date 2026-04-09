@@ -209,7 +209,7 @@ const DownloadModal = ({ isOpen, onClose, evaluationData, patientName }: Downloa
         if (evolutions && evolutions.length > 0) {
           const evoRows = evolutions.map(evo => [
             evo.session_date ? new Date(evo.session_date + 'T00:00:00').toLocaleDateString('pt-BR') : '-',
-            `PA: ${evo.blood_pressure || '-'}\nFC: ${evo.heart_rate || '-'}\nSat: ${evo.saturation || '-'}%`,
+            `PA: ${evo.blood_pressure || '-'}\nFC: ${evo.heart_rate || '-'}\nSat: ${evo.saturation ? `${evo.saturation}%` : '-'}`,
             evo.evolution_text || '-'
           ]);
 

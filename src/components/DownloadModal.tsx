@@ -15,7 +15,7 @@ interface DownloadModalProps {
 
 const DownloadModal = ({ isOpen, onClose, evaluationData, patientName }: DownloadModalProps) => {
   const [loading, setLoading] = useState(false);
-  const [professional, setProfessional] = useState<{ full_name: string; crefito: string } | null>(null);
+  const [professional, setProfessional] = useState<{ full_name: string; crefito: string; phone: string } | null>(null);
   const [selectedOptions, setSelectedOptions] = useState({
     ficha: true,
     evolucao: false
@@ -26,9 +26,9 @@ const DownloadModal = ({ isOpen, onClose, evaluationData, patientName }: Downloa
       if (isOpen && evaluationData.user_id) {
         const { data, error } = await supabase
           .from('profiles')
-          .select('full_name, crefito')
+          .select('full_name, crefito, phone')
           .eq('id', evaluationData.user_id)
-          .single();
+          .maybeSingle();
         
         if (!error && data) {
           setProfessional(data);
@@ -66,6 +66,7 @@ const DownloadModal = ({ isOpen, onClose, evaluationData, patientName }: Downloa
       // Informações do Profissional
       const profName = professional?.full_name ? capitalize(professional.full_name) : 'Não informado';
       const crefito = professional?.crefito || 'Não informado';
+      const profPhone = professional?.phone || 'Não informado';
       
       doc.setFont("helvetica", "bold");
       doc.text(`Profissional: `, 20, currentY);
@@ -77,6 +78,12 @@ const DownloadModal = ({ isOpen, onClose, evaluationData, patientName }: Downloa
       doc.text(`CREFITO: `, 20, currentY);
       doc.setFont("helvetica", "normal");
       doc.text(crefito, 40, currentY);
+      
+      currentY += 6;
+      doc.setFont("helvetica", "bold");
+      doc.text(`Contato: `, 20, currentY);
+      doc.setFont("helvetica", "normal");
+      doc.text(profPhone, 38, currentY);
       
       currentY += 10;
       doc.setFont("helvetica", "bold");

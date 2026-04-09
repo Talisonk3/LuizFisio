@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, FileText, History, Download, Loader2, CheckCircle2 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -15,12 +15,37 @@ interface DownloadModalProps {
 
 const DownloadModal = ({ isOpen, onClose, evaluationData, patientName }: DownloadModalProps) => {
   const [loading, setLoading] = useState(false);
+  const [professional, setProfessional] = useState<{ full_name: string; crefito: string } | null>(null);
   const [selectedOptions, setSelectedOptions] = useState({
     ficha: true,
     evolucao: false
   });
 
+  useEffect(() => {
+    const fetchProfessional = async () => {
+      if (isOpen && evaluationData.user_id) {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('full_name, crefito')
+          .eq('id', evaluationData.user_id)
+          .single();
+        
+        if (!error && data) {
+          setProfessional(data);
+        }
+      }
+    };
+    fetchProfessional();
+  }, [isOpen, evaluationData.user_id]);
+
   if (!isOpen) return null;
+
+  const capitalize = (str: string) => {
+    if (!str) return '';
+    return str.toLowerCase().split(' ').map(word => 
+      word.charAt(0).toUpperCase() + word.slice(1)
+    ).join(' ');
+  };
 
   const generatePDF = async () => {
     setLoading(true);
@@ -35,12 +60,35 @@ const DownloadModal = ({ isOpen, onClose, evaluationData, patientName }: Downloa
       doc.text('FisioSystem - Relatório Clínico', pageWidth / 2, currentY, { align: 'center' });
       
       currentY += 15;
-      doc.setFontSize(12);
-      doc.setTextColor(100);
-      doc.text(`Paciente: ${patientName}`, 20, currentY);
-      doc.text(`Data de Emissão: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth - 20, currentY, { align: 'right' });
+      doc.setFontSize(11);
+      doc.setTextColor(80);
+      
+      // Informações do Profissional
+      const profName = professional?.full_name ? capitalize(professional.full_name) : 'Não informado';
+      const crefito = professional?.crefito || 'Não informado';
+      
+      doc.setFont("helvetica", "bold");
+      doc.text(`Profissional: `, 20, currentY);
+      doc.setFont("helvetica", "normal");
+      doc.text(profName, 45, currentY);
+      
+      currentY += 6;
+      doc.setFont("helvetica", "bold");
+      doc.text(`CREFITO: `, 20, currentY);
+      doc.setFont("helvetica", "normal");
+      doc.text(crefito, 40, currentY);
       
       currentY += 10;
+      doc.setFont("helvetica", "bold");
+      doc.text(`Paciente: `, 20, currentY);
+      doc.setFont("helvetica", "normal");
+      doc.text(capitalize(patientName), 40, currentY);
+      
+      doc.setFontSize(10);
+      doc.setTextColor(120);
+      doc.text(`Data de Emissão: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth - 20, currentY, { align: 'right' });
+      
+      currentY += 8;
       doc.setDrawColor(226, 232, 240);
       doc.line(20, currentY, pageWidth - 20, currentY);
       currentY += 15;
@@ -48,6 +96,7 @@ const DownloadModal = ({ isOpen, onClose, evaluationData, patientName }: Downloa
       if (selectedOptions.ficha) {
         doc.setFontSize(16);
         doc.setTextColor(30, 64, 175);
+        doc.setFont("helvetica", "bold");
         doc.text('1. Ficha de Avaliação', 20, currentY);
         currentY += 10;
 
@@ -84,6 +133,7 @@ const DownloadModal = ({ isOpen, onClose, evaluationData, patientName }: Downloa
 
         doc.setFontSize(16);
         doc.setTextColor(30, 64, 175);
+        doc.setFont("helvetica", "bold");
         doc.text('2. Histórico de Evoluções', 20, currentY);
         currentY += 10;
 

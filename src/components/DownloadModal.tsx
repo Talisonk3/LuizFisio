@@ -13,6 +13,56 @@ interface DownloadModalProps {
   patientName: string;
 }
 
+const fieldLabels: Record<string, string> = {
+  patient_name: 'Nome do Paciente',
+  birth_date: 'Data de Nascimento',
+  email: 'E-mail',
+  phone: 'Telefone',
+  address: 'Endereço',
+  marital_status: 'Estado Civil',
+  gender: 'Gênero',
+  profession: 'Profissão',
+  weight: 'Peso (kg)',
+  height: 'Altura (m)',
+  caregiver_name: 'Responsável 1',
+  caregiver_phone: 'Tel. Responsável 1',
+  caregiver2_name: 'Responsável 2',
+  caregiver2_phone: 'Tel. Responsável 2',
+  caregiver3_name: 'Responsável 3',
+  caregiver3_phone: 'Tel. Responsável 3',
+  responsible_doctor: 'Médico Responsável',
+  doctor_phone: 'Telefone do Médico',
+  chief_complaint: 'Queixa Principal',
+  history_present_illness: 'HDA',
+  previous_illness_history: 'HDP',
+  family_history: 'Histórico Familiar',
+  drinks_details: 'Consumo de Álcool',
+  smokes_details: 'Tabagismo',
+  sedentary_details: 'Atividade Física',
+  medications: 'Medicamentos em Uso',
+  previous_surgeries: 'Cirurgias Prévias',
+  pain_scale: 'Escala de Dor (EVA)',
+  pain_worsening_factors: 'Fatores de Piora da Dor',
+  pain_improvement_factors: 'Fatores de Melhora da Dor',
+  blood_pressure: 'Pressão Arterial',
+  heart_rate: 'Frequência Cardíaca',
+  respiratory_rate: 'Frequência Respiratória',
+  temperature: 'Temperatura',
+  saturation: 'Saturação (SatO2)',
+  cardiac_auscultation: 'Ausculta Cardíaca',
+  pulmonary_auscultation: 'Ausculta Pulmonar',
+  auditory_alteration_details: 'Alterações Auditivas',
+  visual_alteration_details: 'Alterações Visuais',
+  gait_aid_details: 'Auxílio de Marcha',
+  inspection_palpation: 'Inspeção e Palpação',
+  range_of_motion: 'ADM',
+  muscle_strength: 'Força Muscular',
+  muscle_tone_mmss: 'Tônus MMSS',
+  muscle_tone_mmii: 'Tônus MMII',
+  physio_diagnosis: 'Diagnóstico Fisioterapêutico',
+  complementary_exams_details: 'Exames Complementares'
+};
+
 const DownloadModal = ({ isOpen, onClose, evaluationData, patientName }: DownloadModalProps) => {
   const [loading, setLoading] = useState(false);
   const [professional, setProfessional] = useState<{ full_name: string; crefito: string; phone: string } | null>(null);
@@ -107,26 +157,32 @@ const DownloadModal = ({ isOpen, onClose, evaluationData, patientName }: Downloa
         doc.text('1. Ficha de Avaliação', 20, currentY);
         currentY += 10;
 
-        const fichaData = [
-          ['Campo', 'Informação'],
-          ['Data de Nascimento', evaluationData.birth_date || '-'],
-          ['Gênero', evaluationData.gender || '-'],
-          ['Estado Civil', evaluationData.marital_status || '-'],
-          ['Profissão', evaluationData.profession || '-'],
-          ['Telefone', evaluationData.phone || '-'],
-          ['Endereço', evaluationData.address || '-'],
-          ['Queixa Principal', evaluationData.chief_complaint || '-'],
-          ['HDA', evaluationData.history_present_illness || '-'],
-          ['Diagnóstico Fisioterapêutico', evaluationData.physio_diagnosis || '-'],
-        ];
+        // Filtrar apenas campos preenchidos
+        const fichaRows = Object.entries(fieldLabels)
+          .map(([key, label]) => {
+            let value = evaluationData[key];
+            
+            // Tratamento especial para endereço se vier separado
+            if (key === 'address' && evaluationData.address_number) {
+              value = `${evaluationData.address}, ${evaluationData.address_number}`;
+            }
+
+            return [label, value];
+          })
+          .filter(([_, value]) => value && value.toString().trim() !== '' && value !== 'Não');
 
         autoTable(doc, {
           startY: currentY,
-          head: [fichaData[0]],
-          body: fichaData.slice(1),
+          head: [['Campo', 'Informação']],
+          body: fichaRows,
           theme: 'striped',
           headStyles: { fillColor: [37, 99, 235] },
           margin: { left: 20, right: 20 },
+          styles: { overflow: 'linebreak', cellPadding: 3 },
+          columnStyles: {
+            0: { cellWidth: 60, fontStyle: 'bold' },
+            1: { cellWidth: 'auto' }
+          }
         });
 
         currentY = (doc as any).lastAutoTable.finalY + 20;
@@ -169,6 +225,7 @@ const DownloadModal = ({ isOpen, onClose, evaluationData, patientName }: Downloa
               2: { cellWidth: 'auto' }
             },
             margin: { left: 20, right: 20 },
+            styles: { overflow: 'linebreak' }
           });
         } else {
           doc.setFontSize(10);
@@ -219,7 +276,7 @@ const DownloadModal = ({ isOpen, onClose, evaluationData, patientName }: Downloa
                 </div>
                 <div className="text-left">
                   <p className={`font-bold ${selectedOptions.ficha ? 'text-blue-900' : 'text-slate-600'}`}>Ficha de Avaliação</p>
-                  <p className="text-xs text-slate-400">Dados cadastrais e anamnese</p>
+                  <p className="text-xs text-slate-400">Todos os campos preenchidos</p>
                 </div>
               </div>
               {selectedOptions.ficha && <CheckCircle2 size={20} className="text-blue-500" />}

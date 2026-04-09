@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { X, User, Save, Loader2, Award, Phone } from 'lucide-react';
+import { X, User, Save, Loader2, Award, Phone, Lock, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface ProfileModalProps {
@@ -14,10 +14,13 @@ interface ProfileModalProps {
 const ProfileModal = ({ isOpen, onClose, userId, onSuccess }: ProfileModalProps) => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     full_name: '',
     crefito: '',
-    phone: ''
+    phone: '',
+    newPassword: '',
+    confirmPassword: ''
   });
 
   useEffect(() => {
@@ -32,11 +35,12 @@ const ProfileModal = ({ isOpen, onClose, userId, onSuccess }: ProfileModalProps)
             .maybeSingle();
           
           if (!error && data) {
-            setFormData({
+            setFormData(prev => ({
+              ...prev,
               full_name: data.full_name || '',
               crefito: data.crefito || '',
               phone: data.phone || ''
-            });
+            }));
           }
         } catch (error) {
           console.error('Erro ao buscar perfil:', error);
@@ -86,7 +90,8 @@ const ProfileModal = ({ isOpen, onClose, userId, onSuccess }: ProfileModalProps)
     
     setSaving(true);
     try {
-      const { error } = await supabase
+      // Atualizar Perfil no Banco
+      const { error: profileError } = await supabase
         .from('profiles')
         .update({
           full_name: formData.full_name.trim(),
@@ -95,14 +100,25 @@ const ProfileModal = ({ isOpen, onClose, userId, onSuccess }: ProfileModalProps)
         })
         .eq('id', userId);
       
-      if (error) throw error;
+      if (profileError) throw profileError;
       
+      // Atualizar Metadados do Usuário
       await supabase.auth.updateUser({
         data: { full_name: formData.full_name.trim() }
       });
 
-      onSuccess('Perfil atualizado com sucesso!');
+      // Atualizar Senha se preenchida
+      if (formData.newPassword) {
+        const { error: passwordError } = await supabase.auth.updateUser({
+          password: formData.newPassword
+        });
+        if (passwordError) throw passwordError;
+      }
+
+      onSuccess('Perfil e senha atualizados com sucesso!');
       onClose();
+      // Limpar campos de senha
+      setFormData(prev => ({ ...prev, newPassword: '', confirmPassword: '' }));
     } catch (err: any) {
       console.error('Erro ao atualizar perfil:', err);
       alert('Erro ao salvar: ' + (err.message || 'Verifique a conexão.'));
@@ -111,18 +127,22 @@ const ProfileModal = ({ isOpen, onClose, userId, onSuccess }: ProfileModalProps)
     }
   };
 
-  // Validação: Nome preenchido, CREFITO completo (6 números + traço + 1 letra) e Telefone completo (15 caracteres)
+  // Validação: Nome preenchido, CREFITO completo, Telefone completo
+  // E se a senha for preenchida, deve ter 6+ caracteres e coincidir
+  const isPasswordValid = !formData.newPassword || (formData.newPassword.length >= 6 && formData.newPassword === formData.confirmPassword);
+  
   const isFormValid = 
     formData.full_name.trim().length > 0 && 
     formData.crefito.length === 8 && 
-    formData.phone.length === 15;
+    formData.phone.length === 15 &&
+    isPasswordValid;
 
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
       <div className="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl border border-slate-100 overflow-hidden animate-in zoom-in-95 duration-300">
-        <div className="p-8">
+        <div className="p-8 max-h-[90vh] overflow-y-auto">
           <div className="flex justify-between items-start mb-6">
             <div className="bg-blue-50 p-4 rounded-2xl text-blue-600">
               <User size={32} />
@@ -136,7 +156,7 @@ const ProfileModal = ({ isOpen, onClose, userId, onSuccess }: ProfileModalProps)
             Meu Perfil
           </h3>
           <p className="text-slate-500 text-sm mb-8">
-            Mantenha seus dados profissionais atualizados.
+            Mantenha seus dados profissionais e de acesso atualizados.
           </p>
           
           {loading ? (
@@ -161,34 +181,88 @@ const ProfileModal = ({ isOpen, onClose, userId, onSuccess }: ProfileModalProps)
                 </div>
               </div>
 
-              <div>
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 mb-2 block">Número do CREFITO</label>
-                <div className="relative">
-                  <Award className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                  <input
-                    type="text"
-                    name="crefito"
-                    value={formData.crefito}
-                    onChange={handleInputChange}
-                    className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium text-slate-700"
-                    placeholder="Ex: 123456-F"
-                  />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 mb-2 block">CREFITO</label>
+                  <div className="relative">
+                    <Award className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                    <input
+                      type="text"
+                      name="crefito"
+                      value={formData.crefito}
+                      onChange={handleInputChange}
+                      className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium text-slate-700"
+                      placeholder="123456-F"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 mb-2 block">Telefone</label>
+                  <div className="relative">
+                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                    <input
+                      type="tel"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleInputChange}
+                      className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium text-slate-700"
+                      placeholder="(00) 00000-0000"
+                      maxLength={15}
+                    />
+                  </div>
                 </div>
               </div>
 
-              <div>
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 mb-2 block">Telefone de Contato</label>
-                <div className="relative">
-                  <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleInputChange}
-                    className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium text-slate-700"
-                    placeholder="(00) 00000-0000"
-                    maxLength={15}
-                  />
+              <div className="pt-4 border-t border-slate-100">
+                <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Segurança e Acesso</h4>
+                
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 mb-2 block">Nova Senha (opcional)</label>
+                    <div className="relative">
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        name="newPassword"
+                        value={formData.newPassword}
+                        onChange={handleInputChange}
+                        className="w-full pl-12 pr-12 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium text-slate-700"
+                        placeholder="Mínimo 6 caracteres"
+                      />
+                      <button 
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-600 transition-colors"
+                      >
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {formData.newPassword && (
+                    <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                      <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 mb-2 block">Confirmar Nova Senha</label>
+                      <div className="relative">
+                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                        <input
+                          type={showPassword ? "text" : "password"}
+                          name="confirmPassword"
+                          value={formData.confirmPassword}
+                          onChange={handleInputChange}
+                          className={`w-full pl-12 pr-4 py-3.5 bg-slate-50 border rounded-2xl focus:ring-2 outline-none transition-all font-medium text-slate-700 ${
+                            formData.confirmPassword && formData.newPassword !== formData.confirmPassword 
+                            ? 'border-red-300 focus:ring-red-500/20 focus:border-red-500' 
+                            : 'border-slate-200 focus:ring-blue-500/20 focus:border-blue-500'
+                          }`}
+                          placeholder="Repita a nova senha"
+                        />
+                      </div>
+                      {formData.confirmPassword && formData.newPassword !== formData.confirmPassword && (
+                        <p className="text-[10px] text-red-500 font-bold mt-2 ml-1 uppercase tracking-wider">As senhas não coincidem</p>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 

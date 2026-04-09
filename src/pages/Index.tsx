@@ -68,6 +68,15 @@ const Index = () => {
     }
   ];
 
+  const formatDisplayName = (name: string | undefined) => {
+    if (!name) return 'Profissional';
+    const parts = name.trim().split(/\s+/);
+    const firstTwo = parts.slice(0, 2);
+    return firstTwo
+      .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+      .join(' ');
+  };
+
   const getGreetingName = () => {
     const fullName = user?.user_metadata?.full_name;
     if (!fullName) return 'Doutor(a)';
@@ -90,7 +99,9 @@ const Index = () => {
           
           <div className="flex items-center gap-4 relative" ref={menuRef}>
             <div className="hidden md:block text-right">
-              <p className="text-sm font-bold text-slate-800">{user?.user_metadata?.full_name || 'Profissional'}</p>
+              <p className="text-sm font-bold text-slate-800">
+                {formatDisplayName(user?.user_metadata?.full_name)}
+              </p>
               <p className="text-xs text-slate-500">Fisioterapeuta</p>
             </div>
             

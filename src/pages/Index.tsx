@@ -169,7 +169,7 @@ const Index = () => {
               <div className={`${item.lightColor} ${item.textColor} p-4 rounded-2xl w-fit mb-6 group-hover:scale-110 transition-transform duration-300`}>
                 <item.icon size={32} strokeWidth={2.5} />
               </div>
-              <item.title && <h3 className="text-2xl font-bold text-slate-800 mb-3">{item.title}</h3>}
+              {item.title && <h3 className="text-2xl font-bold text-slate-800 mb-3">{item.title}</h3>}
               <p className="text-slate-500 leading-relaxed mb-8 flex-1">{item.description}</p>
               <div className="flex items-center gap-2 font-bold text-sm uppercase tracking-wider text-blue-600 group-hover:gap-4 transition-all">
                 Acessar agora <ChevronRight size={18} />

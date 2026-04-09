@@ -12,15 +12,18 @@ import {
   ChevronRight,
   User,
   Settings,
-  ChevronDown
+  ChevronDown,
+  ShieldCheck
 } from 'lucide-react';
 import ProfileModal from '@/components/ProfileModal';
+import SecurityModal from '@/components/SecurityModal';
 import NotificationModal from '@/components/NotificationModal';
 
 const Index = () => {
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isSecurityOpen, setIsSecurityOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [notification, setNotification] = useState<{ isOpen: boolean; message: string }>({
     isOpen: false,
@@ -125,6 +128,13 @@ const Index = () => {
                   <Settings size={18} />
                   Meu Perfil
                 </button>
+                <button 
+                  onClick={() => { setIsSecurityOpen(true); setIsMenuOpen(false); }}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-600 hover:bg-amber-50 hover:text-amber-600 transition-colors"
+                >
+                  <ShieldCheck size={18} />
+                  Segurança
+                </button>
                 <div className="h-px bg-slate-50 my-1 mx-4" />
                 <button 
                   onClick={() => { signOut(); navigate('/login'); }}
@@ -159,7 +169,7 @@ const Index = () => {
               <div className={`${item.lightColor} ${item.textColor} p-4 rounded-2xl w-fit mb-6 group-hover:scale-110 transition-transform duration-300`}>
                 <item.icon size={32} strokeWidth={2.5} />
               </div>
-              <h3 className="text-2xl font-bold text-slate-800 mb-3">{item.title}</h3>
+              <item.title && <h3 className="text-2xl font-bold text-slate-800 mb-3">{item.title}</h3>}
               <p className="text-slate-500 leading-relaxed mb-8 flex-1">{item.description}</p>
               <div className="flex items-center gap-2 font-bold text-sm uppercase tracking-wider text-blue-600 group-hover:gap-4 transition-all">
                 Acessar agora <ChevronRight size={18} />
@@ -173,6 +183,12 @@ const Index = () => {
         isOpen={isProfileOpen}
         onClose={() => setIsProfileOpen(false)}
         userId={user?.id || ''}
+        onSuccess={(msg) => setNotification({ isOpen: true, message: msg })}
+      />
+
+      <SecurityModal 
+        isOpen={isSecurityOpen}
+        onClose={() => setIsSecurityOpen(false)}
         onSuccess={(msg) => setNotification({ isOpen: true, message: msg })}
       />
 

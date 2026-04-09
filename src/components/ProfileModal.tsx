@@ -82,7 +82,7 @@ const ProfileModal = ({ isOpen, onClose, userId, onSuccess }: ProfileModalProps)
   };
 
   const handleSave = async () => {
-    if (!formData.full_name.trim()) return;
+    if (!isFormValid) return;
     
     setSaving(true);
     try {
@@ -110,6 +110,12 @@ const ProfileModal = ({ isOpen, onClose, userId, onSuccess }: ProfileModalProps)
       setSaving(false);
     }
   };
+
+  // Validação: Nome preenchido, CREFITO completo (6 números + traço + 1 letra) e Telefone completo (15 caracteres)
+  const isFormValid = 
+    formData.full_name.trim().length > 0 && 
+    formData.crefito.length === 8 && 
+    formData.phone.length === 15;
 
   if (!isOpen) return null;
 
@@ -189,7 +195,7 @@ const ProfileModal = ({ isOpen, onClose, userId, onSuccess }: ProfileModalProps)
               <div className="flex flex-col gap-3 pt-4">
                 <button
                   onClick={handleSave}
-                  disabled={saving || !formData.full_name.trim()}
+                  disabled={saving || !isFormValid}
                   className="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                 >
                   {saving ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}

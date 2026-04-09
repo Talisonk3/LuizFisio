@@ -29,7 +29,7 @@ const ProfileModal = ({ isOpen, onClose, userId, onSuccess }: ProfileModalProps)
             .from('profiles')
             .select('full_name, crefito, phone')
             .eq('id', userId)
-            .single();
+            .maybeSingle();
           
           if (!error && data) {
             setFormData({
@@ -58,7 +58,6 @@ const ProfileModal = ({ isOpen, onClose, userId, onSuccess }: ProfileModalProps)
   };
 
   const formatCrefito = (value: string) => {
-    // Máscara comum: 123456-F
     const numbers = value.replace(/[^0-9]/g, '').substring(0, 6);
     const suffix = value.replace(/[^a-zA-Z]/g, '').toUpperCase().substring(0, 1);
     
@@ -72,7 +71,6 @@ const ProfileModal = ({ isOpen, onClose, userId, onSuccess }: ProfileModalProps)
     let filteredValue = value;
 
     if (name === 'full_name') {
-      // Apenas letras e espaços
       filteredValue = value.replace(/[^a-zA-ZÀ-ÿ\s]/g, '');
     } else if (name === 'phone') {
       filteredValue = formatPhone(value);
@@ -105,8 +103,9 @@ const ProfileModal = ({ isOpen, onClose, userId, onSuccess }: ProfileModalProps)
 
       onSuccess('Perfil atualizado com sucesso!');
       onClose();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Erro ao atualizar perfil:', err);
+      alert('Erro ao salvar: ' + (err.message || 'Verifique a conexão.'));
     } finally {
       setSaving(false);
     }

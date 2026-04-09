@@ -79,7 +79,6 @@ const Patients = () => {
         if (error) throw error;
         
         const formattedData = data?.map((item: any) => item.evaluations).filter(Boolean) || [];
-        // Ordenar alfabeticamente no frontend para garantir a ordem correta
         const sortedData = [...formattedData].sort((a, b) => 
           a.patient_name.localeCompare(b.patient_name)
         );
@@ -174,32 +173,30 @@ const Patients = () => {
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6 md:p-12">
+    <div className="min-h-screen bg-slate-50 p-4 md:p-12">
       <div className="max-w-5xl mx-auto">
-        <header className="mb-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+        <header className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div className="flex items-center gap-4">
             {!isVisitor && (
-              <div className="flex gap-2">
-                <button 
-                  onClick={() => navigate('/')} 
-                  className="p-3 bg-white border border-slate-200 rounded-2xl text-slate-400 hover:text-blue-600 transition-all shadow-sm"
-                  title="Início"
-                >
-                  <Home size={20} />
-                </button>
-              </div>
+              <button 
+                onClick={() => navigate('/')} 
+                className="p-3 bg-white border border-slate-200 rounded-2xl text-slate-400 hover:text-blue-600 transition-all shadow-sm"
+                title="Início"
+              >
+                <Home size={20} />
+              </button>
             )}
             <div>
-              <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">
+              <h1 className="text-2xl md:text-3xl font-extrabold text-slate-800 tracking-tight">
                 {isVisitor ? 'Pacientes Autorizados' : 'Meus Pacientes'}
               </h1>
-              <p className="text-slate-500">
-                {isVisitor ? 'Visualize as fichas clínicas autorizadas pelo profissional.' : 'Gerencie o histórico clínico de seus atendimentos.'}
+              <p className="text-slate-500 text-sm md:text-base">
+                {isVisitor ? 'Visualize as fichas clínicas autorizadas.' : 'Gerencie o histórico clínico de seus atendimentos.'}
               </p>
             </div>
           </div>
           {isVisitor && (
-            <button onClick={() => { sessionStorage.clear(); navigate('/login'); }} className="text-red-500 font-bold hover:underline">Sair</button>
+            <button onClick={() => { sessionStorage.clear(); navigate('/login'); }} className="text-red-500 font-bold hover:underline text-sm">Sair</button>
           )}
         </header>
 
@@ -210,7 +207,7 @@ const Patients = () => {
             placeholder="Buscar paciente pelo nome..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-12 pr-4 py-4 bg-white border border-slate-200 rounded-[1.5rem] shadow-sm outline-none"
+            className="w-full pl-12 pr-4 py-4 bg-white border border-slate-200 rounded-[1.5rem] shadow-sm outline-none text-sm md:text-base"
           />
         </div>
 
@@ -222,15 +219,15 @@ const Patients = () => {
         ) : filteredPatients.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {filteredPatients.map((patient) => (
-              <div key={patient.id} className="group bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all flex items-center justify-between">
-                <div className="flex items-center gap-4 flex-1">
-                  <div className="bg-blue-50 text-blue-600 p-4 rounded-2xl group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                    <User size={24} />
+              <div key={patient.id} className="group bg-white p-4 md:p-6 rounded-[1.5rem] md:rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3 md:gap-4 flex-1 min-w-0">
+                  <div className="bg-blue-50 text-blue-600 p-3 md:p-4 rounded-xl md:rounded-2xl group-hover:bg-blue-600 group-hover:text-white transition-colors shrink-0">
+                    <User size={20} className="md:w-6 md:h-6" />
                   </div>
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <button 
                       onClick={() => navigate(`/avaliacao/${patient.id}?mode=view`)} 
-                      className="font-bold text-slate-800 text-lg hover:text-blue-600 transition-colors text-left"
+                      className="font-bold text-slate-800 text-base md:text-lg hover:text-blue-600 transition-colors text-left truncate w-full"
                       title={getFullFormattedName(patient.patient_name)}
                     >
                       {formatDisplayName(patient.patient_name)}
@@ -238,38 +235,37 @@ const Patients = () => {
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-2 ml-4">
-                  {/* Botão de Evolução visível para Profissional e Visitante */}
+                <div className="flex items-center gap-1 md:gap-2 shrink-0">
                   <button 
                     onClick={() => setEvolutionModal({ isOpen: true, patientId: patient.id, patientName: patient.patient_name })}
-                    className="p-3 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all"
+                    className="p-2 md:p-3 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all"
                     title="Nova Evolução"
                   >
-                    <MessageSquarePlus size={20} />
+                    <MessageSquarePlus size={18} className="md:w-5 md:h-5" />
                   </button>
 
                   <button 
                     onClick={() => navigate(`/avaliacao/${patient.id}?mode=view`)} 
-                    className="p-3 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
+                    className="p-2 md:p-3 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
                     title="Visualizar Ficha"
                   >
-                    <Eye size={20} />
+                    <Eye size={18} className="md:w-5 md:h-5" />
                   </button>
                   {!isVisitor && (
                     <>
                       <button 
                         onClick={() => navigate(`/avaliacao/${patient.id}`)} 
-                        className="p-3 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
+                        className="p-2 md:p-3 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
                         title="Editar Ficha"
                       >
-                        <Pencil size={20} />
+                        <Pencil size={18} className="md:w-5 md:h-5" />
                       </button>
                       <button 
                         onClick={() => handleDeleteClick(patient)} 
-                        className="p-3 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
+                        className="p-2 md:p-3 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
                         title="Excluir"
                       >
-                        <Trash2 size={20} />
+                        <Trash2 size={18} className="md:w-5 md:h-5" />
                       </button>
                     </>
                   )}
@@ -278,8 +274,8 @@ const Patients = () => {
             ))}
           </div>
         ) : (
-          <div className="bg-white rounded-[2.5rem] p-12 text-center border border-dashed border-slate-200">
-            <p className="text-slate-500">Nenhum paciente autorizado encontrado.</p>
+          <div className="bg-white rounded-[1.5rem] md:rounded-[2.5rem] p-12 text-center border border-dashed border-slate-200">
+            <p className="text-slate-500 text-sm md:text-base">Nenhum paciente autorizado encontrado.</p>
           </div>
         )}
       </div>

@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/AuthProvider';
 import { Stethoscope, User, Lock, Mail, Loader2, Eye, EyeOff, UserCircle, CheckSquare, Square } from 'lucide-react';
+import ForgotPasswordModal from '@/components/ForgotPasswordModal';
 
 const Login = () => {
   const { session } = useAuth();
@@ -15,6 +16,7 @@ const Login = () => {
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword]= useState(false); 
   const [rememberMe, setRememberMe] = useState(false);
+  const [isForgotModalOpen, setIsForgotModalOpen] = useState(false);
 
   const [formData, setFormData] = useState({
     username: '',
@@ -190,7 +192,18 @@ const Login = () => {
           </div>
 
           <div>
-            <label className="text-sm font-semibold text-slate-600 mb-1 block ml-1">Senha</label>
+            <div className="flex justify-between items-center mb-1 ml-1">
+              <label className="text-sm font-semibold text-slate-600">Senha</label>
+              {!isSignUp && !isVisitor && (
+                <button 
+                  type="button" 
+                  onClick={() => setIsForgotModalOpen(true)}
+                  className="text-xs font-bold text-blue-600 hover:underline"
+                >
+                  Esqueci minha senha
+                </button>
+              )}
+            </div>
             <div className="relative">
               <input name="password" type={showPassword ? "text" : "password"} required value={formData.password} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-blue-500 transition-all" placeholder="••••••••" />
               <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 transition-colors">
@@ -236,6 +249,11 @@ const Login = () => {
           </button>
         </div>
       </div>
+
+      <ForgotPasswordModal 
+        isOpen={isForgotModalOpen}
+        onClose={() => setIsForgotModalOpen(false)}
+      />
     </div>
   );
 };

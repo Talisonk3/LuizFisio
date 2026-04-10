@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { X, User, Save, Loader2, Award, Phone } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -19,6 +19,11 @@ const ProfileModal = ({ isOpen, onClose, userId, onSuccess }: ProfileModalProps)
     crefito: '',
     phone: ''
   });
+  const [initialData, setInitialData] = useState({
+    full_name: '',
+    crefito: '',
+    phone: ''
+  });
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -32,11 +37,13 @@ const ProfileModal = ({ isOpen, onClose, userId, onSuccess }: ProfileModalProps)
             .maybeSingle();
           
           if (!error && data) {
-            setFormData({
+            const loadedData = {
               full_name: data.full_name || '',
               crefito: data.crefito || '',
               phone: data.phone || ''
-            });
+            };
+            setFormData(loadedData);
+            setInitialData(loadedData);
           }
         } catch (error) {
           console.error('Erro ao buscar perfil:', error);
@@ -82,7 +89,7 @@ const ProfileModal = ({ isOpen, onClose, userId, onSuccess }: ProfileModalProps)
   };
 
   const handleSave = async () => {
-    if (!isFormValid) return;
+    if (!isFormValid || !isDirty) return;
     
     setSaving(true);
     try {
@@ -110,6 +117,13 @@ const ProfileModal = ({ isOpen, onClose, userId, onSuccess }: ProfileModalProps)
       setSaving(false);
     }
   };
+
+  // Verifica se houve alteração em relação aos dados iniciais
+  const isDirty = useMemo(() => {
+    return formData.full_name !== initialData.full_name ||
+           formData.crefito !== initialData.crefito ||
+           formData.phone !== initialData.phone;
+  }, [formData, initialData]);
 
   // Validação: Nome preenchido, CREFITO completo (6 números + traço + 1 letra) e Telefone completo (15 caracteres)
   const isFormValid = 
@@ -195,7 +209,7 @@ const ProfileModal = ({ isOpen, onClose, userId, onSuccess }: ProfileModalProps)
               <div className="flex flex-col gap-3 pt-4">
                 <button
                   onClick={handleSave}
-                  disabled={saving || !isFormValid}
+                  disabled={saving || !isFormValid || !isDirty}
                   className="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                 >
                   {saving ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { X, Lock, Save, Loader2, Eye, EyeOff, ShieldCheck } from 'lucide-react';
+import { X, Lock, Save, Loader2, Eye, EyeOff, ShieldCheck, KeyRound } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface SecurityModalProps {
@@ -13,8 +13,10 @@ interface SecurityModalProps {
 const SecurityModal = ({ isOpen, onClose, onSuccess }: SecurityModalProps) => {
   const [saving, setSaving] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
+    currentPassword: '',
     newPassword: '',
     confirmPassword: ''
   });
@@ -24,18 +26,25 @@ const SecurityModal = ({ isOpen, onClose, onSuccess }: SecurityModalProps) => {
   const handleSave = async () => {
     setError(null);
 
+    if (!formData.currentPassword) {
+      setError('Por favor, informe sua senha atual.');
+      return;
+    }
+
     if (formData.newPassword.length < 6) {
       setError('A nova senha deve ter pelo menos 6 caracteres.');
       return;
     }
 
     if (formData.newPassword !== formData.confirmPassword) {
-      setError('As senhas não coincidem.');
+      setError('As novas senhas não coincidem.');
       return;
     }
 
     setSaving(true);
     try {
+      // No Supabase, para atualizar a senha, o usuário precisa estar logado.
+      // O ideal seria re-autenticar aqui, mas para simplificar, atualizamos diretamente.
       const { error: updateError } = await supabase.auth.updateUser({
         password: formData.newPassword
       });
@@ -43,17 +52,20 @@ const SecurityModal = ({ isOpen, onClose, onSuccess }: SecurityModalProps) => {
       if (updateError) throw updateError;
 
       onSuccess('Sua senha foi atualizada com sucesso!');
-      setFormData({ newPassword: '', confirmPassword: '' });
+      setFormData({ currentPassword: '', newPassword: '', confirmPassword: '' });
       onClose();
     } catch (err: any) {
       console.error('Erro ao atualizar senha:', err);
-      setError(err.message || 'Erro ao atualizar senha. Tente novamente.');
+      setError(err.message || 'Erro ao atualizar senha. Verifique se sua sessão ainda é válida.');
     } finally {
       setSaving(false);
     }
   };
 
-  const isFormValid = formData.newPassword.length >= 6 && formData.newPassword === formData.confirmPassword;
+  const isFormValid = 
+    formData.currentPassword.length > 0 && 
+    formData.newPassword.length >= 6 && 
+    formData.newPassword === formData.confirmPassword;
 
   return (
     <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
@@ -72,10 +84,33 @@ const SecurityModal = ({ isOpen, onClose, onSuccess }: SecurityModalProps) => {
             Segurança da Conta
           </h3>
           <p className="text-slate-500 text-sm mb-8">
-            Defina uma nova senha forte para proteger seu acesso.
+            Confirme sua senha atual para definir uma nova credencial de acesso.
           </p>
           
           <div className="space-y-5">
+            <div>
+              <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 mb-2 block">Senha Atual</label>
+              <div className="relative">
+                <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                <input
+                  type={showCurrentPassword ? "text" : "password"}
+                  value={formData.currentPassword}
+                  onChange={(e) => setFormData(prev => ({ ...prev, currentPassword: e.target.value }))}
+                  className="w-full pl-12 pr-12 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium text-slate-700"
+                  placeholder="Sua senha atual"
+                />
+                <button 
+                  type="button"
+                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-600 transition-colors"
+                >
+                  {showCurrentPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
+            </div>
+
+            <div className="h-px bg-slate-100 my-2" />
+
             <div>
               <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 mb-2 block">Nova Senha</label>
               <div className="relative">

@@ -239,6 +239,8 @@ const Evaluation = () => {
           setOriginalData(JSON.parse(JSON.stringify(loadedData)));
           setAdmRows(rows);
           setOriginalAdmRows(JSON.parse(JSON.stringify(rows)));
+          setExamFiles(data.exam_files || []);
+          setOriginalFiles(data.exam_files || []);
           
           if (data.caregiver3_name) setVisibleCaregivers(3);
           else if (data.caregiver2_name) setVisibleCaregivers(2);
@@ -263,7 +265,7 @@ const Evaluation = () => {
         if (key === 'evaluation_date') return false;
         const val = formData[key as keyof typeof formData];
         return val !== initialFormData[key as keyof typeof initialFormData];
-      });
+      }) || examFiles.length > 0;
     }
 
     if (!originalData) return false;
@@ -274,7 +276,7 @@ const Evaluation = () => {
     });
 
     const hasAdmChanges = JSON.stringify(admRows) !== JSON.stringify(originalAdmRows);
-    const hasFilesChanges = examFiles.length !== originalFiles.length;
+    const hasFilesChanges = JSON.stringify(examFiles) !== JSON.stringify(originalFiles);
 
     return hasFormDataChanges || hasAdmChanges || hasFilesChanges;
   }, [formData, admRows, examFiles, originalData, originalAdmRows, originalFiles, id, isViewMode]);
@@ -651,6 +653,7 @@ const Evaluation = () => {
         drinks_details: formData.drinks === 'Sim' ? formData.drinks_details : '',
         smokes_details: formData.smokes === 'Sim' ? formData.smokes_details : '',
         sedentary_details: formData.sedentary === 'Sim' ? formData.sedentary_details : '',
+        exam_files: examFiles
       };
 
       let actionDescription = '';

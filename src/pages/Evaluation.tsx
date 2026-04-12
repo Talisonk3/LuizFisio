@@ -760,7 +760,7 @@ const Evaluation = () => {
     }
     if (currentIndex < tabs.length - 1) {
       setActiveTab(tabs[currentIndex + 1].id);
-    } else if (!isViewMode) {
+    } else if (!isViewMode && !id) {
       handleSave();
     }
   };
@@ -799,6 +799,8 @@ const Evaluation = () => {
       </div>
     );
   }
+
+  const isLastTab = activeTab === tabs[tabs.length - 1].id;
 
   return (
     <div className="min-h-screen bg-slate-50 flex">
@@ -1786,13 +1788,13 @@ const Evaluation = () => {
                 ))}
               </div>
 
-              {!(isViewMode && activeTab === 'historico-evolucoes') && (
+              {!(isLastTab && (id || isViewMode)) && (
                 <button 
                   onClick={handleNext}
-                  disabled={(!isViewMode && (activeTab === 'historico-evolucoes' || activeTab === 'funcional') && !isFormDirty) || isSaving}
+                  disabled={(!isViewMode && isLastTab && !isFormDirty) || isSaving}
                   className="bg-slate-100 text-blue-600 font-black flex items-center gap-2 px-6 py-3 rounded-2xl hover:bg-blue-600 hover:text-white transition-all group text-sm disabled:opacity-50 disabled:hover:bg-slate-100 disabled:hover:text-blue-600"
                 >
-                  {activeTab === 'historico-evolucoes' || activeTab === 'funcional' ? (id ? 'Atualizar' : 'Finalizar') : 'Próximo'} 
+                  {isLastTab ? 'Finalizar' : 'Próximo'} 
                   <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
                 </button>
               )}

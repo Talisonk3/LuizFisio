@@ -18,7 +18,8 @@ import {
   FileText,
   History,
   Home,
-  Download
+  Download,
+  Eye as EyeIcon
 } from 'lucide-react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -27,6 +28,7 @@ import CustomSelect from '@/components/CustomSelect';
 import NotificationModal, { ModalType } from '@/components/NotificationModal';
 import EvolutionHistoryTab from '@/components/EvolutionHistoryTab';
 import DownloadModal from '@/components/DownloadModal';
+import FilePreviewModal from '@/components/FilePreviewModal';
 
 const fieldLabels: Record<string, string> = {
   patient_name: 'Nome',
@@ -92,6 +94,7 @@ const Evaluation = () => {
   const [examFiles, setExamFiles] = useState<string[]>([]);
   const [visibleCaregivers, setVisibleCaregivers] = useState(1);
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
+  const [previewFile, setPreviewFile] = useState<string | null>(null);
   
   const visitorId = sessionStorage.getItem('visitor_id');
   const isVisitor = !!visitorId;
@@ -240,6 +243,11 @@ const Evaluation = () => {
           setAdmRows(rows);
           setOriginalAdmRows(JSON.parse(JSON.stringify(rows)));
           
+          if (data.exam_files) {
+            setExamFiles(data.exam_files);
+            setOriginalFiles(data.exam_files);
+          }
+
           if (data.caregiver3_name) setVisibleCaregivers(3);
           else if (data.caregiver2_name) setVisibleCaregivers(2);
           else setVisibleCaregivers(1);
@@ -263,7 +271,7 @@ const Evaluation = () => {
         if (key === 'evaluation_date') return false;
         const val = formData[key as keyof typeof formData];
         return val !== initialFormData[key as keyof typeof initialFormData];
-      });
+      }) || examFiles.length > 0;
     }
 
     if (!originalData) return false;
@@ -274,7 +282,7 @@ const Evaluation = () => {
     });
 
     const hasAdmChanges = JSON.stringify(admRows) !== JSON.stringify(originalAdmRows);
-    const hasFilesChanges = examFiles.length !== originalFiles.length;
+    const hasFilesChanges = JSON.stringify(examFiles) !== JSON.stringify(originalFiles);
 
     return hasFormDataChanges || hasAdmChanges || hasFilesChanges;
   }, [formData, admRows, examFiles, originalData, originalAdmRows, originalFiles, id, isViewMode]);
@@ -631,6 +639,7 @@ const Evaluation = () => {
         gait_aid,
         id: recordId,
         created_at,
+        exam_files,
         ...dataToSave 
       } = formData;
 
@@ -651,6 +660,7 @@ const Evaluation = () => {
         drinks_details: formData.drinks === 'Sim' ? formData.drinks_details : '',
         smokes_details: formData.smokes === 'Sim' ? formData.smokes_details : '',
         sedentary_details: formData.sedentary === 'Sim' ? formData.sedentary_details : '',
+        exam_files: examFiles // Incluindo os arquivos no payload
       };
 
       let actionDescription = '';
@@ -659,6 +669,1441 @@ const Evaluation = () => {
       } else {
         const changes = [];
         for (const key in payload) {
+          if (key === 'exam_files') {
+            if (JSON.stringify(examFiles) !== JSON.stringify(originalFiles)) {
+              changes.push('[Arquivos de Exames atualizados]');
+            }
+            continue;
+          }
+          if (payload[key as keyof typeof payload] !== originalData[key as keyof typeof originalData] && fieldLabels[key]) {
+            const oldValue = originalData[key as keyof typeof originalData] || 'Vazio';
+            const newValue = payload[key as keyof typeof payload] || 'Vazio';
+            changes.push(`[${fieldLabels[key]}: ${oldValue} → ${newValue}]`);
+          }
+        }
+        actionDescription = changes.length > 0 
+          ? `Campos atualizados: ${changes.join(' ')}` 
+          : 'Ficha salva sem alterações detectadas.';
+      }
+
+      let error;
+      let savedId = id;
+      if (id) {
+        const { error: updateError } = await supabase
+          .from('evaluations')
+          .update(payload)
+          .eq('id', id);
+        error = updateError;
+      } else {
+        const { data: insertData, error: insertError } = await supabase
+          .from('evaluations')
+          .insert([payload])
+          .select();
+        error = insertError;
+        if (insertData) savedId = insertData[0].id;
+      }
+
+      if (error) throw error;
+
+      if (savedId) {
+        await supabase.from('evaluation_history').insert([{
+          evaluation_id: savedId,
+          user_id: user?.id,
+          action_description: actionDescription
+        }]);
+      }
+      
+      showAlert(
+        'success', 
+        'Sucesso!', 
+        id ? 'Ficha atualizada com sucesso!' : 'Avaliação salva com sucesso!',
+        () => navigate('/pacientes'),
+        'Ver Pacientes',
+        id ? 'Continuar Editando' : 'Nova Avaliação'
+      );
+      
+      if (!id) {
+        setFormData(initialFormData);
+        setAdmRows([{ movement: '', degree: '' }]);
+        setExamFiles([]);
+        setErrors([]);
+        setActiveTab('identificacao');
+        setVisibleCaregivers(1);
+      } else {
+        setOriginalData(JSON.parse(JSON.stringify(formData)));
+        setOriginalAdmRows(JSON.parse(JSON.stringify(admRows)));
+        setOriginalFiles([...examFiles]);
+      }
+      
+    } catch (error: any) {
+      console.error('Erro ao salvar:', error);
+      showAlert('error', 'Erro ao Salvar', error.message || 'Verifique sua conexão com a internet.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleNext = () => {
+    const currentIndex = tabs.findIndex(t => t.id === activeTab);
+    if (!isViewMode) {
+      if (!validateCurrentTab()) {
+        const hasFutureDate = isFutureDate(formData.birth_date);
+        const hasIncompletePhone = ['phone', 'caregiver_phone', 'caregiver2_phone', 'caregiver3_phone', 'doctor_phone'].some(f => {
+          const val = formData[f as keyof typeof formData] as string;
+          return val && val.trim() !== '' && val.length < 15;
+        });
+
+        let message = 'Preencha os campos obrigatórios marcados em vermelho antes de prosseguir.';
+        let title = 'Campos Obrigatórios';
+        
+        if (hasFutureDate) {
+          title = 'Data Inválida';
+          message = 'A data de nascimento não pode ser posterior à data de hoje.';
+        } else if (hasIncompletePhone) {
+          title = 'Telefone Incompleto';
+          message = 'Os números de telefone devem ser preenchidos completamente no formato (00) 00000-0000.';
+        }
+        
+        showAlert('warning', title, message);
+        return;
+      }
+    }
+    if (currentIndex < tabs.length - 1) {
+      setActiveTab(tabs[currentIndex + 1].id);
+    } else if (!isViewMode) {
+      handleSave();
+    }
+  };
+
+  const tabs = [
+    { id: 'identificacao', label: 'Identificação', icon: User },
+    { id: 'exame-fisico', label: 'Sinais e Exames', icon: Activity },
+    { id: 'anamnese', label: 'Anamnese', icon: ClipboardList },
+    { id: 'funcional', label: 'Avaliação Funcional', icon: Dumbbell },
+    ...(id ? [{ id: 'historico-evolucoes', label: 'Histórico de Evoluções', icon: History }] : [])
+  ];
+
+  const getInputClasses = (fieldName: string) => {
+    const base = "w-full p-3 bg-slate-50 border rounded-2xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all hover:border-slate-300 placeholder:text-slate-400 appearance-none disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed";
+    const errorState = errors.includes(fieldName) ? "border-red-500 bg-red-50" : "border-slate-200";
+    return `${base} ${errorState}`;
+  };
+
+  const labelClasses = "text-sm font-semibold text-slate-600 mb-1 block ml-1";
+
+  const getPainColor = (value: number) => {
+    if (value === 0) return 'bg-green-500';
+    if (value <= 3) return 'bg-yellow-400';
+    if (value <= 6) return 'bg-orange-500';
+    if (value <= 8) return 'bg-red-500';
+    return 'bg-red-700';
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="animate-spin text-blue-600" size={48} />
+          <p className="text-slate-500 font-medium">Carregando ficha do paciente...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-50 flex">
+      <aside className="w-72 bg-white border-r border-slate-200 hidden lg:flex flex-col shadow-sm">
+        <div className="p-8 border-b border-slate-100 flex justify-center">
+          <button 
+            onClick={handleGoHome}
+            className="p-3 bg-white border border-slate-200 rounded-2xl text-slate-400 hover:text-blue-600 transition-all shadow-sm"
+            title="Início"
+          >
+            <Home size={24} />
+          </button>
+        </div>
+        <nav className="flex-1 p-6 space-y-3">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => {
+                if (!isViewMode && !validateCurrentTab()) {
+                  const hasFutureDate = isFutureDate(formData.birth_date);
+                  const hasIncompletePhone = ['phone', 'caregiver_phone', 'caregiver2_phone', 'caregiver3_phone', 'doctor_phone'].some(f => {
+                    const val = formData[f as keyof typeof formData] as string;
+                    return val && val.trim() !== '' && val.length < 15;
+                  });
+
+                  let message = 'Preencha os campos obrigatórios antes de mudar de aba.';
+                  let title = 'Campos Obrigatórios';
+                  
+                  if (hasFutureDate) {
+                    title = 'Data Inválida';
+                    message = 'A data de nascimento não pode ser posterior à data de hoje.';
+                  } else if (hasIncompletePhone) {
+                    title = 'Telefone Incompleto';
+                    message = 'Os números de telefone devem ser preenchidos completamente no formato (00) 00000-0000.';
+                  }
+                  
+                  showAlert('warning', title, message);
+                  return;
+                }
+                setActiveTab(tab.id);
+              }}
+              className={`w-full flex items-center gap-3 px-5 py-4 rounded-2xl transition-all duration-200 ${
+                activeTab === tab.id 
+                ? 'bg-blue-600 text-white shadow-lg shadow-blue-100 font-bold scale-[1.02]' 
+                : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
+              }`}
+            >
+              <tab.icon size={22} />
+              {tab.label}
+            </button>
+          ))}
+        </nav>
+        <div className="p-6 border-t border-slate-100">
+          <button 
+            onClick={() => { signOut(); navigate('/login'); }}
+            className="w-full flex items-center gap-3 px-5 py-4 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-2xl transition-all font-medium"
+          >
+            <LogOut size={22} /> Sair do Sistema
+          </button>
+        </div>
+      </aside>
+
+      <main className="flex-1 overflow-y-auto p-6 md:p-12">
+        <div className="max-w-4xl mx-auto">
+          <header className="mb-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+              <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">
+                {isViewMode ? 'Visualizar Ficha' : (id ? 'Editar Ficha' : 'Nova Avaliação')}
+              </h1>
+              <p className="text-slate-500 mt-1">
+                {id ? `${isViewMode ? 'Visualizando' : 'Editando'} dados de ${formData.patient_name}` : 'Preencha os dados clínicos do seu paciente.'}
+              </p>
+            </div>
+            <div className="flex gap-3">
+              {isViewMode && !isVisitor && (
+                <button 
+                  onClick={() => setIsDownloadModalOpen(true)}
+                  className="bg-blue-600 text-white px-6 py-3 rounded-2xl flex items-center gap-2 hover:bg-blue-700 transition-all shadow-xl shadow-blue-100 font-bold"
+                >
+                  <Download size={20} /> Baixar Ficha
+                </button>
+              )}
+              
+              {!isViewMode && (
+                <>
+                  <button 
+                    onClick={handleGoHome}
+                    className="p-3 bg-white border border-slate-200 rounded-2xl text-slate-400 hover:text-blue-600 transition-all shadow-sm"
+                    title="Início"
+                  >
+                    <Home size={20} />
+                  </button>
+                  <button 
+                    onClick={handleGoBack}
+                    className="bg-white text-slate-600 border border-slate-200 px-6 py-3 rounded-2xl flex items-center gap-2 hover:bg-slate-50 transition-all font-bold shadow-sm"
+                  >
+                    <ArrowLeft size={20} /> Voltar
+                  </button>
+                  
+                  <button 
+                    onClick={handleSave}
+                    disabled={isSaving || !isFormDirty}
+                    className="bg-blue-600 text-white px-8 py-3 rounded-2xl flex items-center gap-2 hover:bg-blue-700 transition-all shadow-xl shadow-blue-100 disabled:opacity-50 disabled:shadow-none font-bold"
+                  >
+                    {isSaving ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
+                    {id ? 'Atualizar Ficha' : 'Salvar Ficha'}
+                  </button>
+                </>
+              )}
+            </div>
+          </header>
+
+          <div className="bg-white rounded-[2rem] shadow-xl shadow-slate-200/50 border border-slate-100 p-8 md:p-12">
+            {activeTab === 'identificacao' && (
+              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+                  <div className="bg-blue-100 p-2 rounded-lg text-blue-600"><User size={20} /></div>
+                  <h3 className="text-xl font-bold text-slate-800">Dados de Identificação</h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div>
+                    <label className={labelClasses}>Nome Completo <span className="text-red-500">*</span></label>
+                    <input disabled={isViewMode} name="patient_name" value={formData.patient_name} onChange={handleInputChange} type="text" className={getInputClasses('patient_name')} placeholder="Ex: João da Silva Santos" />
+                  </div>
+                  <div>
+                    <label className={labelClasses}>Data de Nascimento <span className="text-red-500">*</span></label>
+                    <input disabled={isViewMode} name="birth_date" value={formData.birth_date} onChange={handleInputChange} type="text" className={getInputClasses('birth_date')} placeholder="DD/MM/AAAA" maxLength={10} />
+                  </div>
+                  <div>
+                    <label className={labelClasses}>Gênero <span className="text-red-500">*</span></label>
+                    <CustomSelect 
+                      options={[
+                        { value: 'Masculino', label: 'Masculino' },
+                        { value: 'Feminino', label: 'Feminino' }
+                      ]}
+                      value={formData.gender}
+                      onChange={(val) => handleSelectChange('gender', val)}
+                      error={errors.includes('gender')}
+                      disabled={isViewMode}
+                    />
+                  </div>
+                  <div>
+                    <label className={labelClasses}>Estado Civil <span className="text-red-500">*</span></label>
+                    <CustomSelect 
+                      options={[
+                        { value: 'Solteiro(a)', label: 'Solteiro(a)' },
+                        { value: 'Casado(a)', label: 'Casado(a)' },
+                        { value: 'Divorciado(a)', label: 'Divorciado(a)' },
+                        { value: 'Viúvo(a)', label: 'Viúvo(a)' }
+                      ]}
+                      value={formData.marital_status}
+                      onChange={(val) => handleSelectChange('marital_status', val)}
+                      error={errors.includes('marital_status')}
+                      disabled={isViewMode}
+                    />
+                  </div>
+                  <div className="md:col-span-2 grid grid-cols-4 gap-4">
+                    <div className="col-span-3">
+                      <label className={labelClasses}>Endereço <span className="text-red-500">*</span></label>
+                      <input disabled={isViewMode} name="address" value={formData.address} onChange={handleInputChange} type="text" className={getInputClasses('address')} placeholder="Rua, bairro, cidade" />
+                    </div>
+                    <div className="col-span-1">
+                      <label className={labelClasses}>Nº <span className="text-red-500">*</span></label>
+                      <input disabled={isViewMode} name="address_number" value={formData.address_number} onChange={handleInputChange} type="text" className={getInputClasses('address_number')} placeholder="123" maxLength={4} />
+                    </div>
+                  </div>
+                  <div>
+                    <label className={labelClasses}>Profissão <span className="text-red-500">*</span></label>
+                    <input disabled={isViewMode} name="profession" value={formData.profession} onChange={handleInputChange} type="text" className={getInputClasses('profession')} placeholder="Ex: Engenheiro" />
+                  </div>
+                  <div>
+                    <label className={labelClasses}>Telefone de Contato</label>
+                    <input disabled={isViewMode} name="phone" value={formData.phone} onChange={handleInputChange} type="tel" className={getInputClasses('phone')} placeholder="(00) 00000-0000" maxLength={15} />
+                  </div>
+                  <div>
+                    <label className={labelClasses}>E-mail do Paciente</label>
+                    <input disabled={isViewMode} name="email" value={formData.email} onChange={handleInputChange} type="email" className={getInputClasses('email')} placeholder="exemplo@email.com" />
+                  </div>
+                  <div>
+                    <label className={labelClasses}>Peso (kg)</label>
+                    <input disabled={isViewMode} name="weight" value={formData.weight} onChange={handleInputChange} type="text" className={getInputClasses('weight')} placeholder="Ex: 75" maxLength={3} />
+                  </div>
+                  <div>
+                    <label className={labelClasses}>Altura (m)</label>
+                    <input disabled={isViewMode} name="height" value={formData.height} onChange={handleInputChange} type="text" className={getInputClasses('height')} placeholder="Ex: 1.75" maxLength={4} />
+                  </div>
+
+                  <div className="md:col-span-2 space-y-4 border-t border-slate-100 pt-8">
+                    <div className="flex justify-between items-center">
+                      <label className={labelClasses}>Possui Familiar Responsável ou Cuidador?</label>
+                      {formData.has_caregiver === 'Sim' && visibleCaregivers < 3 && !isViewMode && (
+                        <button 
+                          onClick={() => setVisibleCaregivers(prev => prev + 1)}
+                          className="flex items-center gap-1 text-xs font-bold text-blue-600 hover:bg-blue-50 px-3 py-1.5 rounded-lg transition-all"
+                        >
+                          <Plus size={14} /> Adicionar Responsável
+                        </button>
+                      )}
+                    </div>
+                    <div className="flex gap-4">
+                      {['Não', 'Sim'].map((option) => (
+                        <button
+                          key={option}
+                          type="button"
+                          disabled={isViewMode}
+                          onClick={() => setFormData(prev => ({ ...prev, has_caregiver: option }))}
+                          className={`px-6 py-2 rounded-xl border transition-all font-medium ${
+                            formData.has_caregiver === option 
+                            ? 'bg-blue-600 text-white border-blue-600 shadow-md' 
+                            : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
+                          } disabled:opacity-50`}
+                        >
+                          {option}
+                        </button>
+                      ))}
+                    </div>
+                    
+                    {formData.has_caregiver === 'Sim' && (
+                      <div className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                          <div>
+                            <label className={labelClasses}>Nome do Responsável 1 <span className="text-red-500">*</span></label>
+                            <input 
+                              disabled={isViewMode}
+                              name="caregiver_name" 
+                              value={formData.caregiver_name} 
+                              onChange={handleInputChange} 
+                              type="text" 
+                              className={getInputClasses('caregiver_name')} 
+                              placeholder="Nome completo" 
+                            />
+                          </div>
+                          <div>
+                            <label className={labelClasses}>Telefone do Responsável 1 <span className="text-red-500">*</span></label>
+                            <input 
+                              disabled={isViewMode}
+                              name="caregiver_phone" 
+                              value={formData.caregiver_phone} 
+                              onChange={handleInputChange} 
+                              type="tel" 
+                              className={getInputClasses('caregiver_phone')} 
+                              placeholder="(00) 00000-0000" 
+                              maxLength={15}
+                            />
+                          </div>
+                        </div>
+
+                        {visibleCaregivers >= 2 && (
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in slide-in-from-top-2 duration-300">
+                            <div>
+                              <label className={labelClasses}>Nome do Responsável 2 <span className="text-red-500">*</span></label>
+                              <input 
+                                disabled={isViewMode}
+                                name="caregiver2_name" 
+                                value={formData.caregiver2_name} 
+                                onChange={handleInputChange} 
+                                type="text" 
+                                className={getInputClasses('caregiver2_name')} 
+                                placeholder="Nome completo" 
+                              />
+                            </div>
+                            <div className="relative">
+                              think
+The user is pointing out that my previous response was cut off. I need to complete the `Evaluation.tsx` file and provide the summary and chat summary as required by the instructions.
+
+Looking at the previous output:
+```tsx
+                        {visibleCaregivers >= 2 && (
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in slide-in-from-top-2 duration-300">
+                            <div>
+                              <label className={labelClasses}>Nome do Responsável 2 <span className="text-red-500">*</span></label>
+                              <input 
+                                disabled={isViewMode}
+                                name="caregiver2_name" 
+                                value={formData.caregiver2_name} 
+                                onChange={handleInputChange} 
+                                type="text" 
+                                className={getInputClasses('caregiver2_name')} 
+                                placeholder="Nome completo" 
+                              />
+                            </div>
+                            <div className="relative">
+```
+It stopped right there. I need to continue from `label className={labelClasses}>Telefone do Responsável 2 <span className="text-red-500">*</span></label>` and finish the file.
+
+Wait, the instructions say "Continue exactly where you left off without any preamble." and "Only use ONE <dyad-write> block per file that you write!". Since the previous block was incomplete, I should probably rewrite the whole file or at least the rest of it in a way that makes sense. However, the system usually expects a full file in a `dyad-write` tag.
+
+Actually, if I just "continue", I might violate the "one dyad-write per file" rule if I open a new one. But the previous one was broken. I will provide the full corrected file to ensure it's valid.
+
+Wait, the user said "Continue exactly where you left off without any preamble."
+If I just paste the rest of the code, it won't be inside a `dyad-write` tag, which is a "CRITICAL FAILURE".
+I must use `<dyad-write>`.
+
+Let's rewrite the `src/pages/Evaluation.tsx` file completely to ensure it's correct and includes the fix for saving images.
+
+The fix involves:
+1. Including `exam_files: examFiles` in the payload.
+2. Loading `exam_files` from the database in `useEffect`.
+3. Handling the `FilePreviewModal`.
+
+I will rewrite the whole file.<dyad-write path="src/pages/Evaluation.tsx" description="Corrigindo o salvamento e carregamento de arquivos (imagens e PDFs) na ficha de avaliação.">
+"use client";
+
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { 
+  User, 
+  ClipboardList, 
+  Activity, 
+  Dumbbell, 
+  Save, 
+  LogOut,
+  ChevronRight,
+  ChevronLeft,
+  Loader2,
+  X,
+  Plus,
+  Trash2,
+  ArrowLeft,
+  FileText,
+  History,
+  Home,
+  Download,
+  Eye as EyeIcon
+} from 'lucide-react';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/components/AuthProvider';
+import CustomSelect from '@/components/CustomSelect';
+import NotificationModal, { ModalType } from '@/components/NotificationModal';
+import EvolutionHistoryTab from '@/components/EvolutionHistoryTab';
+import DownloadModal from '@/components/DownloadModal';
+import FilePreviewModal from '@/components/FilePreviewModal';
+
+const fieldLabels: Record<string, string> = {
+  patient_name: 'Nome',
+  birth_date: 'Data de Nasc.',
+  email: 'E-mail',
+  phone: 'Telefone',
+  address: 'Endereço',
+  marital_status: 'Est. Civil',
+  gender: 'Gênero',
+  profession: 'Profissão',
+  weight: 'Peso',
+  height: 'Altura',
+  caregiver_name: 'Responsável 1',
+  caregiver_phone: 'Tel. Responsável 1',
+  caregiver2_name: 'Responsável 2',
+  caregiver2_phone: 'Tel. Responsável 2',
+  caregiver3_name: 'Responsável 3',
+  caregiver3_phone: 'Tel. Responsável 3',
+  responsible_doctor: 'Médico',
+  doctor_phone: 'Tel. Médico',
+  chief_complaint: 'Queixa',
+  history_present_illness: 'HDA',
+  previous_illness_history: 'HDP',
+  family_history: 'Hist. Familiar',
+  drinks_details: 'Álcool',
+  smokes_details: 'Fumo',
+  sedentary_details: 'Ativ. Física',
+  medications: 'Medicamentos',
+  previous_surgeries: 'Cirurgias',
+  pain_scale: 'Dor (EVA)',
+  pain_worsening_factors: 'Piora dor',
+  pain_improvement_factors: 'Melhora dor',
+  blood_pressure: 'PA',
+  heart_rate: 'FC',
+  respiratory_rate: 'FR',
+  temperature: 'Temp',
+  saturation: 'SatO2',
+  cardiac_auscultation: 'Ausc. Cardíaca',
+  pulmonary_auscultation: 'Ausc. Pulmonar',
+  auditory_alteration_details: 'Alt. Auditiva',
+  visual_alteration_details: 'Alt. Visual',
+  gait_aid_details: 'Aux. Marcha',
+  inspection_palpation: 'Inspeção',
+  range_of_motion: 'ADM',
+  muscle_strength: 'Força',
+  muscle_tone_mmss: 'Tônus MMSS',
+  muscle_tone_mmii: 'Tônus MMII',
+  physio_diagnosis: 'Diagnóstico',
+  complementary_exams_details: 'Exames Compl.'
+};
+
+const Evaluation = () => {
+  const { id } = useParams();
+  const [searchParams] = useSearchParams();
+  const isViewMode = searchParams.get('mode') === 'view';
+  const navigate = useNavigate();
+  const { signOut, user } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [activeTab, setActiveTab] = useState('identificacao');
+  const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(!!id);
+  const [errors, setErrors] = useState<string[]>([]);
+  const [examFiles, setExamFiles] = useState<string[]>([]);
+  const [visibleCaregivers, setVisibleCaregivers] = useState(1);
+  const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
+  const [previewFile, setPreviewFile] = useState<string | null>(null);
+  
+  const visitorId = sessionStorage.getItem('visitor_id');
+  const isVisitor = !!visitorId;
+
+  const [modalConfig, setModalConfig] = useState<{
+    isOpen: boolean;
+    type: ModalType;
+    title: string;
+    message: string;
+    onConfirm?: () => void;
+    confirmLabel?: string;
+    cancelLabel?: string;
+  }>({
+    isOpen: false,
+    type: 'info',
+    title: '',
+    message: ''
+  });
+  
+  const [admRows, setAdmRows] = useState([{ movement: '', degree: '' }]);
+  const [originalData, setOriginalData] = useState<any>(null);
+  const [originalAdmRows, setOriginalAdmRows] = useState<any>([]);
+  const [originalFiles, setOriginalFiles] = useState<string[]>([]);
+
+  const initialFormData = {
+    patient_name: '',
+    birth_date: '',
+    email: '',
+    phone: '',
+    address: '',
+    address_number: '',
+    marital_status: '',
+    gender: '',
+    profession: '',
+    weight: '',
+    height: '',
+    has_caregiver: 'Não',
+    caregiver_name: '',
+    caregiver_phone: '',
+    caregiver2_name: '',
+    caregiver2_phone: '',
+    caregiver3_name: '',
+    caregiver3_phone: '',
+    responsible_doctor: '',
+    doctor_phone: '',
+    evaluation_date: new Date().toLocaleDateString('pt-BR'),
+    chief_complaint: '',
+    history_present_illness: '',
+    previous_illness_history: '',
+    family_history: '',
+    drinks: 'Não',
+    drinks_details: '',
+    smokes: 'Não',
+    smokes_details: '',
+    sedentary: 'Não',
+    sedentary_details: '',
+    has_medications: 'Não',
+    medications: '',
+    has_surgeries: 'Não',
+    previous_surgeries: '',
+    pain_scale: '0',
+    pain_worsening_factors: '',
+    pain_improvement_factors: '',
+    blood_pressure: '',
+    heart_rate: '',
+    respiratory_rate: '',
+    temperature: '',
+    saturation: '',
+    cardiac_auscultation: '',
+    pulmonary_auscultation: '',
+    auditory_alteration: 'Não',
+    auditory_alteration_details: '',
+    visual_alteration: 'Não',
+    visual_alteration_details: '',
+    gait_aid: 'Não',
+    gait_aid_details: '',
+    inspection_palpation: '',
+    range_of_motion: '',
+    muscle_strength: '',
+    muscle_tone_mmss: 'Normal',
+    muscle_tone_mmii: 'Normal',
+    physio_diagnosis: '',
+    has_complementary_exams: 'Não',
+    complementary_exams_details: ''
+  };
+
+  const [formData, setFormData] = useState(initialFormData);
+
+  useEffect(() => {
+    const fetchEvaluation = async () => {
+      if (!id) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('evaluations')
+          .select('*')
+          .eq('id', id)
+          .single();
+
+        if (error) throw error;
+
+        if (data) {
+          let street = data.address || '';
+          let number = '';
+          if (street.includes(',')) {
+            const parts = street.split(',');
+            street = parts[0].trim();
+            number = parts[1].trim();
+          }
+
+          let birthDate = '';
+          if (data.birth_date) {
+            const parts = data.birth_date.split('-');
+            birthDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+          }
+
+          let rows = [{ movement: '', degree: '' }];
+          if (data.range_of_motion) {
+            rows = data.range_of_motion.split('; ').map((item: string) => {
+              const [movement, degree] = item.split(': ');
+              return { movement: movement || '', degree: degree || '' };
+            });
+          }
+
+          const loadedData = {
+            ...initialFormData,
+            ...data,
+            address: street,
+            address_number: number,
+            birth_date: birthDate,
+            has_caregiver: (data.caregiver_name || data.caregiver2_name || data.caregiver3_name) ? 'Sim' : 'Não',
+            has_medications: data.medications ? 'Sim' : 'Não',
+            has_surgeries: data.previous_surgeries ? 'Sim' : 'Não',
+            drinks: data.drinks_details ? 'Sim' : 'Não',
+            smokes: data.smokes_details ? 'Sim' : 'Não',
+            sedentary: data.sedentary_details ? 'Sim' : 'Não',
+            auditory_alteration: data.auditory_alteration_details ? 'Sim' : 'Não',
+            visual_alteration: data.visual_alteration_details ? 'Sim' : 'Não',
+            gait_aid: data.gait_aid_details ? 'Sim' : 'Não',
+            has_complementary_exams: data.complementary_exams_details ? 'Sim' : 'Não',
+            evaluation_date: data.created_at ? new Date(data.created_at).toLocaleDateString('pt-BR') : initialFormData.evaluation_date
+          };
+
+          setFormData(loadedData);
+          setOriginalData(JSON.parse(JSON.stringify(loadedData)));
+          setAdmRows(rows);
+          setOriginalAdmRows(JSON.parse(JSON.stringify(rows)));
+          
+          if (data.exam_files) {
+            setExamFiles(data.exam_files);
+            setOriginalFiles(data.exam_files);
+          }
+
+          if (data.caregiver3_name) setVisibleCaregivers(3);
+          else if (data.caregiver2_name) setVisibleCaregivers(2);
+          else setVisibleCaregivers(1);
+        }
+      } catch (error) {
+        console.error('Erro ao carregar avaliação:', error);
+        showAlert('error', 'Erro', 'Não foi possível carregar os dados desta avaliação.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchEvaluation();
+  }, [id]);
+
+  const isFormDirty = useMemo(() => {
+    if (isViewMode) return false;
+    
+    if (!id) {
+      return Object.keys(formData).some(key => {
+        if (key === 'evaluation_date') return false;
+        const val = formData[key as keyof typeof formData];
+        return val !== initialFormData[key as keyof typeof initialFormData];
+      }) || examFiles.length > 0;
+    }
+
+    if (!originalData) return false;
+
+    const hasFormDataChanges = Object.keys(formData).some(key => {
+      if (key === 'evaluation_date') return false;
+      return formData[key as keyof typeof formData] !== originalData[key as keyof typeof originalData];
+    });
+
+    const hasAdmChanges = JSON.stringify(admRows) !== JSON.stringify(originalAdmRows);
+    const hasFilesChanges = JSON.stringify(examFiles) !== JSON.stringify(originalFiles);
+
+    return hasFormDataChanges || hasAdmChanges || hasFilesChanges;
+  }, [formData, admRows, examFiles, originalData, originalAdmRows, originalFiles, id, isViewMode]);
+
+  const showAlert = (type: ModalType, title: string, message: string, onConfirm?: () => void, confirmLabel?: string, cancelLabel?: string) => {
+    setModalConfig({
+      isOpen: true,
+      type,
+      title,
+      message,
+      onConfirm,
+      confirmLabel,
+      cancelLabel
+    });
+  };
+
+  const handleGoHome = () => {
+    if (isFormDirty) {
+      showAlert(
+        'warning', 
+        'Ficha não salva!', 
+        'Você preencheu alguns dados nesta avaliação. Se sair agora, todas as informações não salvas serão perdidas. Deseja realmente voltar ao início?',
+        () => navigate('/'),
+        'Sim, sair agora',
+        'Não, continuar'
+      );
+    } else {
+      navigate('/');
+    }
+  };
+
+  <dyad-write path="src/pages/Evaluation.tsx" description="Corrigindo o salvamento e carregamento de arquivos (imagens e PDFs) na ficha de avaliação.">
+"use client";
+
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { 
+  User, 
+  ClipboardList, 
+  Activity, 
+  Dumbbell, 
+  Save, 
+  LogOut,
+  ChevronRight,
+  ChevronLeft,
+  Loader2,
+  X,
+  Plus,
+  Trash2,
+  ArrowLeft,
+  FileText,
+  History,
+  Home,
+  Download,
+  Eye as EyeIcon
+} from 'lucide-react';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/components/AuthProvider';
+import CustomSelect from '@/components/CustomSelect';
+import NotificationModal, { ModalType } from '@/components/NotificationModal';
+import EvolutionHistoryTab from '@/components/EvolutionHistoryTab';
+import DownloadModal from '@/components/DownloadModal';
+import FilePreviewModal from '@/components/FilePreviewModal';
+
+const fieldLabels: Record<string, string> = {
+  patient_name: 'Nome',
+  birth_date: 'Data de Nasc.',
+  email: 'E-mail',
+  phone: 'Telefone',
+  address: 'Endereço',
+  marital_status: 'Est. Civil',
+  gender: 'Gênero',
+  profession: 'Profissão',
+  weight: 'Peso',
+  height: 'Altura',
+  caregiver_name: 'Responsável 1',
+  caregiver_phone: 'Tel. Responsável 1',
+  caregiver2_name: 'Responsável 2',
+  caregiver2_phone: 'Tel. Responsável 2',
+  caregiver3_name: 'Responsável 3',
+  caregiver3_phone: 'Tel. Responsável 3',
+  responsible_doctor: 'Médico',
+  doctor_phone: 'Tel. Médico',
+  chief_complaint: 'Queixa',
+  history_present_illness: 'HDA',
+  previous_illness_history: 'HDP',
+  family_history: 'Hist. Familiar',
+  drinks_details: 'Álcool',
+  smokes_details: 'Fumo',
+  sedentary_details: 'Ativ. Física',
+  medications: 'Medicamentos',
+  previous_surgeries: 'Cirurgias',
+  pain_scale: 'Dor (EVA)',
+  pain_worsening_factors: 'Piora dor',
+  pain_improvement_factors: 'Melhora dor',
+  blood_pressure: 'PA',
+  heart_rate: 'FC',
+  respiratory_rate: 'FR',
+  temperature: 'Temp',
+  saturation: 'SatO2',
+  cardiac_auscultation: 'Ausc. Cardíaca',
+  pulmonary_auscultation: 'Ausc. Pulmonar',
+  auditory_alteration_details: 'Alt. Auditiva',
+  visual_alteration_details: 'Alt. Visual',
+  gait_aid_details: 'Aux. Marcha',
+  inspection_palpation: 'Inspeção',
+  range_of_motion: 'ADM',
+  muscle_strength: 'Força',
+  muscle_tone_mmss: 'Tônus MMSS',
+  muscle_tone_mmii: 'Tônus MMII',
+  physio_diagnosis: 'Diagnóstico',
+  complementary_exams_details: 'Exames Compl.'
+};
+
+const Evaluation = () => {
+  const { id } = useParams();
+  const [searchParams] = useSearchParams();
+  const isViewMode = searchParams.get('mode') === 'view';
+  const navigate = useNavigate();
+  const { signOut, user } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [activeTab, setActiveTab] = useState('identificacao');
+  const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(!!id);
+  const [errors, setErrors] = useState<string[]>([]);
+  const [examFiles, setExamFiles] = useState<string[]>([]);
+  const [visibleCaregivers, setVisibleCaregivers] = useState(1);
+  const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
+  const [previewFile, setPreviewFile] = useState<string | null>(null);
+  
+  const visitorId = sessionStorage.getItem('visitor_id');
+  const isVisitor = !!visitorId;
+
+  const [modalConfig, setModalConfig] = useState<{
+    isOpen: boolean;
+    type: ModalType;
+    title: string;
+    message: string;
+    onConfirm?: () => void;
+    confirmLabel?: string;
+    cancelLabel?: string;
+  }>({
+    isOpen: false,
+    type: 'info',
+    title: '',
+    message: ''
+  });
+  
+  const [admRows, setAdmRows] = useState([{ movement: '', degree: '' }]);
+  const [originalData, setOriginalData] = useState<any>(null);
+  const [originalAdmRows, setOriginalAdmRows] = useState<any>([]);
+  const [originalFiles, setOriginalFiles] = useState<string[]>([]);
+
+  const initialFormData = {
+    patient_name: '',
+    birth_date: '',
+    email: '',
+    phone: '',
+    address: '',
+    address_number: '',
+    marital_status: '',
+    gender: '',
+    profession: '',
+    weight: '',
+    height: '',
+    has_caregiver: 'Não',
+    caregiver_name: '',
+    caregiver_phone: '',
+    caregiver2_name: '',
+    caregiver2_phone: '',
+    caregiver3_name: '',
+    caregiver3_phone: '',
+    responsible_doctor: '',
+    doctor_phone: '',
+    evaluation_date: new Date().toLocaleDateString('pt-BR'),
+    chief_complaint: '',
+    history_present_illness: '',
+    previous_illness_history: '',
+    family_history: '',
+    drinks: 'Não',
+    drinks_details: '',
+    smokes: 'Não',
+    smokes_details: '',
+    sedentary: 'Não',
+    sedentary_details: '',
+    has_medications: 'Não',
+    medications: '',
+    has_surgeries: 'Não',
+    previous_surgeries: '',
+    pain_scale: '0',
+    pain_worsening_factors: '',
+    pain_improvement_factors: '',
+    blood_pressure: '',
+    heart_rate: '',
+    respiratory_rate: '',
+    temperature: '',
+    saturation: '',
+    cardiac_auscultation: '',
+    pulmonary_auscultation: '',
+    auditory_alteration: 'Não',
+    auditory_alteration_details: '',
+    visual_alteration: 'Não',
+    visual_alteration_details: '',
+    gait_aid: 'Não',
+    gait_aid_details: '',
+    inspection_palpation: '',
+    range_of_motion: '',
+    muscle_strength: '',
+    muscle_tone_mmss: 'Normal',
+    muscle_tone_mmii: 'Normal',
+    physio_diagnosis: '',
+    has_complementary_exams: 'Não',
+    complementary_exams_details: ''
+  };
+
+  const [formData, setFormData] = useState(initialFormData);
+
+  useEffect(() => {
+    const fetchEvaluation = async () => {
+      if (!id) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('evaluations')
+          .select('*')
+          .eq('id', id)
+          .single();
+
+        if (error) throw error;
+
+        if (data) {
+          let street = data.address || '';
+          let number = '';
+          if (street.includes(',')) {
+            const parts = street.split(',');
+            street = parts[0].trim();
+            number = parts[1].trim();
+          }
+
+          let birthDate = '';
+          if (data.birth_date) {
+            const parts = data.birth_date.split('-');
+            birthDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+          }
+
+          let rows = [{ movement: '', degree: '' }];
+          if (data.range_of_motion) {
+            rows = data.range_of_motion.split('; ').map((item: string) => {
+              const [movement, degree] = item.split(': ');
+              return { movement: movement || '', degree: degree || '' };
+            });
+          }
+
+          const loadedData = {
+            ...initialFormData,
+            ...data,
+            address: street,
+            address_number: number,
+            birth_date: birthDate,
+            has_caregiver: (data.caregiver_name || data.caregiver2_name || data.caregiver3_name) ? 'Sim' : 'Não',
+            has_medications: data.medications ? 'Sim' : 'Não',
+            has_surgeries: data.previous_surgeries ? 'Sim' : 'Não',
+            drinks: data.drinks_details ? 'Sim' : 'Não',
+            smokes: data.smokes_details ? 'Sim' : 'Não',
+            sedentary: data.sedentary_details ? 'Sim' : 'Não',
+            auditory_alteration: data.auditory_alteration_details ? 'Sim' : 'Não',
+            visual_alteration: data.visual_alteration_details ? 'Sim' : 'Não',
+            gait_aid: data.gait_aid_details ? 'Sim' : 'Não',
+            has_complementary_exams: data.complementary_exams_details ? 'Sim' : 'Não',
+            evaluation_date: data.created_at ? new Date(data.created_at).toLocaleDateString('pt-BR') : initialFormData.evaluation_date
+          };
+
+          setFormData(loadedData);
+          setOriginalData(JSON.parse(JSON.stringify(loadedData)));
+          setAdmRows(rows);
+          setOriginalAdmRows(JSON.parse(JSON.stringify(rows)));
+          
+          if (data.exam_files) {
+            setExamFiles(data.exam_files);
+            setOriginalFiles(data.exam_files);
+          }
+
+          if (data.caregiver3_name) setVisibleCaregivers(3);
+          else if (data.caregiver2_name) setVisibleCaregivers(2);
+          else setVisibleCaregivers(1);
+        }
+      } catch (error) {
+        console.error('Erro ao carregar avaliação:', error);
+        showAlert('error', 'Erro', 'Não foi possível carregar os dados desta avaliação.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchEvaluation();
+  }, [id]);
+
+  const isFormDirty = useMemo(() => {
+    if (isViewMode) return false;
+    
+    if (!id) {
+      return Object.keys(formData).some(key => {
+        if (key === 'evaluation_date') return false;
+        const val = formData[key as keyof typeof formData];
+        return val !== initialFormData[key as keyof typeof initialFormData];
+      }) || examFiles.length > 0;
+    }
+
+    if (!originalData) return false;
+
+    const hasFormDataChanges = Object.keys(formData).some(key => {
+      if (key === 'evaluation_date') return false;
+      return formData[key as keyof typeof formData] !== originalData[key as keyof typeof originalData];
+    });
+
+    const hasAdmChanges = JSON.stringify(admRows) !== JSON.stringify(originalAdmRows);
+    const hasFilesChanges = JSON.stringify(examFiles) !== JSON.stringify(originalFiles);
+
+    return hasFormDataChanges || hasAdmChanges || hasFilesChanges;
+  }, [formData, admRows, examFiles, originalData, originalAdmRows, originalFiles, id, isViewMode]);
+
+  const showAlert = (type: ModalType, title: string, message: string, onConfirm?: () => void, confirmLabel?: string, cancelLabel?: string) => {
+    setModalConfig({
+      isOpen: true,
+      type,
+      title,
+      message,
+      onConfirm,
+      confirmLabel,
+      cancelLabel
+    });
+  };
+
+  const handleGoHome = () => {
+    if (isFormDirty) {
+      showAlert(
+        'warning', 
+        'Ficha não salva!', 
+        'Você preencheu alguns dados nesta avaliação. Se sair agora, todas as informações não salvas serão perdidas. Deseja realmente voltar ao início?',
+        () => navigate('/'),
+        'Sim, sair agora',
+        'Não, continuar'
+      );
+    } else {
+      navigate('/');
+    }
+  };
+
+  const handleGoBack = () => {
+    if (isFormDirty) {
+      showAlert(
+        'warning', 
+        'Alterações não salvas!', 
+        'Existem alterações nesta ficha que ainda não foram salvas. Deseja realmente voltar para a lista de pacientes?',
+        () => navigate('/pacientes'),
+        'Sim, sair sem salvar',
+        'Não, continuar editando'
+      );
+    } else {
+      navigate('/pacientes');
+    }
+  };
+
+  const formatPhone = (value: string) => {
+    const numbers = value.replace(/\D/g, '');
+    if (numbers.length === 0) return '';
+    if (numbers.length <= 2) return `(${numbers}`;
+    if (numbers.length <= 6) return `(${numbers.slice(0, 2)}) ${numbers.slice(2)}`;
+    if (numbers.length <= 10) return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 6)}-${numbers.slice(6)}`;
+    return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7, 11)}`;
+  };
+
+  const formatDate = (value: string) => {
+    const numbers = value.replace(/\D/g, '');
+    const currentYear = new Date().getFullYear();
+    let day = numbers.slice(0, 2);
+    let month = numbers.slice(2, 4);
+    let year = numbers.slice(4, 8);
+    if (day && parseInt(day) > 31) day = '31';
+    if (day && day !== '0' && day !== '00' && parseInt(day) === 0) day = '01';
+    if (month && parseInt(month) > 12) month = '12';
+    if (month && month !== '0' && month !== '00' && parseInt(month) === 0) month = '01';
+    if (year && year.length === 4 && parseInt(year) > currentYear) year = currentYear.toString();
+    if (numbers.length <= 2) return day;
+    if (numbers.length <= 4) return `${day}/${month}`;
+    return `${day}/${month}/${year}`;
+  };
+
+  const formatHeight = (value: string) => {
+    const numbers = value.replace(/\D/g, '').substring(0, 3);
+    if (numbers.length <= 1) return numbers;
+    if (numbers.length === 2) return `${numbers.slice(0, 1)}.${numbers.slice(1)}`;
+    return `${numbers.slice(0, 1)}.${numbers.slice(1, 3)}`;
+  };
+
+  const formatPA = (value: string) => {
+    const numbers = value.replace(/\D/g, '').substring(0, 5);
+    if (numbers.length <= 2) return numbers;
+    if (numbers.length === 3) return `${numbers.slice(0, 2)}/${numbers.slice(2)}`;
+    if (numbers.length === 4) return `${numbers.slice(0, 2)}/${numbers.slice(2)}`;
+    return `${numbers.slice(0, 3)}/${numbers.slice(3)}`;
+  };
+
+  const formatTemp = (value: string) => {
+    const numbers = value.replace(/\D/g, '').substring(0, 3);
+    if (numbers.length <= 2) return numbers;
+    return `${numbers.slice(0, 2)}.${numbers.slice(2)}`;
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    if (isViewMode) return;
+    const { name, value } = e.target;
+    let filteredValue = value.trimStart();
+    
+    if (name === 'patient_name' || name === 'responsible_doctor' || name.includes('caregiver') && name.includes('name')) {
+      filteredValue = filteredValue.replace(/[^a-zA-ZÀ-ÿ\s]/g, '');
+    } else if (name === 'profession') {
+      filteredValue = filteredValue.replace(/[^a-zA-ZÀ-ÿ\s]/g, '');
+    } else if (name === 'address') {
+      filteredValue = filteredValue.replace(/[^a-zA-ZÀ-ÿ0-9\s]/g, '');
+    } else if (name === 'weight') {
+      filteredValue = filteredValue.replace(/\D/g, '').substring(0, 3);
+    } else if (name === 'height') {
+      filteredValue = formatHeight(filteredValue);
+    } else if (name === 'phone' || name === 'doctor_phone' || name.includes('caregiver') && name.includes('phone')) {
+      filteredValue = formatPhone(filteredValue);
+    } else if (name === 'birth_date' || name === 'evaluation_date') {
+      filteredValue = formatDate(filteredValue);
+    } else if (name === 'blood_pressure') {
+      filteredValue = formatPA(filteredValue);
+    } else if (name === 'heart_rate') {
+      filteredValue = filteredValue.replace(/\D/g, '').substring(0, 3);
+    } else if (name === 'respiratory_rate') {
+      filteredValue = filteredValue.replace(/\D/g, '').substring(0, 2);
+    } else if (name === 'temperature') {
+      filteredValue = formatTemp(filteredValue);
+    } else if (name === 'saturation') {
+      filteredValue = filteredValue.replace(/\D/g, '').substring(0, 3);
+    } else if (name === 'address_number') {
+      filteredValue = filteredValue.replace(/\D/g, '').substring(0, 4);
+    }
+
+    if (errors.includes(name)) {
+      setErrors(prev => prev.filter(err => err !== name));
+    }
+
+    setFormData(prev => ({ ...prev, [name]: filteredValue }));
+  };
+
+  const handleSelectChange = (name: string, value: string) => {
+    if (isViewMode) return;
+    if (errors.includes(name)) {
+      setErrors(prev => prev.filter(err => err !== name));
+    }
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleAdmRowChange = (index: number, field: 'movement' | 'degree', value: string) => {
+    if (isViewMode) return;
+    const newRows = [...admRows];
+    let filteredValue = value;
+    if (field === 'movement') {
+      filteredValue = value.replace(/[^a-zA-ZÀ-ÿ\s]/g, '');
+    } else if (field === 'degree') {
+      const numbers = value.replace(/\D/g, '').substring(0, 3);
+      filteredValue = numbers ? `${numbers}°` : '';
+    }
+    newRows[index][field] = filteredValue;
+    setAdmRows(newRows);
+  };
+
+  const addAdmRow = () => {
+    if (isViewMode) return;
+    setAdmRows([...admRows, { movement: '', degree: '' }]);
+  };
+
+  const removeAdmRow = (index: number) => {
+    if (isViewMode) return;
+    if (admRows.length > 1) {
+      setAdmRows(admRows.filter((_, i) => i !== index));
+    }
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (isViewMode) return;
+    const files = Array.from(e.target.files || []);
+    if (examFiles.length + files.length > 10) {
+      showAlert('warning', 'Limite de Arquivos', 'Você pode enviar no máximo 10 arquivos.');
+      return;
+    }
+    files.forEach(file => {
+      const isImage = file.type.startsWith('image/');
+      const isPDF = file.type === 'application/pdf';
+      
+      if (!isImage && !isPDF) {
+        showAlert('error', 'Arquivo Inválido', 'Apenas imagens e arquivos PDF são permitidos.');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setExamFiles(prev => [...prev, reader.result as string]);
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const removeFile = (index: number) => {
+    if (isViewMode) return;
+    setExamFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const isFutureDate = (dateStr: string) => {
+    if (dateStr.length !== 10) return false;
+    const [d, m, y] = dateStr.split('/').map(Number);
+    const date = new Date(y, m - 1, d);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return date > today;
+  };
+
+  const validateCurrentTab = () => {
+    const newErrors: string[] = [];
+    
+    if (activeTab === 'identificacao') {
+      const requiredFields = [
+        'patient_name', 
+        'birth_date', 
+        'gender', 
+        'marital_status', 
+        'address', 
+        'address_number',
+        'profession'
+      ];
+      if (formData.has_caregiver === 'Sim') {
+        requiredFields.push('caregiver_name', 'caregiver_phone');
+        if (visibleCaregivers >= 2) requiredFields.push('caregiver2_name', 'caregiver2_phone');
+        if (visibleCaregivers >= 3) requiredFields.push('caregiver3_name', 'caregiver3_phone');
+      }
+      requiredFields.forEach(field => {
+        const val = formData[field as keyof typeof formData];
+        if (!val || val.toString().trim() === '') {
+          newErrors.push(field);
+        }
+      });
+      
+      if (formData.birth_date.length < 10 && !newErrors.includes('birth_date')) {
+        newErrors.push('birth_date');
+      } else if (isFutureDate(formData.birth_date)) {
+        newErrors.push('birth_date');
+      }
+
+      const phoneFields = ['phone', 'caregiver_phone', 'caregiver2_phone', 'caregiver3_phone', 'doctor_phone'];
+      phoneFields.forEach(field => {
+        const val = formData[field as keyof typeof formData] as string;
+        if (val && val.trim() !== '' && val.length < 15) {
+          if (!newErrors.includes(field)) newErrors.push(field);
+        }
+      });
+    }
+    
+    if (activeTab === 'exame-fisico') {
+      if (formData.auditory_alteration === 'Sim' && !formData.auditory_alteration_details.trim()) newErrors.push('auditory_alteration_details');
+      if (formData.visual_alteration === 'Sim' && !formData.visual_alteration_details.trim()) newErrors.push('visual_alteration_details');
+      if (formData.gait_aid === 'Sim' && !formData.gait_aid_details.trim()) newErrors.push('gait_aid_details');
+      if (formData.has_complementary_exams === 'Sim' && !formData.complementary_exams_details.trim()) newErrors.push('complementary_exams_details');
+    }
+    
+    if (activeTab === 'anamnese') {
+      if (formData.drinks === 'Sim' && !formData.drinks_details.trim()) newErrors.push('drinks_details');
+      if (formData.smokes === 'Sim' && !formData.smokes_details.trim()) newErrors.push('smokes_details');
+      if (formData.sedentary === 'Sim' && !formData.sedentary_details.trim()) newErrors.push('sedentary_details');
+      if (formData.has_medications === 'Sim' && !formData.medications.trim()) newErrors.push('medications');
+      if (formData.has_surgeries === 'Sim' && !formData.previous_surgeries.trim()) newErrors.push('previous_surgeries');
+    }
+
+    setErrors(newErrors);
+    return newErrors.length === 0;
+  };
+
+  const validateAll = () => {
+    const newErrors: string[] = [];
+    
+    const idFields = ['patient_name', 'birth_date', 'gender', 'marital_status', 'address', 'address_number', 'profession'];
+    if (formData.has_caregiver === 'Sim') {
+      idFields.push('caregiver_name', 'caregiver_phone');
+      if (visibleCaregivers >= 2) idFields.push('caregiver2_name', 'caregiver2_phone');
+      if (visibleCaregivers >= 3) idFields.push('caregiver3_name', 'caregiver3_phone');
+    }
+    idFields.forEach(f => { if (!formData[f as keyof typeof formData]?.toString().trim()) newErrors.push(f); });
+    
+    if (formData.birth_date.length < 10 && !newErrors.includes('birth_date')) {
+      newErrors.push('birth_date');
+    } else if (isFutureDate(formData.birth_date)) {
+      newErrors.push('birth_date');
+    }
+
+    const phoneFields = ['phone', 'caregiver_phone', 'caregiver2_phone', 'caregiver3_phone', 'doctor_phone'];
+    phoneFields.forEach(field => {
+      const val = formData[field as keyof typeof formData] as string;
+      if (val && val.trim() !== '' && val.length < 15) {
+        if (!newErrors.includes(field)) newErrors.push(field);
+      }
+    });
+
+    if (formData.auditory_alteration === 'Sim' && !formData.auditory_alteration_details.trim()) newErrors.push('auditory_alteration_details');
+    if (formData.visual_alteration === 'Sim' && !formData.visual_alteration_details.trim()) newErrors.push('visual_alteration_details');
+    if (formData.gait_aid === 'Sim' && !formData.gait_aid_details.trim()) newErrors.push('gait_aid_details');
+    if (formData.has_complementary_exams === 'Sim' && !formData.complementary_exams_details.trim()) newErrors.push('complementary_exams_details');
+
+    if (formData.drinks === 'Sim' && !formData.drinks_details.trim()) newErrors.push('drinks_details');
+    if (formData.smokes === 'Sim' && !formData.smokes_details.trim()) newErrors.push('smokes_details');
+    if (formData.sedentary === 'Sim' && !formData.sedentary_details.trim()) newErrors.push('sedentary_details');
+    if (formData.has_medications === 'Sim' && !formData.medications.trim()) newErrors.push('medications');
+    if (formData.has_surgeries === 'Sim' && !formData.previous_surgeries.trim()) newErrors.push('previous_surgeries');
+
+    setErrors(newErrors);
+    return newErrors.length === 0;
+  };
+
+  const handleSave = async () => {
+    if (isViewMode) return;
+    if (!validateAll()) {
+      const hasFutureDate = isFutureDate(formData.birth_date);
+      const hasIncompletePhone = ['phone', 'caregiver_phone', 'caregiver2_phone', 'caregiver3_phone', 'doctor_phone'].some(f => {
+        const val = formData[f as keyof typeof formData] as string;
+        return val && val.trim() !== '' && val.length < 15;
+      });
+
+      let message = 'Por favor, preencha todos os campos obrigatórios marcados em vermelho antes de salvar.';
+      let title = 'Campos Obrigatórios';
+      
+      if (hasFutureDate) {
+        title = 'Data Inválida';
+        message = 'A data de nascimento não pode ser posterior à data de hoje.';
+      } else if (hasIncompletePhone) {
+        title = 'Telefone Incompleto';
+        message = 'Os números de telefone devem ser preenchidos completamente no formato (00) 00000-0000.';
+      }
+      
+      showAlert('warning', title, message);
+      return;
+    }
+
+    let formattedBirthDate = null;
+    const parts = formData.birth_date.split('/');
+    if (parts.length === 3) {
+      formattedBirthDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+    }
+
+    const formattedAdm = admRows
+      .filter(row => row.movement.trim() || row.degree.trim())
+      .map(row => `${row.movement}: ${row.degree}`)
+      .join('; ');
+
+    setIsSaving(true);
+    try {
+      const fullAddress = `${formData.address}, ${formData.address_number}`;
+      
+      const { 
+        has_medications, 
+        has_surgeries, 
+        has_caregiver, 
+        has_complementary_exams,
+        address_number,
+        evaluation_date,
+        drinks,
+        smokes,
+        sedentary,
+        auditory_alteration,
+        visual_alteration,
+        gait_aid,
+        id: recordId,
+        created_at,
+        exam_files,
+        ...dataToSave 
+      } = formData;
+
+      const payload = { 
+        ...dataToSave, 
+        address: fullAddress,
+        birth_date: formattedBirthDate,
+        user_id: user?.id,
+        range_of_motion: formattedAdm,
+        medications: has_medications === 'Sim' ? formData.medications : '',
+        previous_surgeries: has_surgeries === 'Sim' ? formData.previous_surgeries : '',
+        caregiver_name: has_caregiver === 'Sim' ? formData.caregiver_name : '',
+        caregiver_phone: has_caregiver === 'Sim' ? formData.caregiver_phone : '',
+        caregiver2_name: (has_caregiver === 'Sim' && visibleCaregivers >= 2) ? formData.caregiver2_name : '',
+        caregiver2_phone: (has_caregiver === 'Sim' && visibleCaregivers >= 2) ? formData.caregiver2_phone : '',
+        caregiver3_name: (has_caregiver === 'Sim' && visibleCaregivers >= 3) ? formData.caregiver3_name : '',
+        caregiver3_phone: (has_caregiver === 'Sim' && visibleCaregivers >= 3) ? formData.caregiver3_phone : '',
+        drinks_details: formData.drinks === 'Sim' ? formData.drinks_details : '',
+        smokes_details: formData.smokes === 'Sim' ? formData.smokes_details : '',
+        sedentary_details: formData.sedentary === 'Sim' ? formData.sedentary_details : '',
+        exam_files: examFiles
+      };
+
+      let actionDescription = '';
+      if (!id) {
+        actionDescription = 'Ficha de avaliação inicial criada.';
+      } else {
+        const changes = [];
+        for (const key in payload) {
+          if (key === 'exam_files') {
+            if (JSON.stringify(examFiles) !== JSON.stringify(originalFiles)) {
+              changes.push('[Arquivos de Exames atualizados]');
+            }
+            continue;
+          }
           if (payload[key as keyof typeof payload] !== originalData[key as keyof typeof originalData] && fieldLabels[key]) {
             const oldValue = originalData[key as keyof typeof originalData] || 'Vazio';
             const newValue = payload[key as keyof typeof payload] || 'Vazio';
@@ -1333,14 +2778,25 @@ const Evaluation = () => {
                                 ) : (
                                   <img src={file} alt={`Exame ${index + 1}`} className="w-full h-full object-cover" />
                                 )}
-                                {!isViewMode && (
+                                
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                                   <button 
-                                    onClick={() => removeFile(index)}
-                                    className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                                    onClick={() => setPreviewFile(file)}
+                                    className="p-2 bg-white text-blue-600 rounded-full shadow-lg hover:scale-110 transition-transform"
+                                    title="Visualizar"
                                   >
-                                    <X size={14} />
+                                    <EyeIcon size={16} />
                                   </button>
-                                )}
+                                  {!isViewMode && (
+                                    <button 
+                                      onClick={() => removeFile(index)}
+                                      className="p-2 bg-red-500 text-white rounded-full shadow-lg hover:scale-110 transition-transform"
+                                      title="Remover"
+                                    >
+                                      <X size={16} />
+                                    </button>
+                                  )}
+                                </div>
                               </div>
                             ))}
                             
@@ -1785,6 +3241,12 @@ const Evaluation = () => {
         onClose={() => setIsDownloadModalOpen(false)}
         evaluationData={{ ...formData, id }}
         patientName={formData.patient_name}
+      />
+
+      <FilePreviewModal 
+        isOpen={!!previewFile}
+        onClose={() => setPreviewFile(null)}
+        fileUrl={previewFile}
       />
 
       <NotificationModal 

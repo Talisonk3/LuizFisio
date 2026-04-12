@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { X, Download, FileText, ExternalLink, Loader2 } from 'lucide-react';
+import { X, Download, FileText, Loader2 } from 'lucide-react';
 
 interface FilePreviewModalProps {
   isOpen: boolean;
@@ -19,6 +19,7 @@ const FilePreviewModal = ({ isOpen, onClose, fileUrl }: FilePreviewModalProps) =
     if (isOpen && fileUrl && isPDF && fileUrl.startsWith('data:')) {
       setLoading(true);
       try {
+        // Converte o Data URL em um Blob para garantir compatibilidade máxima com o visualizador do navegador
         const base64Data = fileUrl.split(',')[1];
         const byteCharacters = atob(base64Data);
         const byteNumbers = new Array(byteCharacters.length);
@@ -55,12 +56,6 @@ const FilePreviewModal = ({ isOpen, onClose, fileUrl }: FilePreviewModalProps) =
     document.body.removeChild(link);
   };
 
-  const handleOpenNewTab = () => {
-    if (blobUrl || fileUrl) {
-      window.open(blobUrl || fileUrl, '_blank');
-    }
-  };
-
   return (
     <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-md animate-in fade-in duration-300">
       <div className="relative w-full max-w-5xl h-full max-h-[90vh] flex flex-col bg-white rounded-[2.5rem] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
@@ -73,19 +68,11 @@ const FilePreviewModal = ({ isOpen, onClose, fileUrl }: FilePreviewModalProps) =
             <h3 className="font-bold text-slate-800">Visualização do Exame</h3>
           </div>
           <div className="flex items-center gap-2">
-            {isPDF && (
-              <button 
-                onClick={handleOpenNewTab}
-                className="p-3 bg-blue-600 text-white hover:bg-blue-700 rounded-xl transition-all flex items-center gap-2 font-bold text-sm shadow-lg shadow-blue-100"
-              >
-                <ExternalLink size={18} /> Abrir em Tela Cheia
-              </button>
-            )}
             <button 
               onClick={handleDownload}
-              className="p-3 bg-slate-50 text-slate-600 hover:bg-slate-100 rounded-xl transition-all flex items-center gap-2 font-bold text-sm"
+              className="p-3 bg-blue-600 text-white hover:bg-blue-700 rounded-xl transition-all flex items-center gap-2 font-bold text-sm shadow-lg shadow-blue-100"
             >
-              <Download size={18} /> Baixar
+              <Download size={18} /> Baixar Arquivo
             </button>
             <button 
               onClick={onClose}
@@ -105,14 +92,11 @@ const FilePreviewModal = ({ isOpen, onClose, fileUrl }: FilePreviewModalProps) =
             </div>
           ) : isPDF ? (
             <div className="w-full h-full flex flex-col items-center justify-center">
-              <embed
-                src={`${blobUrl || fileUrl}#toolbar=0&navpanes=0&scrollbar=1`}
-                type="application/pdf"
+              <iframe
+                src={blobUrl || fileUrl}
                 className="w-full h-full rounded-xl border border-slate-200 shadow-inner bg-white"
+                title="Visualização do PDF"
               />
-              <p className="mt-4 text-xs text-slate-400 font-medium">
-                Se o documento não aparecer, clique em "Abrir em Tela Cheia" acima.
-              </p>
             </div>
           ) : (
             <div className="w-full h-full overflow-auto flex items-center justify-center">

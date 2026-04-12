@@ -18,7 +18,8 @@ import {
   FileText,
   History,
   Home,
-  Download
+  Download,
+  Eye
 } from 'lucide-react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -27,6 +28,7 @@ import CustomSelect from '@/components/CustomSelect';
 import NotificationModal, { ModalType } from '@/components/NotificationModal';
 import EvolutionHistoryTab from '@/components/EvolutionHistoryTab';
 import DownloadModal from '@/components/DownloadModal';
+import FilePreviewModal from '@/components/FilePreviewModal';
 
 const fieldLabels: Record<string, string> = {
   patient_name: 'Nome',
@@ -92,6 +94,7 @@ const Evaluation = () => {
   const [examFiles, setExamFiles] = useState<string[]>([]);
   const [visibleCaregivers, setVisibleCaregivers] = useState(1);
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
+  const [previewFile, setPreviewFile] = useState<string | null>(null);
   
   const visitorId = sessionStorage.getItem('visitor_id');
   const isVisitor = !!visitorId;
@@ -1336,7 +1339,11 @@ const Evaluation = () => {
                           <label className={labelClasses}>Arquivos dos Exames (Imagens ou PDF - Máx. 10)</label>
                           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 mt-2">
                             {examFiles.map((file, index) => (
-                              <div key={index} className="relative group aspect-square rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 flex items-center justify-center">
+                              <div 
+                                key={index} 
+                                onClick={() => setPreviewFile(file)}
+                                className="relative group aspect-square rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 flex items-center justify-center cursor-pointer hover:ring-4 hover:ring-blue-500/20 transition-all"
+                              >
                                 {file.startsWith('data:application/pdf') ? (
                                   <div className="flex flex-col items-center gap-1 text-slate-400">
                                     <FileText size={32} />
@@ -1345,10 +1352,15 @@ const Evaluation = () => {
                                 ) : (
                                   <img src={file} alt={`Exame ${index + 1}`} className="w-full h-full object-cover" />
                                 )}
+                                
+                                <div className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/20 flex items-center justify-center transition-all">
+                                  <Eye className="text-white opacity-0 group-hover:opacity-100 transition-opacity" size={24} />
+                                </div>
+
                                 {!isViewMode && (
                                   <button 
-                                    onClick={() => removeFile(index)}
-                                    className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                                    onClick={(e) => { e.stopPropagation(); removeFile(index); }}
+                                    className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg z-10"
                                   >
                                     <X size={14} />
                                   </button>
@@ -1808,6 +1820,12 @@ const Evaluation = () => {
         onClose={() => setIsDownloadModalOpen(false)}
         evaluationData={{ ...formData, id }}
         patientName={formData.patient_name}
+      />
+
+      <FilePreviewModal 
+        isOpen={!!previewFile}
+        onClose={() => setPreviewFile(null)}
+        fileUrl={previewFile}
       />
 
       <NotificationModal 

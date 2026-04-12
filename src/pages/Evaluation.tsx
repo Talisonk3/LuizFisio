@@ -263,8 +263,9 @@ const Evaluation = () => {
     if (!id) {
       return Object.keys(formData).some(key => {
         if (key === 'evaluation_date') return false;
-        const val = formData[key as keyof typeof formData];
-        return val !== initialFormData[key as keyof typeof initialFormData];
+        const val = formData[key as keyof typeof formData] || '';
+        const initial = initialFormData[key as keyof typeof initialFormData] || '';
+        return val.toString().trim() !== initial.toString().trim();
       }) || examFiles.length > 0;
     }
 
@@ -272,7 +273,9 @@ const Evaluation = () => {
 
     const hasFormDataChanges = Object.keys(formData).some(key => {
       if (key === 'evaluation_date') return false;
-      return formData[key as keyof typeof formData] !== originalData[key as keyof typeof originalData];
+      const current = formData[key as keyof typeof formData] || '';
+      const original = originalData[key as keyof typeof originalData] || '';
+      return current.toString().trim() !== original.toString().trim();
     });
 
     const hasAdmChanges = JSON.stringify(admRows) !== JSON.stringify(originalAdmRows);
@@ -1786,7 +1789,8 @@ const Evaluation = () => {
               {!(isViewMode && activeTab === 'historico-evolucoes') && (
                 <button 
                   onClick={handleNext}
-                  className="bg-slate-100 text-blue-600 font-black flex items-center gap-2 px-6 py-3 rounded-2xl hover:bg-blue-600 hover:text-white transition-all group text-sm"
+                  disabled={(!isViewMode && (activeTab === 'historico-evolucoes' || activeTab === 'funcional') && !isFormDirty) || isSaving}
+                  className="bg-slate-100 text-blue-600 font-black flex items-center gap-2 px-6 py-3 rounded-2xl hover:bg-blue-600 hover:text-white transition-all group text-sm disabled:opacity-50 disabled:hover:bg-slate-100 disabled:hover:text-blue-600"
                 >
                   {activeTab === 'historico-evolucoes' || activeTab === 'funcional' ? (id ? 'Atualizar' : 'Finalizar') : 'Próximo'} 
                   <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />

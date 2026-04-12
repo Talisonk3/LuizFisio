@@ -42,7 +42,7 @@ const FilePreviewModal = ({ isOpen, onClose, fileUrl }: FilePreviewModalProps) =
         setBlobUrl(null);
       }
     };
-  }, [isOpen, fileUrl]);
+  }, [isOpen, fileUrl, isPDF]);
 
   if (!isOpen || !fileUrl) return null;
 
@@ -117,21 +117,6 @@ const FilePreviewModal = ({ isOpen, onClose, fileUrl }: FilePreviewModalProps) =
           ) : (
             <div className="w-full h-full overflow-auto flex items-center justify-center">
               <img 
-                src={fileUrlthink
-The user is pointing out that my previous response was cut off. I need to complete the `FilePreviewModal.tsx` file and provide the summary and chat summary as required by the instructions.
-
-Looking at the previous output:
-```tsx
-            <div className="w-full h-full overflow-auto flex items-center justify-center">
-              <img 
-                src={fileUrl
-```
-It stopped right there. I need to finish the `img` tag, the `div`s, the component, and the file write block.
-
-Then I need to provide the concise summary and the `<dyad-chat-summary>` tag.
-
-File structure to complete:
-```tsx
                 src={fileUrl} 
                 alt="Exame expandido" 
                 className="max-w-full max-h-full object-contain rounded-xl shadow-lg"

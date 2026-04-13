@@ -17,7 +17,7 @@ const DownloadModal = ({ isOpen, onClose, evaluationData, patientName }: Downloa
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedOptions, setSelectedOptions] = useState({
-    ficha: true,
+    ficha: false,
     evolucao: false
   });
   const [dateRange, setDateRange] = useState({
@@ -52,32 +52,38 @@ const DownloadModal = ({ isOpen, onClose, evaluationData, patientName }: Downloa
   };
 
   useEffect(() => {
-    if (isOpen && evaluationData.id) {
-      const fetchFirstDate = async () => {
-        const { data } = await supabase
-          .from('session_evolutions')
-          .select('session_date, created_at')
-          .eq('evaluation_id', evaluationData.id)
-          .order('session_date', { ascending: true })
-          .order('created_at', { ascending: true })
-          .limit(1)
-          .maybeSingle();
-        
-        if (data) {
-          const dateToUse = data.session_date || data.created_at.split('T')[0];
-          const [y, m, d] = dateToUse.split('-');
-          setDateRange({
-            start: `${d}/${m}/${y}`,
-            end: new Date().toLocaleDateString('pt-BR')
-          });
-        } else {
-          setDateRange({
-            start: '',
-            end: new Date().toLocaleDateString('pt-BR')
-          });
-        }
-      };
-      fetchFirstDate();
+    if (isOpen) {
+      // Resetar opções sempre que abrir
+      setSelectedOptions({ ficha: false, evolucao: false });
+      setError(null);
+
+      if (evaluationData.id) {
+        const fetchFirstDate = async () => {
+          const { data } = await supabase
+            .from('session_evolutions')
+            .select('session_date, created_at')
+            .eq('evaluation_id', evaluationData.id)
+            .order('session_date', { ascending: true })
+            .order('created_at', { ascending: true })
+            .limit(1)
+            .maybeSingle();
+          
+          if (data) {
+            const dateToUse = data.session_date || data.created_at.split('T')[0];
+            const [y, m, d] = dateToUse.split('-');
+            setDateRange({
+              start: `${d}/${m}/${y}`,
+              end: new Date().toLocaleDateString('pt-BR')
+            });
+          } else {
+            setDateRange({
+              start: '',
+              end: new Date().toLocaleDateString('pt-BR')
+            });
+          }
+        };
+        fetchFirstDate();
+      }
     }
   }, [isOpen, evaluationData.id]);
 
@@ -122,7 +128,7 @@ const DownloadModal = ({ isOpen, onClose, evaluationData, patientName }: Downloa
       doc.setFontSize(12);
       doc.setTextColor(100);
       doc.text(`Paciente: ${patientName}`, 20, currentY);
-      doc.text(`Data de Emissão: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth - 20, currentY, { align: 'right' });
+      doc.text(`Data de Emissão: ${new Date().toLocaleDateString('pt-BR')}`,pageWidth - 20, currentY, { align: 'right' });
       
       currentY += 10;
       doc.setDrawColor(226, 232, 240);

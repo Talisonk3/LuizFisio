@@ -85,9 +85,13 @@ const Profile = () => {
     const { name, value } = e.target;
     let filteredValue = value;
 
-    if (name === 'phone') {
+    if (name === 'full_name') {
+      // Aceita apenas letras (incluindo acentuadas) e espaços
+      filteredValue = value.replace(/[^a-zA-ZÀ-ÿ\s]/g, '');
+    } else if (name === 'phone') {
       const numbers = value.replace(/\D/g, '');
-      if (numbers.length <= 2) filteredValue = `(${numbers}`;
+      if (numbers.length === 0) filteredValue = '';
+      else if (numbers.length <= 2) filteredValue = `(${numbers}`;
       else if (numbers.length <= 6) filteredValue = `(${numbers.slice(0, 2)}) ${numbers.slice(2)}`;
       else if (numbers.length <= 10) filteredValue = `(${numbers.slice(0, 2)}) ${numbers.slice(2, 6)}-${numbers.slice(6)}`;
       else filteredValue = `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7, 11)}`;

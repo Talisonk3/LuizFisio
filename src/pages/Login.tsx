@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/AuthProvider';
 import { Stethoscope, User, Lock, Mail, Loader2, Eye, EyeOff, UserCircle, CheckSquare, Square, ArrowLeft } from 'lucide-react';
+import ResetPasswordModal from '@/components/ResetPasswordModal';
 
 const Login = () => {
   const { session } = useAuth();
@@ -12,6 +13,7 @@ const Login = () => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [isVisitor, setIsVisitor] = useState(false);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [checkingEmail, setCheckingEmail] = useState(false);
   const [isEmailVerified, setIsEmailVerified] = useState(false);
@@ -29,9 +31,15 @@ const Login = () => {
   });
 
   useEffect(() => {
-    if (session) {
+    // Detectar se o usuário veio de um link de recuperação de senha
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setIsResetModalOpen(true);
+      }
+    });
+
+    if (session && !isResetModalOpen) {
       navigate('/');
-      return;
     }
 
     if (!isSignUp && !isVisitor && !isForgotPassword) {
@@ -48,7 +56,9 @@ const Login = () => {
         setRememberMe(true);
       }
     }
-  }, [session, navigate, isSignUp, isVisitor, isForgotPassword]);
+
+    return () => subscription.unsubscribe();
+  }, [session, navigate, isSignUp, isVisitor, isForgotPassword, isResetModalOpen]);
 
   // Validação de e-mail para recuperação de senha
   useEffect(() => {
@@ -362,6 +372,11 @@ const Login = () => {
           </div>
         )}
       </div>
+
+      <ResetPasswordModal 
+        isOpen={isResetModalOpen}
+        onClose={() => setIsResetModalOpen(false)}
+      />
     </div>
   );
 };

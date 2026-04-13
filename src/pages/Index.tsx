@@ -7,14 +7,14 @@ import {
   Users, 
   FilePlus, 
   Share2, 
-  LogOut, 
   Activity, 
   ChevronRight
 } from 'lucide-react';
+import UserMenu from '@/components/UserMenu';
 
 const Index = () => {
   const navigate = useNavigate();
-  const { signOut, user } = useAuth();
+  const { user } = useAuth();
 
   const menuItems = [
     {
@@ -66,19 +66,7 @@ const Index = () => {
             <h1 className="text-xl font-black text-slate-800 tracking-tight">FisioSystem</h1>
           </div>
           
-          <div className="flex items-center gap-4">
-            <div className="hidden md:block text-right">
-              <p className="text-sm font-bold text-slate-800">{user?.user_metadata?.full_name || 'Profissional'}</p>
-              <p className="text-xs text-slate-500">Fisioterapeuta</p>
-            </div>
-            <button 
-              onClick={() => { signOut(); navigate('/login'); }}
-              className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
-              title="Sair"
-            >
-              <LogOut size={20} />
-            </button>
-          </div>
+          <UserMenu />
         </div>
       </header>
 

@@ -7,6 +7,7 @@ import Evaluation from './pages/Evaluation';
 import Index from './pages/Index';
 import Patients from './pages/Patients';
 import Share from './pages/Share';
+import Profile from './pages/Profile';
 import { useAuth } from './components/AuthProvider';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -17,7 +18,6 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
   const visitorAccess = sessionStorage.getItem('visitor_access');
   const isEvaluationPath = location.pathname.startsWith('/avaliacao/');
-  const isPatientsPath = location.pathname === '/pacientes';
   
   // Acesso de visitante geral (pode ver a lista de pacientes do dono)
   const isGeneralVisitor = visitorAccess === 'general';
@@ -30,8 +30,8 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/login" />;
   }
 
-  // Visitantes gerais não podem acessar a Home ou Share, apenas a lista de pacientes
-  if (isGeneralVisitor && (location.pathname === '/' || location.pathname === '/compartilhar')) {
+  // Visitantes gerais não podem acessar a Home, Share ou Perfil
+  if (isGeneralVisitor && (location.pathname === '/' || location.pathname === '/compartilhar' || location.pathname === '/perfil')) {
     return <Navigate to="/pacientes" />;
   }
   
@@ -48,6 +48,7 @@ function App() {
         <Route path="/avaliacao/:id" element={<ProtectedRoute><Evaluation /></ProtectedRoute>} />
         <Route path="/pacientes" element={<ProtectedRoute><Patients /></ProtectedRoute>} />
         <Route path="/compartilhar" element={<ProtectedRoute><Share /></ProtectedRoute>} />
+        <Route path="/perfil" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </Router>

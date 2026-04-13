@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/AuthProvider';
@@ -21,6 +21,12 @@ const Profile = () => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [originalData, setOriginalData] = useState({
+    full_name: '',
+    crefito: '',
+    phone: '',
+    email: ''
+  });
   const [formData, setFormData] = useState({
     full_name: '',
     crefito: '',
@@ -52,12 +58,14 @@ const Profile = () => {
 
         if (error) throw error;
         if (data) {
-          setFormData({
+          const profileData = {
             full_name: data.full_name || '',
             crefito: data.crefito || '',
             phone: data.phone || '',
             email: data.email || user.email || ''
-          });
+          };
+          setFormData(profileData);
+          setOriginalData(profileData);
         }
       } catch (error) {
         console.error('Erro ao carregar perfil:', error);
@@ -69,6 +77,10 @@ const Profile = () => {
     fetchProfile();
   }, [user]);
 
+  const isDirty = useMemo(() => {
+    return JSON.stringify(formData) !== JSON.stringify(originalData);
+  }, [formData, originalData]);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     let filteredValue = value;
@@ -79,13 +91,16 @@ const Profile = () => {
       else if (numbers.length <= 6) filteredValue = `(${numbers.slice(0, 2)}) ${numbers.slice(2)}`;
       else if (numbers.length <= 10) filteredValue = `(${numbers.slice(0, 2)}) ${numbers.slice(2, 6)}-${numbers.slice(6)}`;
       else filteredValue = `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7, 11)}`;
+    } else if (name === 'crefito') {
+      // Apenas números, traço e letra F (maiúscula), máximo 8 caracteres
+      filteredValue = value.toUpperCase().replace(/[^0-9-F]/g, '').substring(0, 8);
     }
 
     setFormData(prev => ({ ...prev, [name]: filteredValue }));
   };
 
   const handleSave = async () => {
-    if (!user) return;
+    if (!user || !isDirty) return;
     setSaving(true);
     try {
       const { error } = await supabase
@@ -100,6 +115,7 @@ const Profile = () => {
 
       if (error) throw error;
 
+      setOriginalData({ ...formData });
       setModalConfig({
         isOpen: true,
         type: 'success',
@@ -218,7 +234,7 @@ const Profile = () => {
           <div className="pt-8 border-t border-slate-100 flex gap-4">
             <button
               onClick={handleSave}
-              disabled={saving}
+              disabled={saving || !isDirty}
               className="flex-1 bg-blue-600 text-white py-4 rounded-2xl font-bold shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
             >
               {saving ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}

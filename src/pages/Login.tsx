@@ -4,17 +4,21 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/AuthProvider';
-import { Stethoscope, User, Lock, Mail, Loader2, Eye, EyeOff, UserCircle, CheckSquare, Square } from 'lucide-react';
+import { Stethoscope, User, Lock, Mail, Loader2, Eye, EyeOff, UserCircle, CheckSquare, Square, ArrowLeft } from 'lucide-react';
 
 const Login = () => {
   const { session } = useAuth();
   const navigate = useNavigate();
   const [isSignUp, setIsSignUp] = useState(false);
   const [isVisitor, setIsVisitor] = useState(false);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [checkingEmail, setCheckingEmail] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showPassword, setShowPassword]= useState(true); // Senha visível por padrão
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [showPassword, setShowPassword]= useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
 
   const [formData, setFormData] = useState({
     username: '',
@@ -23,14 +27,13 @@ const Login = () => {
     fullName: ''
   });
 
-  // Efeito para carregar credenciais apenas no modo de login profissional inicial
   useEffect(() => {
     if (session) {
       navigate('/');
       return;
     }
 
-    if (!isSignUp && !isVisitor) {
+    if (!isSignUp && !isVisitor && !isForgotPassword) {
       const savedUsername = localStorage.getItem('fisio_username');
       const savedPassword = localStorage.getItem('fisio_password');
       const savedVisitor = localStorage.getItem('fisio_is_visitor') === 'true';
@@ -44,7 +47,41 @@ const Login = () => {
         setRememberMe(true);
       }
     }
-  }, [session, navigate, isSignUp, isVisitor]);
+  }, [session, navigate, isSignUp, isVisitor, isForgotPassword]);
+
+  // Validação de e-mail para recuperação de senha
+  useEffect(() => {
+    const validateEmail = async () => {
+      if (!isForgotPassword || !formData.email || !formData.email.includes('@')) {
+        setEmailError(null);
+        return;
+      }
+
+      setCheckingEmail(true);
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('email', formData.email.trim().toLowerCase())
+          .maybeSingle();
+
+        if (error) throw error;
+        
+        if (!data) {
+          setEmailError('E-mail incorreto ou não cadastrado.');
+        } else {
+          setEmailError(null);
+        }
+      } catch (err) {
+        console.error('Erro ao validar e-mail:', err);
+      } finally {
+        setCheckingEmail(false);
+      }
+    };
+
+    const timer = setTimeout(validateEmail, 500);
+    return () => clearTimeout(timer);
+  }, [formData.email, isForgotPassword]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -64,6 +101,15 @@ const Login = () => {
     setError(null);
 
     try {
+      if (isForgotPassword) {
+        const { error: resetError } = await supabase.auth.resetPasswordForEmail(formData.email.trim().toLowerCase(), {
+          redirectTo: `${window.location.origin}/login`,
+        });
+        if (resetError) throw resetError;
+        setResetSent(true);
+        return;
+      }
+
       if (rememberMe && !isSignUp && !isVisitor) {
         localStorage.setItem('fisio_username', formData.username);
         localStorage.setItem('fisio_password', formData.password);
@@ -145,18 +191,50 @@ const Login = () => {
   const toggleAuthMode = () => {
     setIsSignUp(!isSignUp);
     setIsVisitor(false);
+    setIsForgotPassword(false);
     setError(null);
-    // Limpar formulário ao mudar de modo
     setFormData({ username: '', email: '', password: '', fullName: '' });
   };
 
   const toggleVisitorMode = () => {
     setIsVisitor(!isVisitor);
     setIsSignUp(false);
+    setIsForgotPassword(false);
     setError(null);
-    // Limpar formulário ao mudar de modo
     setFormData({ username: '', email: '', password: '', fullName: '' });
   };
+
+  const toggleForgotPassword = () => {
+    setIsForgotPassword(!isForgotPassword);
+    setIsSignUp(false);
+    setIsVisitor(false);
+    setError(null);
+    setEmailError(null);
+    setResetSent(false);
+    setFormData({ username: '', email: '', password: '', fullName: '' });
+  };
+
+  if (isForgotPassword && resetSent) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-3xl shadow-2xl p-10 border border-slate-100 text-center">
+          <div className="bg-emerald-100 p-4 rounded-2xl w-fit mx-auto mb-6 text-emerald-600">
+            <Mail size={40} />
+          </div>
+          <h1 className="text-2xl font-extrabold text-slate-800 mb-4">E-mail Enviado!</h1>
+          <p className="text-slate-500 mb-8">
+            Enviamos as instruções para recuperação de senha para o e-mail <strong>{formData.email}</strong>.
+          </p>
+          <button 
+            onClick={toggleForgotPassword}
+            className="w-full bg-blue-600 text-white py-4 rounded-xl font-bold hover:bg-blue-700 transition-all"
+          >
+            Voltar para o Login
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
@@ -167,71 +245,116 @@ const Login = () => {
           </div>
           <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">FisioSystem</h1>
           <p className="text-slate-500 text-center mt-2">
-            {isVisitor ? 'Acesso de Visitante' : (isSignUp ? 'Crie sua conta' : 'Acesse sua plataforma')}
+            {isForgotPassword ? 'Recuperar Senha' : (isVisitor ? 'Acesso de Visitante' : (isSignUp ? 'Crie sua conta' : 'Acesse sua plataforma'))}
           </p>
         </div>
 
         <form onSubmit={handleAuth} className="space-y-4">
-          {isSignUp && (
+          {isForgotPassword ? (
+            <div>
+              <label className="text-sm font-semibold text-slate-600 mb-1 block ml-1">E-mail Cadastrado</label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-3 text-slate-400" size={20} />
+                <input 
+                  name="email" 
+                  type="email" 
+                  required 
+                  value={formData.email} 
+                  onChange={handleInputChange} 
+                  className={`w-full pl-10 pr-4 py-3 bg-slate-50 border rounded-xl outline-none transition-all ${emailError ? 'border-red-500' : 'border-slate-200 focus:border-blue-500'}`} 
+                  placeholder="seu@email.com" 
+                />
+              </div>
+              {emailError && <p className="text-red-500 text-[10px] font-bold mt-1 ml-1 uppercase tracking-wider">{emailError}</p>}
+              {checkingEmail && <p className="text-blue-500 text-[10px] font-bold mt-1 ml-1 uppercase tracking-wider animate-pulse">Verificando e-mail...</p>}
+            </div>
+          ) : (
             <>
+              {isSignUp && (
+                <>
+                  <div>
+                    <label className="text-sm font-semibold text-slate-600 mb-1 block ml-1">Nome Completo</label>
+                    <input name="fullName" type="text" required value={formData.fullName} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none" placeholder="Seu nome" />
+                  </div>
+                  <div>
+                    <label className="text-sm font-semibold text-slate-600 mb-1 block ml-1">E-mail</label>
+                    <input name="email" type="email" required value={formData.email} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none" placeholder="seu@email.com" />
+                  </div>
+                </>
+              )}
+
               <div>
-                <label className="text-sm font-semibold text-slate-600 mb-1 block ml-1">Nome Completo</label>
-                <input name="fullName" type="text" required value={formData.fullName} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none" placeholder="Seu nome" />
+                <label className="text-sm font-semibold text-slate-600 mb-1 block ml-1">Usuário</label>
+                <input name="username" type="text" required value={formData.username} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none" placeholder="Nome de usuário" />
               </div>
+
               <div>
-                <label className="text-sm font-semibold text-slate-600 mb-1 block ml-1">E-mail</label>
-                <input name="email" type="email" required value={formData.email} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none" placeholder="seu@email.com" />
+                <div className="flex justify-between items-center mb-1 ml-1">
+                  <label className="text-sm font-semibold text-slate-600">Senha</label>
+                  {!isSignUp && !isVisitor && (
+                    <button type="button" onClick={toggleForgotPassword} className="text-xs font-bold text-blue-600 hover:underline">
+                      Esqueceu a senha?
+                    </button>
+                  )}
+                </div>
+                <div className="relative">
+                  <input name="password" type={showPassword ? "text" : "password"} required value={formData.password} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none" placeholder="••••••••" />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-3 text-slate-400">
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+                </div>
               </div>
+
+              {!isSignUp && !isVisitor && (
+                <div className="flex items-center justify-between px-1">
+                  <button 
+                    type="button"
+                    onClick={() => setRememberMe(!rememberMe)}
+                    className="flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-700 transition-colors"
+                  >
+                    {rememberMe ? (
+                      <CheckSquare className="text-blue-600" size={18} />
+                    ) : (
+                      <Square className="text-slate-300" size={18} />
+                    )}
+                    Manter logado
+                  </button>
+                </div>
+              )}
             </>
-          )}
-
-          <div>
-            <label className="text-sm font-semibold text-slate-600 mb-1 block ml-1">Usuário</label>
-            <input name="username" type="text" required value={formData.username} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none" placeholder="Nome de usuário" />
-          </div>
-
-          <div>
-            <label className="text-sm font-semibold text-slate-600 mb-1 block ml-1">Senha</label>
-            <div className="relative">
-              <input name="password" type={showPassword ? "text" : "password"} required value={formData.password} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none" placeholder="••••••••" />
-              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-3 text-slate-400">
-                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-              </button>
-            </div>
-          </div>
-
-          {!isSignUp && !isVisitor && (
-            <div className="flex items-center justify-between px-1">
-              <button 
-                type="button"
-                onClick={() => setRememberMe(!rememberMe)}
-                className="flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-700 transition-colors"
-              >
-                {rememberMe ? (
-                  <CheckSquare className="text-blue-600" size={18} />
-                ) : (
-                  <Square className="text-slate-300" size={18} />
-                )}
-                Manter logado
-              </button>
-            </div>
           )}
 
           {error && <p className="text-red-600 text-xs text-center font-medium">{error}</p>}
 
-          <button type="submit" disabled={loading} className={`w-full text-white py-4 rounded-xl font-bold shadow-lg transition-all ${isVisitor ? 'bg-purple-600 hover:bg-purple-700' : 'bg-blue-600 hover:bg-blue-700'}`}>
-            {loading ? <Loader2 className="animate-spin mx-auto" size={20} /> : (isVisitor ? 'Entrar como Visitante' : 'Entrar no Sistema')}
+          <button 
+            type="submit" 
+            disabled={loading || (isForgotPassword && (!!emailError || !formData.email || checkingEmail))} 
+            className={`w-full text-white py-4 rounded-xl font-bold shadow-lg transition-all disabled:opacity-50 ${isVisitor ? 'bg-purple-600 hover:bg-purple-700' : 'bg-blue-600 hover:bg-blue-700'}`}
+          >
+            {loading ? <Loader2 className="animate-spin mx-auto" size={20} /> : (isForgotPassword ? 'Enviar Link de Recuperação' : (isVisitor ? 'Entrar como Visitante' : 'Entrar no Sistema'))}
           </button>
+
+          {isForgotPassword && (
+            <button 
+              type="button" 
+              onClick={toggleForgotPassword}
+              className="w-full flex items-center justify-center gap-2 text-slate-500 font-bold text-sm hover:text-slate-800 transition-colors"
+            >
+              <ArrowLeft size={16} /> Voltar para o Login
+            </button>
+          )}
         </form>
 
-        <div className="mt-8 flex flex-col gap-3 text-center">
-          <button onClick={toggleAuthMode} className="text-blue-600 font-semibold hover:underline text-sm">
-            {isSignUp ? 'Já tem uma conta? Entre' : 'Não tem uma conta? Cadastre-se'}
-          </button>
-          <button onClick={toggleVisitorMode} className="text-purple-600 font-bold hover:underline text-sm">
-            {isVisitor ? 'Voltar para Login Profissional' : 'Sou Visitante (Acessar com senha)'}
-          </button>
-        </div>
+        {!isForgotPassword && (
+          <div className="mt-8 flex flex-col gap-3 text-center">
+            <button onClick={toggleAuthMode} className="text-blue-600 font-semibold hover:underline text-sm">
+              {isSignUp ? 'Já tem uma conta? Entre' : 'Não tem uma conta? Cadastre-se'}
+            </button>
+            <button onClick={toggleVisitorMode} className="text-purple-600 font-bold hover:underline text-sm">
+              {isVisitor ? 'Voltar para Login Profissional' : 'Sou Visitante (Acessar com senha)'}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

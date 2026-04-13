@@ -192,7 +192,7 @@ const Share = () => {
                     </button>
 
                     <div className="flex items-center gap-3 border-l border-slate-100 pl-4">
-                      <span className={`text-xs font-black uppercase tracking-wider ${visitor.is_active ? 'text-emerald-500' : 'text-slate-400'}`}>
+                      <span className={`text-xs font-black uppercase tracking-wider w-16 text-right ${visitor.is_active ? 'text-emerald-500' : 'text-slate-400'}`}>
                         {visitor.is_active ? 'Ativo' : 'Inativo'}
                       </span>
                       <button 

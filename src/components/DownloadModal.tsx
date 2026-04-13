@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { X, FileText, History, Download, Loader2, CheckCircle2 } from 'lucide-react';
+import { X, FileText, History, Download, Loader2, CheckCircle2, Calendar } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { supabase } from '@/integrations/supabase/client';
@@ -18,6 +18,10 @@ const DownloadModal = ({ isOpen, onClose, evaluationData, patientName }: Downloa
   const [selectedOptions, setSelectedOptions] = useState({
     ficha: true,
     evolucao: false
+  });
+  const [dateRange, setDateRange] = useState({
+    start: '',
+    end: ''
   });
 
   if (!isOpen) return null;
@@ -85,13 +89,28 @@ const DownloadModal = ({ isOpen, onClose, evaluationData, patientName }: Downloa
         doc.setFontSize(16);
         doc.setTextColor(30, 64, 175);
         doc.text('2. Histórico de Evoluções', 20, currentY);
-        currentY += 10;
+        
+        if (dateRange.start || dateRange.end) {
+          doc.setFontSize(10);
+          doc.setTextColor(100);
+          const startStr = dateRange.start ? new Date(dateRange.start + 'T00:00:00').toLocaleDateString('pt-BR') : 'Início';
+          const endStr = dateRange.end ? new Date(dateRange.end + 'T00:00:00').toLocaleDateString('pt-BR') : 'Hoje';
+          doc.text(`Período: ${startStr} até ${endStr}`, 20, currentY + 7);
+          currentY += 15;
+        } else {
+          currentY += 10;
+        }
 
-        const { data: evolutions } = await supabase
+        let query = supabase
           .from('session_evolutions')
           .select('*')
           .eq('evaluation_id', evaluationData.id)
           .order('session_date', { ascending: false });
+
+        if (dateRange.start) query = query.gte('session_date', dateRange.start);
+        if (dateRange.end) query = query.lte('session_date', dateRange.end);
+
+        const { data: evolutions } = await query;
 
         if (evolutions && evolutions.length > 0) {
           const evoRows = evolutions.map(evo => {
@@ -126,11 +145,11 @@ const DownloadModal = ({ isOpen, onClose, evaluationData, patientName }: Downloa
         } else {
           doc.setFontSize(10);
           doc.setTextColor(150);
-          doc.text('Nenhuma evolução registrada.', 20, currentY);
+          doc.text('Nenhuma evolução encontrada para o período selecionado.', 20, currentY);
         }
       }
 
-      doc.save(`Ficha_${patientName.replace(/\s+/g, '_')}.pdf`);
+      doc.save(`Relatorio_${patientName.replace(/\s+/g, '_')}.pdf`);
       onClose();
     } catch (error) {
       console.error('Erro ao gerar PDF:', error);
@@ -159,7 +178,7 @@ const DownloadModal = ({ isOpen, onClose, evaluationData, patientName }: Downloa
             Selecione o que deseja incluir no arquivo PDF para download.
           </p>
           
-          <div className="space-y-3 mb-8">
+          <div className="space-y-3 mb-6">
             <button
               onClick={() => setSelectedOptions(prev => ({ ...prev, ficha: !prev.ficha }))}
               className={`w-full flex items-center justify-between p-5 rounded-2xl border-2 transition-all ${
@@ -196,6 +215,35 @@ const DownloadModal = ({ isOpen, onClose, evaluationData, patientName }: Downloa
               {selectedOptions.evolucao && <CheckCircle2 size={20} className="text-emerald-500" />}
             </button>
           </div>
+
+          {selectedOptions.evolucao && (
+            <div className="mb-8 p-6 bg-slate-50 rounded-3xl border border-slate-100 animate-in slide-in-from-top-2 duration-300">
+              <div className="flex items-center gap-2 mb-4 text-emerald-600">
+                <Calendar size={18} />
+                <span className="text-xs font-bold uppercase tracking-wider">Filtrar Período (Opcional)</span>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 mb-1 block">Data Inicial</label>
+                  <input 
+                    type="date" 
+                    value={dateRange.start}
+                    onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
+                    className="w-full p-3 bg-white border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 mb-1 block">Data Final</label>
+                  <input 
+                    type="date" 
+                    value={dateRange.end}
+                    onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
+                    className="w-full p-3 bg-white border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
           
           <div className="flex flex-col gap-3">
             <button

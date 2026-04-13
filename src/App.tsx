@@ -7,7 +7,6 @@ import Evaluation from './pages/Evaluation';
 import Index from './pages/Index';
 import Patients from './pages/Patients';
 import Share from './pages/Share';
-import Profile from './pages/Profile';
 import { useAuth } from './components/AuthProvider';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -30,8 +29,8 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/login" />;
   }
 
-  // Visitantes gerais não podem acessar a Home, Share ou Perfil
-  if (isGeneralVisitor && (location.pathname === '/' || location.pathname === '/compartilhar' || location.pathname === '/perfil')) {
+  // Visitantes gerais não podem acessar a Home ou Share
+  if (isGeneralVisitor && (location.pathname === '/' || location.pathname === '/compartilhar')) {
     return <Navigate to="/pacientes" />;
   }
   
@@ -48,7 +47,6 @@ function App() {
         <Route path="/avaliacao/:id" element={<ProtectedRoute><Evaluation /></ProtectedRoute>} />
         <Route path="/pacientes" element={<ProtectedRoute><Patients /></ProtectedRoute>} />
         <Route path="/compartilhar" element={<ProtectedRoute><Share /></ProtectedRoute>} />
-        <Route path="/perfil" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </Router>

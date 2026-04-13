@@ -4,9 +4,11 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthProvider';
 import { User, LogOut, ChevronDown, UserCircle } from 'lucide-react';
+import ProfileModal from './ProfileModal';
 
 const UserMenu = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const menuRef = useRef<HTMLDivElement>(null);
@@ -48,7 +50,7 @@ const UserMenu = () => {
         <div className="absolute right-0 mt-3 w-56 bg-white border border-slate-100 rounded-[1.5rem] shadow-2xl shadow-slate-200/50 overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200">
           <div className="p-2">
             <button
-              onClick={() => { navigate('/perfil'); setIsOpen(false); }}
+              onClick={() => { setIsProfileOpen(true); setIsOpen(false); }}
               className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-all"
             >
               <UserCircle size={20} />
@@ -65,6 +67,11 @@ const UserMenu = () => {
           </div>
         </div>
       )}
+
+      <ProfileModal 
+        isOpen={isProfileOpen} 
+        onClose={() => setIsProfileOpen(false)} 
+      />
     </div>
   );
 };

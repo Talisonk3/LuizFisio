@@ -94,11 +94,20 @@ const DownloadModal = ({ isOpen, onClose, evaluationData, patientName }: Downloa
           .order('session_date', { ascending: false });
 
         if (evolutions && evolutions.length > 0) {
-          const evoRows = evolutions.map(evo => [
-            evo.session_date ? new Date(evo.session_date + 'T00:00:00').toLocaleDateString('pt-BR') : '-',
-            `PA: ${evo.blood_pressure || '-'}\nFC: ${evo.heart_rate || '-'}\nFR: ${evo.respiratory_rate || '-'}\nTemp: ${evo.temperature || '-'}°C\nSat: ${evo.saturation || '-'}%\nDor: ${evo.pain_scale || '0'}/10`,
-            evo.evolution_text || '-'
-          ]);
+          const evoRows = evolutions.map(evo => {
+            const pa = evo.blood_pressure || '-';
+            const fc = evo.heart_rate || '-';
+            const fr = evo.respiratory_rate || '-';
+            const temp = evo.temperature ? `${evo.temperature}°C` : '-';
+            const sat = evo.saturation ? `${evo.saturation}%` : '-';
+            const dor = evo.pain_scale !== null && evo.pain_scale !== undefined ? `${evo.pain_scale}/10` : '0/10';
+
+            return [
+              evo.session_date ? new Date(evo.session_date + 'T00:00:00').toLocaleDateString('pt-BR') : '-',
+              `PA: ${pa}\nFC: ${fc}\nFR: ${fr}\nTemp: ${temp}\nSat: ${sat}\nDor: ${dor}`,
+              evo.evolution_text || '-'
+            ];
+          });
 
           autoTable(doc, {
             startY: currentY,

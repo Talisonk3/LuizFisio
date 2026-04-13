@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from 'react';
-import { X, FileText, History, Download, Loader2, CheckCircle2, Calendar } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, FileText, History, Download, Loader2, CheckCircle2, Calendar, AlertCircle } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { supabase } from '@/integrations/supabase/client';
@@ -15,18 +15,98 @@ interface DownloadModalProps {
 
 const DownloadModal = ({ isOpen, onClose, evaluationData, patientName }: DownloadModalProps) => {
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [selectedOptions, setSelectedOptions] = useState({
     ficha: true,
     evolucao: false
   });
   const [dateRange, setDateRange] = useState({
     start: '',
-    end: ''
+    end: new Date().toLocaleDateString('pt-BR')
   });
+
+  const formatDate = (value: string) => {
+    const numbers = value.replace(/\D/g, '');
+    const currentYear = new Date().getFullYear();
+    let day = numbers.slice(0, 2);
+    let month = numbers.slice(2, 4);
+    let year = numbers.slice(4, 8);
+    
+    if (day && parseInt(day) > 31) day = '31';
+    if (day && day !== '0' && day !== '00' && parseInt(day) === 0) day = '01';
+    if (month && parseInt(month) > 12) month = '12';
+    if (month && month !== '0' && month !== '00' && parseInt(month) === 0) month = '01';
+    
+    if (numbers.length <= 2) return day;
+    if (numbers.length <= 4) return `${day}/${month}`;
+    return `${day}/${month}/${year}`;
+  };
+
+  const isFutureDate = (dateStr: string) => {
+    if (dateStr.length !== 10) return false;
+    const [d, m, y] = dateStr.split('/').map(Number);
+    const date = new Date(y, m - 1, d);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return date > today;
+  };
+
+  useEffect(() => {
+    if (isOpen && evaluationData.id) {
+      const fetchFirstDate = async () => {
+        const { data } = await supabase
+          .from('session_evolutions')
+          .select('session_date, created_at')
+          .eq('evaluation_id', evaluationData.id)
+          .order('session_date', { ascending: true })
+          .order('created_at', { ascending: true })
+          .limit(1)
+          .maybeSingle();
+        
+        if (data) {
+          const dateToUse = data.session_date || data.created_at.split('T')[0];
+          const [y, m, d] = dateToUse.split('-');
+          setDateRange({
+            start: `${d}/${m}/${y}`,
+            end: new Date().toLocaleDateString('pt-BR')
+          });
+        } else {
+          setDateRange({
+            start: '',
+            end: new Date().toLocaleDateString('pt-BR')
+          });
+        }
+      };
+      fetchFirstDate();
+    }
+  }, [isOpen, evaluationData.id]);
 
   if (!isOpen) return null;
 
+  const handleDateChange = (field: 'start' | 'end', value: string) => {
+    const formatted = formatDate(value);
+    setDateRange(prev => ({ ...prev, [field]: formatted }));
+    setError(null);
+  };
+
   const generatePDF = async () => {
+    setError(null);
+
+    if (selectedOptions.evolucao) {
+      if (dateRange.start.length > 0 && dateRange.start.length < 10) {
+        setError('Data inicial incompleta.');
+        return;
+      }
+      if (dateRange.end.length > 0 && dateRange.end.length < 10) {
+        setError('Data final incompleta.');
+        return;
+      }
+      if (isFutureDate(dateRange.start) || isFutureDate(dateRange.end)) {
+        setError('Não é permitido selecionar datas futuras.');
+        return;
+      }
+    }
+
     setLoading(true);
     try {
       const doc = new jsPDF();
@@ -35,7 +115,7 @@ const DownloadModal = ({ isOpen, onClose, evaluationData, patientName }: Downloa
 
       // Cabeçalho
       doc.setFontSize(22);
-      doc.setTextColor(30, 64, 175); // Blue-800
+      doc.setTextColor(30, 64, 175);
       doc.text('FisioSystem - Relatório Clínico', pageWidth / 2, currentY, { align: 'center' });
       
       currentY += 15;
@@ -93,9 +173,7 @@ const DownloadModal = ({ isOpen, onClose, evaluationData, patientName }: Downloa
         if (dateRange.start || dateRange.end) {
           doc.setFontSize(10);
           doc.setTextColor(100);
-          const startStr = dateRange.start ? new Date(dateRange.start + 'T00:00:00').toLocaleDateString('pt-BR') : 'Início';
-          const endStr = dateRange.end ? new Date(dateRange.end + 'T00:00:00').toLocaleDateString('pt-BR') : 'Hoje';
-          doc.text(`Período: ${startStr} até ${endStr}`, 20, currentY + 7);
+          doc.text(`Período: ${dateRange.start || 'Início'} até ${dateRange.end || 'Hoje'}`, 20, currentY + 7);
           currentY += 15;
         } else {
           currentY += 10;
@@ -107,8 +185,14 @@ const DownloadModal = ({ isOpen, onClose, evaluationData, patientName }: Downloa
           .eq('evaluation_id', evaluationData.id)
           .order('session_date', { ascending: false });
 
-        if (dateRange.start) query = query.gte('session_date', dateRange.start);
-        if (dateRange.end) query = query.lte('session_date', dateRange.end);
+        if (dateRange.start.length === 10) {
+          const [d, m, y] = dateRange.start.split('/');
+          query = query.gte('session_date', `${y}-${m}-${d}`);
+        }
+        if (dateRange.end.length === 10) {
+          const [d, m, y] = dateRange.end.split('/');
+          query = query.lte('session_date', `${y}-${m}-${d}`);
+        }
 
         const { data: evolutions } = await query;
 
@@ -133,7 +217,7 @@ const DownloadModal = ({ isOpen, onClose, evaluationData, patientName }: Downloa
             head: [['Data', 'Sinais Vitais e Dor', 'Evolução']],
             body: evoRows,
             theme: 'grid',
-            headStyles: { fillColor: [16, 185, 129] }, // Emerald-500
+            headStyles: { fillColor: [16, 185, 129] },
             columnStyles: {
               0: { cellWidth: 25 },
               1: { cellWidth: 45 },
@@ -226,22 +310,36 @@ const DownloadModal = ({ isOpen, onClose, evaluationData, patientName }: Downloa
                 <div>
                   <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 mb-1 block">Data Inicial</label>
                   <input 
-                    type="date" 
+                    type="text" 
                     value={dateRange.start}
-                    onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
-                    className="w-full p-3 bg-white border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                    onChange={(e) => handleDateChange('start', e.target.value)}
+                    placeholder="DD/MM/AAAA"
+                    maxLength={10}
+                    className={`w-full p-3 bg-white border rounded-xl text-sm outline-none transition-all ${
+                      isFutureDate(dateRange.start) ? 'border-red-500 text-red-600' : 'border-slate-200 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500'
+                    }`}
                   />
                 </div>
                 <div>
                   <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 mb-1 block">Data Final</label>
                   <input 
-                    type="date" 
+                    type="text" 
                     value={dateRange.end}
-                    onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
-                    className="w-full p-3 bg-white border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                    onChange={(e) => handleDateChange('end', e.target.value)}
+                    placeholder="DD/MM/AAAA"
+                    maxLength={10}
+                    className={`w-full p-3 bg-white border rounded-xl text-sm outline-none transition-all ${
+                      isFutureDate(dateRange.end) ? 'border-red-500 text-red-600' : 'border-slate-200 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500'
+                    }`}
                   />
                 </div>
               </div>
+              {error && (
+                <div className="mt-4 flex items-center gap-2 text-red-500 text-[10px] font-bold uppercase tracking-wider">
+                  <AlertCircle size={14} />
+                  {error}
+                </div>
+              )}
             </div>
           )}
           

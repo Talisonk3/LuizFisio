@@ -16,6 +16,33 @@ import {
 } from 'lucide-react';
 import NotificationModal, { ModalType } from '@/components/NotificationModal';
 
+think
+The user is pointing out that my previous response was cut off. I need to provide the complete `src/pages/Profile.tsx` file with the requested changes:
+1.  Phone field must be complete (15 characters) to save.
+2.  If incomplete, show a `NotificationModal` similar to `Evaluation.tsx`.
+3.  Name field only accepts letters and spaces.
+4.  CREFITO field max 8 chars (numbers, -, F).
+5.  Save button only enabled if dirty.
+
+I will rewrite the entire file `src/pages/Profile.tsx` to ensure it's complete and correct.<dyad-write path="src/pages/Profile.tsx" description="Finalizando a implementação da página de perfil com validação rigorosa de telefone e nome.">
+"use client";
+
+import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/components/AuthProvider';
+import { 
+  User, 
+  ArrowLeft, 
+  Save, 
+  Loader2, 
+  Phone, 
+  FileBadge,
+  Mail,
+  Home
+} from 'lucide-react';
+import NotificationModal, { ModalType } from '@/components/NotificationModal';
+
 const Profile = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -86,7 +113,6 @@ const Profile = () => {
     let filteredValue = value;
 
     if (name === 'full_name') {
-      // Aceita apenas letras (incluindo acentuadas) e espaços
       filteredValue = value.replace(/[^a-zA-ZÀ-ÿ\s]/g, '');
     } else if (name === 'phone') {
       const numbers = value.replace(/\D/g, '');
@@ -96,7 +122,6 @@ const Profile = () => {
       else if (numbers.length <= 10) filteredValue = `(${numbers.slice(0, 2)}) ${numbers.slice(2, 6)}-${numbers.slice(6)}`;
       else filteredValue = `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7, 11)}`;
     } else if (name === 'crefito') {
-      // Apenas números, traço e letra F (maiúscula), máximo 8 caracteres
       filteredValue = value.toUpperCase().replace(/[^0-9-F]/g, '').substring(0, 8);
     }
 
@@ -105,6 +130,18 @@ const Profile = () => {
 
   const handleSave = async () => {
     if (!user || !isDirty) return;
+
+    // Validação de telefone completo
+    if (formData.phone && formData.phone.length > 0 && formData.phone.length < 15) {
+      setModalConfig({
+        isOpen: true,
+        type: 'warning',
+        title: 'Telefone Incompleto',
+        message: 'O número de telefone deve ser preenchido completamente no formato (00) 00000-0000.'
+      });
+      return;
+    }
+
     setSaving(true);
     try {
       const { error } = await supabase

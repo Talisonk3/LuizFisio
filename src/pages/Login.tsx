@@ -14,6 +14,7 @@ const Login = () => {
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [checkingEmail, setCheckingEmail] = useState(false);
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [showPassword, setShowPassword]= useState(false);
@@ -54,6 +55,7 @@ const Login = () => {
     const validateEmail = async () => {
       if (!isForgotPassword || !formData.email || !formData.email.includes('@')) {
         setEmailError(null);
+        setIsEmailVerified(false);
         return;
       }
 
@@ -69,11 +71,14 @@ const Login = () => {
         
         if (!data) {
           setEmailError('E-mail incorreto ou não cadastrado.');
+          setIsEmailVerified(false);
         } else {
           setEmailError(null);
+          setIsEmailVerified(true);
         }
       } catch (err) {
         console.error('Erro ao validar e-mail:', err);
+        setIsEmailVerified(false);
       } finally {
         setCheckingEmail(false);
       }
@@ -210,6 +215,7 @@ const Login = () => {
     setIsVisitor(false);
     setError(null);
     setEmailError(null);
+    setIsEmailVerified(false);
     setResetSent(false);
     setFormData({ username: '', email: '', password: '', fullName: '' });
   };
@@ -328,7 +334,7 @@ const Login = () => {
 
           <button 
             type="submit" 
-            disabled={loading || (isForgotPassword && (!!emailError || !formData.email || checkingEmail))} 
+            disabled={loading || (isForgotPassword && (!isEmailVerified || checkingEmail))} 
             className={`w-full text-white py-4 rounded-xl font-bold shadow-lg transition-all disabled:opacity-50 ${isVisitor ? 'bg-purple-600 hover:bg-purple-700' : 'bg-blue-600 hover:bg-blue-700'}`}
           >
             {loading ? <Loader2 className="animate-spin mx-auto" size={20} /> : (isForgotPassword ? 'Enviar Link de Recuperação' : (isVisitor ? 'Entrar como Visitante' : 'Entrar no Sistema'))}

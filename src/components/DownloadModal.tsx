@@ -96,21 +96,22 @@ const DownloadModal = ({ isOpen, onClose, evaluationData, patientName }: Downloa
         if (evolutions && evolutions.length > 0) {
           const evoRows = evolutions.map(evo => [
             evo.session_date ? new Date(evo.session_date + 'T00:00:00').toLocaleDateString('pt-BR') : '-',
-            `PA: ${evo.blood_pressure || '-'}\nFC: ${evo.heart_rate || '-'}\nSat: ${evo.saturation || '-'}%`,
+            `PA: ${evo.blood_pressure || '-'}\nFC: ${evo.heart_rate || '-'}\nFR: ${evo.respiratory_rate || '-'}\nTemp: ${evo.temperature || '-'}°C\nSat: ${evo.saturation || '-'}%\nDor: ${evo.pain_scale || '0'}/10`,
             evo.evolution_text || '-'
           ]);
 
           autoTable(doc, {
             startY: currentY,
-            head: [['Data', 'Sinais Vitais', 'Evolução']],
+            head: [['Data', 'Sinais Vitais e Dor', 'Evolução']],
             body: evoRows,
             theme: 'grid',
             headStyles: { fillColor: [16, 185, 129] }, // Emerald-500
             columnStyles: {
-              0: { cellWidth: 30 },
-              1: { cellWidth: 40 },
+              0: { cellWidth: 25 },
+              1: { cellWidth: 45 },
               2: { cellWidth: 'auto' }
             },
+            styles: { fontSize: 9 },
             margin: { left: 20, right: 20 },
           });
         } else {

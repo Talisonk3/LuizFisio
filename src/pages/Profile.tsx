@@ -6,34 +6,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/AuthProvider';
 import { 
   User, 
-  ArrowLeft, 
-  Save, 
-  Loader2, 
-  Phone, 
-  FileBadge,
-  Mail,
-  Home
-} from 'lucide-react';
-import NotificationModal, { ModalType } from '@/components/NotificationModal';
-
-think
-The user is pointing out that my previous response was cut off. I need to provide the complete `src/pages/Profile.tsx` file with the requested changes:
-1.  Phone field must be complete (15 characters) to save.
-2.  If incomplete, show a `NotificationModal` similar to `Evaluation.tsx`.
-3.  Name field only accepts letters and spaces.
-4.  CREFITO field max 8 chars (numbers, -, F).
-5.  Save button only enabled if dirty.
-
-I will rewrite the entire file `src/pages/Profile.tsx` to ensure it's complete and correct.<dyad-write path="src/pages/Profile.tsx" description="Finalizando a implementação da página de perfil com validação rigorosa de telefone e nome.">
-"use client";
-
-import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/components/AuthProvider';
-import { 
-  User, 
-  ArrowLeft, 
   Save, 
   Loader2, 
   Phone, 
@@ -131,7 +103,6 @@ const Profile = () => {
   const handleSave = async () => {
     if (!user || !isDirty) return;
 
-    // Validação de telefone completo
     if (formData.phone && formData.phone.length > 0 && formData.phone.length < 15) {
       setModalConfig({
         isOpen: true,

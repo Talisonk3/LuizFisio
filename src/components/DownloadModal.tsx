@@ -5,6 +5,7 @@ import { X, FileText, History, Download, Loader2, CheckCircle2, Calendar, AlertC
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/components/AuthProvider';
 
 interface DownloadModalProps {
   isOpen: boolean;
@@ -14,8 +15,10 @@ interface DownloadModalProps {
 }
 
 const DownloadModal = ({ isOpen, onClose, evaluationData, patientName }: DownloadModalProps) => {
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [professionalInfo, setProfessionalInfo] = useState<any>(null);
   const [selectedOptions, setSelectedOptions] = useState({
     ficha: false,
     evolucao: false
@@ -27,7 +30,6 @@ const DownloadModal = ({ isOpen, onClose, evaluationData, patientName }: Downloa
 
   const formatDate = (value: string) => {
     const numbers = value.replace(/\D/g, '');
-    const currentYear = new Date().getFullYear();
     let day = numbers.slice(0, 2);
     let month = numbers.slice(2, 4);
     let year = numbers.slice(4, 8);
@@ -53,9 +55,19 @@ const DownloadModal = ({ isOpen, onClose, evaluationData, patientName }: Downloa
 
   useEffect(() => {
     if (isOpen) {
-      // Resetar opções sempre que abrir
       setSelectedOptions({ ficha: false, evolucao: false });
       setError(null);
+
+      // Buscar dados do profissional
+      const fetchProfessional = async () => {
+        if (!user) return;
+        const { data } = await supabase
+          .from('profiles')
+          .select('full_name, crefito, phone')
+          .eq('id', user.id)
+          .single();
+        if (data) setProfessionalInfo(data);
+      };
 
       if (evaluationData.id) {
         const fetchFirstDate = async () => {
@@ -84,8 +96,9 @@ const DownloadModal = ({ isOpen, onClose, evaluationData, patientName }: Downloa
         };
         fetchFirstDate();
       }
+      fetchProfessional();
     }
-  }, [isOpen, evaluationData.id]);
+  }, [isOpen, evaluationData.id, user]);
 
   if (!isOpen) return null;
 
@@ -119,18 +132,37 @@ const DownloadModal = ({ isOpen, onClose, evaluationData, patientName }: Downloa
       const pageWidth = doc.internal.pageSize.getWidth();
       let currentY = 20;
 
-      // Cabeçalho
+      // Cabeçalho do Sistema
       doc.setFontSize(22);
       doc.setTextColor(30, 64, 175);
       doc.text('FisioSystem - Relatório Clínico', pageWidth / 2, currentY, { align: 'center' });
       
       currentY += 15;
-      doc.setFontSize(12);
-      doc.setTextColor(100);
-      doc.text(`Paciente: ${patientName}`, 20, currentY);
-      doc.text(`Data de Emissão: ${new Date().toLocaleDateString('pt-BR')}`,pageWidth - 20, currentY, { align: 'right' });
+
+      // Informações do Profissional
+      doc.setFontSize(10);
+      doc.setTextColor(80, 80, 80);
+      doc.setFont('helvetica', 'bold');
+      doc.text('DADOS DO PROFISSIONAL', 20, currentY);
+      doc.setFont('helvetica', 'normal');
+      currentY += 6;
+      doc.text(`Nome: ${professionalInfo?.full_name || 'Não informado'}`, 20, currentY);
+      currentY += 5;
+      doc.text(`CREFITO: ${professionalInfo?.crefito || 'Não informado'}`, 20, currentY);
+      currentY += 5;
+      doc.text(`Telefone: ${professionalInfo?.phone || 'Não informado'}`, 20, currentY);
       
       currentY += 10;
+      
+      // Informações do Paciente
+      doc.setFont('helvetica', 'bold');
+      doc.text('DADOS DO PACIENTE', 20, currentY);
+      doc.setFont('helvetica', 'normal');
+      currentY += 6;
+      doc.text(`Paciente: ${patientName}`, 20, currentY);
+      doc.text(`Data de Emissão: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth - 20, currentY, { align: 'right' });
+      
+      currentY += 8;
       doc.setDrawColor(226, 232, 240);
       doc.line(20, currentY, pageWidth - 20, currentY);
       currentY += 15;

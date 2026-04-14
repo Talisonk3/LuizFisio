@@ -21,27 +21,24 @@ const Index = () => {
       title: 'Meus Pacientes',
       description: 'Gerencie sua lista de pacientes e histórico clínico.',
       icon: Users,
-      color: 'bg-blue-500',
-      lightColor: 'bg-blue-100/50',
-      textColor: 'text-blue-600',
+      gradient: 'from-blue-700 to-blue-500',
+      shadow: 'shadow-blue-200/50',
       path: '/pacientes'
     },
     {
       title: 'Criar Nova Ficha',
       description: 'Inicie uma nova avaliação fisioterapêutica completa.',
       icon: FilePlus,
-      color: 'bg-emerald-500',
-      lightColor: 'bg-emerald-100/50',
-      textColor: 'text-emerald-600',
+      gradient: 'from-emerald-600 to-emerald-400',
+      shadow: 'shadow-emerald-200/50',
       path: '/avaliacao'
     },
     {
       title: 'Compartilhar Fichas',
       description: 'Crie acessos para visitantes ou compartilhe com outros profissionais.',
       icon: Share2,
-      color: 'bg-purple-500',
-      lightColor: 'bg-purple-100/50',
-      textColor: 'text-purple-600',
+      gradient: 'from-purple-600 to-purple-400',
+      shadow: 'shadow-purple-200/50',
       path: '/compartilhar'
     }
   ];
@@ -85,19 +82,19 @@ const Index = () => {
             <button
               key={index}
               onClick={() => navigate(item.path)}
-              className="group relative bg-gradient-to-br from-white to-blue-50/50 p-8 rounded-[2.5rem] shadow-xl shadow-slate-200/40 border border-white hover:border-blue-100 text-left transition-all hover:scale-[1.03] hover:shadow-2xl hover:shadow-blue-200/30 flex flex-col h-full overflow-hidden"
+              className={`group relative bg-gradient-to-br ${item.gradient} p-8 rounded-[2.5rem] shadow-2xl ${item.shadow} border-t border-white/20 text-left transition-all hover:scale-[1.03] hover:-translate-y-1 flex flex-col h-full overflow-hidden`}
             >
               {/* Efeito de brilho sutil no hover */}
-              <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-blue-400/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               
-              <div className={`${item.lightColor} ${item.textColor} p-4 rounded-2xl w-fit mb-6 group-hover:scale-110 transition-transform duration-300 relative z-10`}>
+              <div className="bg-white/20 text-white p-4 rounded-2xl w-fit mb-6 group-hover:scale-110 group-hover:bg-white/30 transition-all duration-300 relative z-10">
                 <item.icon size={32} strokeWidth={2.5} />
               </div>
               
-              <h3 className="text-2xl font-bold text-slate-800 mb-3 relative z-10">{item.title}</h3>
-              <p className="text-slate-500 leading-relaxed mb-8 flex-1 relative z-10">{item.description}</p>
+              <h3 className="text-2xl font-bold text-white mb-3 relative z-10">{item.title}</h3>
+              <p className="text-white/80 leading-relaxed mb-8 flex-1 relative z-10 font-medium">{item.description}</p>
               
-              <div className="flex items-center gap-2 font-bold text-sm uppercase tracking-wider text-blue-600 group-hover:gap-4 transition-all relative z-10">
+              <div className="flex items-center gap-2 font-bold text-sm uppercase tracking-wider text-white group-hover:gap-4 transition-all relative z-10">
                 Acessar agora <ChevronRight size={18} />
               </div>
             </button>

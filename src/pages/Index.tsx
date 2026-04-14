@@ -22,7 +22,7 @@ const Index = () => {
       description: 'Gerencie sua lista de pacientes e histórico clínico.',
       icon: Users,
       color: 'bg-blue-500',
-      lightColor: 'bg-blue-50',
+      lightColor: 'bg-blue-100/50',
       textColor: 'text-blue-600',
       path: '/pacientes'
     },
@@ -31,7 +31,7 @@ const Index = () => {
       description: 'Inicie uma nova avaliação fisioterapêutica completa.',
       icon: FilePlus,
       color: 'bg-emerald-500',
-      lightColor: 'bg-emerald-50',
+      lightColor: 'bg-emerald-100/50',
       textColor: 'text-emerald-600',
       path: '/avaliacao'
     },
@@ -40,7 +40,7 @@ const Index = () => {
       description: 'Crie acessos para visitantes ou compartilhe com outros profissionais.',
       icon: Share2,
       color: 'bg-purple-500',
-      lightColor: 'bg-purple-50',
+      lightColor: 'bg-purple-100/50',
       textColor: 'text-purple-600',
       path: '/compartilhar'
     }
@@ -85,14 +85,19 @@ const Index = () => {
             <button
               key={index}
               onClick={() => navigate(item.path)}
-              className="group bg-white p-8 rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-slate-100 text-left transition-all hover:scale-[1.03] hover:shadow-2xl hover:shadow-slate-300/50 flex flex-col h-full"
+              className="group relative bg-gradient-to-br from-white to-blue-50/50 p-8 rounded-[2.5rem] shadow-xl shadow-slate-200/40 border border-white hover:border-blue-100 text-left transition-all hover:scale-[1.03] hover:shadow-2xl hover:shadow-blue-200/30 flex flex-col h-full overflow-hidden"
             >
-              <div className={`${item.lightColor} ${item.textColor} p-4 rounded-2xl w-fit mb-6 group-hover:scale-110 transition-transform duration-300`}>
+              {/* Efeito de brilho sutil no hover */}
+              <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-blue-400/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              
+              <div className={`${item.lightColor} ${item.textColor} p-4 rounded-2xl w-fit mb-6 group-hover:scale-110 transition-transform duration-300 relative z-10`}>
                 <item.icon size={32} strokeWidth={2.5} />
               </div>
-              <h3 className="text-2xl font-bold text-slate-800 mb-3">{item.title}</h3>
-              <p className="text-slate-500 leading-relaxed mb-8 flex-1">{item.description}</p>
-              <div className="flex items-center gap-2 font-bold text-sm uppercase tracking-wider text-blue-600 group-hover:gap-4 transition-all">
+              
+              <h3 className="text-2xl font-bold text-slate-800 mb-3 relative z-10">{item.title}</h3>
+              <p className="text-slate-500 leading-relaxed mb-8 flex-1 relative z-10">{item.description}</p>
+              
+              <div className="flex items-center gap-2 font-bold text-sm uppercase tracking-wider text-blue-600 group-hover:gap-4 transition-all relative z-10">
                 Acessar agora <ChevronRight size={18} />
               </div>
             </button>

@@ -1,6 +1,12 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+importVou reescrever o arquivo de login completo para corrigir a corrupção no código e garantir que todas as funcionalidades (Login, Cadastro, Visitante e Recuperação de Senha) estejam operacionais.
+
+<dyad-write path="src/pages/Login.tsx" description="Reconstruindo o arquivo de Login completo para corrigir erros de sintaxe e truncamento.">
+"use client";
+
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/AuthProvider';
@@ -19,7 +25,7 @@ const Login = () => {
   const [isEmailVerified, setIsEmailVerified] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
-  const [showPassword, setShowPassword]= useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [resetSent, setResetSent] = useState(false);
 
@@ -31,7 +37,6 @@ const Login = () => {
   });
 
   useEffect(() => {
-    // Detectar se o usuário veio de um link de recuperação de senha
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'PASSWORD_RECOVERY') {
         setIsResetModalOpen(true);
@@ -60,7 +65,6 @@ const Login = () => {
     return () => subscription.unsubscribe();
   }, [session, navigate, isSignUp, isVisitor, isForgotPassword, isResetModalOpen]);
 
-  // Validação de e-mail para recuperação de senha
   useEffect(() => {
     const validateEmail = async () => {
       if (!isForgotPassword || !formData.email || !formData.email.includes('@')) {
@@ -257,71 +261,197 @@ const Login = () => {
       <div className="max-w-md w-full bg-white rounded-3xl shadow-2xl p-10 border border-slate-100">
         <div className="flex flex-col items-center mb-8">
           <div className={`${isVisitor ? 'bg-purple-600 shadow-purple-200' : 'bg-blue-600 shadow-blue-200'} p-4 rounded-2xl shadow-lg mb-4 transition-colors duration-500`}>
-            {isVisitor ? <UserCircle className="text-white w-10 hthink
-The previous response was cut off in the middle of a `<dyad-write>` block for `src/pages/Login.tsx`.
-I need to complete the file content and close the tag.
+            {isVisitor ? <UserCircle className="text-white w-10 h-10" /> : <Stethoscope className="text-white w-10 h-10" />}
+          </div>
+          <h1 className="text-3xl font-black text-slate-800 tracking-tight">FisioSystem</h1>
+          <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px] mt-1">
+            {isVisitor ? 'Acesso de Visitante' : 'Gestão Fisioterapêutica'}
+          </p>
+        </div>
 
-The last part was:
-```tsx
-          <div className={`${isVisitor ? 'bg-purple-600 shadow-purple-200' : 'bg-blue-600 shadow-blue-200'} p-4 rounded-2xl shadow-lg mb-4 transition-colors duration-500`}>
-            {isVisitor ? <UserCircle className="text-white w-10 h
-```
+        <form onSubmit={handleAuth} className="space-y-5">
+          {isSignUp && (
+            <div>
+              <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-1 block">Nome Completo</label>
+              <div className="relative">
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                <input
+                  name="fullName"
+                  type="text"
+                  required
+                  value={formData.fullName}
+                  onChange={handleInputChange}
+                  className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all"
+                  placeholder="Seu nome completo"
+                />
+              </div>
+            </div>
+          )}
 
-I will continue from `h` to complete `h-10" />`.
+          {isForgotPassword ? (
+            <div>
+              <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-1 block">E-mail da Conta</label>
+              <div className="relative">
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                <input
+                  name="email"
+                  type="email"
+                  required
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  className={`w-full pl-12 pr-4 py-4 bg-slate-50 border rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all ${emailError ? 'border-red-500' : 'border-slate-200'}`}
+                  placeholder="seu@email.com"
+                />
+              </div>
+              {checkingEmail && <p className="text-[10px] text-blue-500 font-bold mt-2 ml-1 uppercase">Verificando e-mail...</p>}
+              {emailError && <p className="text-[10px] text-red-500 font-bold mt-2 ml-1 uppercase">{emailError}</p>}
+            </div>
+          ) : (
+            <>
+              <div>
+                <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-1 block">
+                  {isVisitor ? 'Nome de Usuário' : 'Usuário ou E-mail'}
+                </label>
+                <div className="relative">
+                  <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                  <input
+                    name="username"
+                    type="text"
+                    required
+                    value={formData.username}
+                    onChange={handleInputChange}
+                    className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all"
+                    placeholder={isVisitor ? "Ex: assistente_clinica" : "Seu usuário"}
+                  />
+                </div>
+              </div>
 
-Wait, I should probably provide the whole file or at least the rest of it. The instructions say "Continue exactly where you left off without any preamble".
+              {isSignUp && (
+                <div>
+                  <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-1 block">E-mail</label>
+                  <div className="relative">
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                    <input
+                      name="email"
+                      type="email"
+                      required
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all"
+                      placeholder="seu@email.com"
+                    />
+                  </div>
+                </div>
+              )}
 
-However, usually, it's better to provide the full `<dyad-write>` block if it was interrupted to ensure the file is valid. But the prompt says "Continue exactly where you left off".
+              <div>
+                <div className="flex justify-between items-center mb-1">
+                  <label className="text-xs font-bold text-slate-500 uppercase ml-1 block">Senha</label>
+                  {!isSignUp && !isVisitor && (
+                    <button 
+                      type="button" 
+                      onClick={toggleForgotPassword}
+                      className="text-[10px] font-black text-blue-600 uppercase hover:underline"
+                    >
+                      Esqueceu a senha?
+                    </button>
+                  )}
+                </div>
+                <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                  <input
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    required
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    className="w-full pl-12 pr-12 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all"
+                    placeholder="••••••••"
+                  />
+                  <button 
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-600 transition-colors"
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
 
-Actually, if I just output the rest of the code, it might not be valid XML if I don't wrap it.
-But the user said "Continue exactly where you left off".
+          {!isSignUp && !isVisitor && !isForgotPassword && (
+            <button 
+              type="button"
+              onClick={() => setRememberMe(!rememberMe)}
+              className="flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-blue-600 transition-colors group"
+            >
+              {rememberMe ? <CheckSquare size={18} className="text-blue-600" /> : <Square size={18} className="group-hover:border-blue-400" />}
+              Lembrar meus dados
+            </button>
+          )}
 
-Let's look at the previous content of `src/pages/Login.tsx` to see what's missing.
+          {error && (
+            <div className="p-4 bg-red-50 border border-red-100 rounded-2xl text-red-600 text-xs font-bold animate-in fade-in slide-in-from-top-2">
+              {error}
+            </div>
+          )}
 
-Previous content of `src/pages/Login.tsx` (from the context):
-```tsx
-"use client";
+          <button
+            type="submit"
+            disabled={loading || (isForgotPassword && !isEmailVerified && !checkingEmail)}
+            className={`w-full py-4 rounded-2xl font-bold text-white shadow-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50 ${
+              isVisitor ? 'bg-purple-600 hover:bg-purple-700 shadow-purple-100' : 'bg-blue-600 hover:bg-blue-700 shadow-blue-100'
+            }`}
+          >
+            {loading ? <Loader2 className="animate-spin" size={20} /> : (isForgotPassword ? 'Enviar Link de Recuperação' : (isSignUp ? 'Criar Minha Conta' : 'Entrar no Sistema'))}
+          </button>
+        </form>
 
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/components/AuthProvider';
-import { Stethoscope, User, Lock, Mail, Loader2, Eye, EyeOff, UserCircle, CheckSquare, Square, ArrowLeft } from 'lucide-react';
-import ResetPasswordModal from '@/components/ResetPasswordModal';
+        <div className="mt-8 space-y-4">
+          {isForgotPassword ? (
+            <button 
+              onClick={toggleForgotPassword}
+              className="w-full flex items-center justify-center gap-2 text-sm font-bold text-slate-500 hover:text-blue-600 transition-all"
+            >
+              <ArrowLeft size={18} /> Voltar para o Login
+            </button>
+          ) : (
+            <>
+              <button
+                onClick={toggleAuthMode}
+                className="w-full text-sm font-bold text-slate-500 hover:text-blue-600 transition-all"
+              >
+                {isSignUp ? 'Já tem uma conta? Faça login' : 'Não tem conta? Cadastre-se grátis'}
+              </button>
 
-const Login = () => {
-  // ... (rest of the component)
-```
+              <div className="relative flex items-center py-2">
+                <div className="flex-grow border-t border-slate-100"></div>
+                <span className="flex-shrink mx-4 text-[10px] font-black text-slate-300 uppercase tracking-widest">Ou</span>
+                <div className="flex-grow border-t border-slate-100"></div>
+              </div>
 
-The interrupted part was:
-```tsx
-          <div className={`${isVisitor ? 'bg-purple-600 shadow-purple-200' : 'bg-blue-600 shadow-blue-200'} p-4 rounded-2xl shadow-lg mb-4 transition-colors duration-500`}>
-            {isVisitor ? <UserCircle className="text-white w-10 h
-```
+              <button
+                onClick={toggleVisitorMode}
+                className={`w-full py-4 rounded-2xl font-bold border-2 transition-all ${
+                  isVisitor 
+                  ? 'bg-blue-50 border-blue-200 text-blue-600' 
+                  : 'bg-purple-50 border-purple-200 text-purple-600 hover:bg-purple-100'
+                }`}
+              >
+                {isVisitor ? 'Voltar para Login Profissional' : 'Entrar como Visitante'}
+              </button>
+            </>
+          )}
+        </div>
+      </div>
 
-So I need to finish the `h-10" />` and the rest of the file.
+      <ResetPasswordModal 
+        isOpen={isResetModalOpen} 
+        onClose={() => setIsResetModalOpen(false)} 
+      />
+    </div>
+  );
+};
 
-Wait, if I just output text, it won't be a `<dyad-write>` block.
-The system instructions say: "ONLY use <dyad-write> tags for ALL code output."
-
-So I should probably restart the `<dyad-write>` block for that file.
-
-But the user said "Continue exactly where you left off without any preamble".
-
-If I start a new `<dyad-write>` block, it's not "exactly where I left off" in terms of text stream, but it's the correct way to provide code.
-
-Actually, the previous response ended with:
-`<dyad-write path="src/pages/Login.tsx" description="Alterando o fundo da tela de login para azul claro.">`
-... code ...
-`{isVisitor ? <UserCircle className="text-white w-10 h`
-
-So the tag is still open. I should just continue the text.
-
-However, the AI model usually generates a full response.
-
-Let's try to provide the rest of the code and close the tag.
-
-Wait, if I just output:
-`-10" /> : <Stethoscope className="text-white w-10 h-10" />}`
-...
-`
+export default Login;

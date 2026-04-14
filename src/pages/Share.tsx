@@ -115,7 +115,7 @@ const Share = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6 md:p-12">
+    <div className="min-h-screen bg-blue-50 p-6 md:p-12">
       <div className="max-w-4xl mx-auto">
         <header className="mb-12 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div className="flex items-center gap-4">

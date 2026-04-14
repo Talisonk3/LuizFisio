@@ -801,7 +801,7 @@ const Evaluation = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-blue-50 flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="animate-spin text-blue-600" size={48} />
           <p className="text-slate-500 font-medium">Carregando ficha do paciente...</p>
@@ -811,7 +811,7 @@ const Evaluation = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex">
+    <div className="min-h-screen bg-blue-50 flex">
       <aside className="w-72 bg-white border-r border-slate-200 hidden lg:flex flex-col shadow-sm">
         <div className="p-8 border-b border-slate-100 flex justify-center">
           <button 

@@ -55,7 +55,7 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
+    <div className="min-h-screen bg-blue-50 flex flex-col">
       {/* Header */}
       <header className="bg-white border-b border-slate-200 px-6 py-4 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto flex justify-between items-center">

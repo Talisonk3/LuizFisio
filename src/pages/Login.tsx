@@ -1,12 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-importVou reescrever o arquivo de login completo para corrigir a corrupção no código e garantir que todas as funcionalidades (Login, Cadastro, Visitante e Recuperação de Senha) estejam operacionais.
-
-<dyad-write path="src/pages/Login.tsx" description="Reconstruindo o arquivo de Login completo para corrigir erros de sintaxe e truncamento.">
-"use client";
-
-import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/AuthProvider';

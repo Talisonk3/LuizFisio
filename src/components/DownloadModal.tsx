@@ -28,6 +28,18 @@ const DownloadModal = ({ isOpen, onClose, evaluationData, patientName }: Downloa
     end: new Date().toLocaleDateString('pt-BR')
   });
 
+  const formatName = (name: string) => {
+    if (!name) return '';
+    return name
+      .toLowerCase()
+      .split(' ')
+      .map(word => {
+        if (['da', 'de', 'do', 'das', 'dos', 'e'].includes(word)) return word;
+        return word.charAt(0).toUpperCase() + word.slice(1);
+      })
+      .join(' ');
+  };
+
   const formatDate = (value: string) => {
     const numbers = value.replace(/\D/g, '');
     let day = numbers.slice(0, 2);
@@ -58,7 +70,6 @@ const DownloadModal = ({ isOpen, onClose, evaluationData, patientName }: Downloa
       setSelectedOptions({ ficha: false, evolucao: false });
       setError(null);
 
-      // Buscar dados do profissional
       const fetchProfessional = async () => {
         if (!user) return;
         const { data } = await supabase
@@ -132,21 +143,19 @@ const DownloadModal = ({ isOpen, onClose, evaluationData, patientName }: Downloa
       const pageWidth = doc.internal.pageSize.getWidth();
       let currentY = 20;
 
-      // Cabeçalho do Sistema
       doc.setFontSize(22);
       doc.setTextColor(30, 64, 175);
       doc.text('FisioSystem - Relatório Clínico', pageWidth / 2, currentY, { align: 'center' });
       
       currentY += 15;
 
-      // Informações do Profissional
       doc.setFontSize(10);
       doc.setTextColor(80, 80, 80);
       doc.setFont('helvetica', 'bold');
       doc.text('DADOS DO PROFISSIONAL', 20, currentY);
       doc.setFont('helvetica', 'normal');
       currentY += 6;
-      doc.text(`Nome: ${professionalInfo?.full_name || 'Não informado'}`, 20, currentY);
+      doc.text(`Nome: ${formatName(professionalInfo?.full_name || 'Não informado')}`, 20, currentY);
       currentY += 5;
       doc.text(`CREFITO: ${professionalInfo?.crefito || 'Não informado'}`, 20, currentY);
       currentY += 5;
@@ -154,12 +163,11 @@ const DownloadModal = ({ isOpen, onClose, evaluationData, patientName }: Downloa
       
       currentY += 10;
       
-      // Informações do Paciente
       doc.setFont('helvetica', 'bold');
       doc.text('DADOS DO PACIENTE', 20, currentY);
       doc.setFont('helvetica', 'normal');
       currentY += 6;
-      doc.text(`Paciente: ${patientName}`, 20, currentY);
+      doc.text(`Paciente: ${formatName(patientName)}`, 20, currentY);
       doc.text(`Data de Emissão: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth - 20, currentY, { align: 'right' });
       
       currentY += 8;

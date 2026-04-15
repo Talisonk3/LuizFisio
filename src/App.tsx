@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Login from './pages/Login';
 import Evaluation from './pages/Evaluation';
@@ -8,6 +8,7 @@ import Index from './pages/Index';
 import Patients from './pages/Patients';
 import Share from './pages/Share';
 import { useAuth } from './components/AuthProvider';
+import ProfileModal from './components/ProfileModal';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { session, loading } = useAuth();
@@ -18,10 +19,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const visitorAccess = sessionStorage.getItem('visitor_access');
   const isEvaluationPath = location.pathname.startsWith('/avaliacao/');
   
-  // Acesso de visitante geral (pode ver a lista de pacientes do dono)
   const isGeneralVisitor = visitorAccess === 'general';
-  
-  // Acesso de visitante específico (só vê uma avaliação)
   const currentEvalId = location.pathname.split('/')[2];
   const isSpecificVisitor = visitorAccess && isEvaluationPath && visitorAccess === currentEvalId;
 
@@ -29,7 +27,6 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/login" />;
   }
 
-  // Visitantes gerais não podem acessar a Home ou Share
   if (isGeneralVisitor && (location.pathname === '/' || location.pathname === '/compartilhar')) {
     return <Navigate to="/pacientes" />;
   }
@@ -38,6 +35,14 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 function App() {
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+
+  useEffect(() => {
+    const handleOpenProfile = () => setIsProfileOpen(true);
+    window.addEventListener('open-profile-modal', handleOpenProfile);
+    return () => window.removeEventListener('open-profile-modal', handleOpenProfile);
+  }, []);
+
   return (
     <Router>
       <Routes>
@@ -49,6 +54,11 @@ function App() {
         <Route path="/compartilhar" element={<ProtectedRoute><Share /></ProtectedRoute>} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
+      
+      <ProfileModal 
+        isOpen={isProfileOpen} 
+        onClose={() => setIsProfileOpen(false)} 
+      />
     </Router>
   );
 }

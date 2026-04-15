@@ -157,8 +157,8 @@ const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
   const labelClasses = "text-sm font-bold text-slate-600 mb-2 block ml-1";
 
   return (
-    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
-      <div className="bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-300">
+    <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
+      <div className="bg-white opacity-100 w-full max-w-lg rounded-[2.5rem] shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-300">
         <div className="p-8 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
           <div className="flex items-center gap-3">
             <div className="bg-blue-600 p-2.5 rounded-xl text-white shadow-lg shadow-blue-100">
@@ -174,7 +174,7 @@ const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-8">
+        <div className="flex-1 overflow-y-auto p-8 bg-white">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-12 text-slate-400">
               <Loader2 className="animate-spin mb-3" size={32} />
@@ -251,7 +251,7 @@ const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
           )}
         </div>
 
-        <div className="p-8 bg-slate-50/50 border-t border-slate-100 flex gap-3">
+        <div className="p-8 bg-slate-50 border-t border-slate-100 flex gap-3">
           <button
             onClick={handleSave}
             disabled={saving || !isDirty || loading}

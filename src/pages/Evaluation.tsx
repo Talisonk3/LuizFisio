@@ -874,13 +874,23 @@ const Evaluation = () => {
       <main className="flex-1 overflow-y-auto p-4 md:p-12">
         <div className="max-w-4xl mx-auto">
           <header className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div className="w-full md:w-auto">
-              <h1 className="text-2xl md:text-3xl font-extrabold text-slate-800 tracking-tight">
-                {isViewMode ? 'Visualizar Ficha' : (id ? 'Editar Ficha' : 'Nova Avaliação')}
-              </h1>
-              <p className="text-slate-500 mt-1 text-sm md:text-base">
-                {id ? `${isViewMode ? 'Visualizando' : 'Editando'} dados de ${formData.patient_name}` : 'Preencha os dados clínicos do seu paciente.'}
-              </p>
+            <div className="w-full md:w-auto flex items-center gap-3">
+              {/* Botão Home visível apenas em mobile/tablet */}
+              <button 
+                onClick={handleGoHome}
+                className="lg:hidden p-3 bg-white border border-slate-200 rounded-2xl text-slate-400 hover:text-blue-600 transition-all shadow-sm"
+                title="Início"
+              >
+                <Home size={20} />
+              </button>
+              <div>
+                <h1 className="text-2xl md:text-3xl font-extrabold text-slate-800 tracking-tight">
+                  {isViewMode ? 'Visualizar Ficha' : (id ? 'Editar Ficha' : 'Nova Avaliação')}
+                </h1>
+                <p className="text-slate-500 mt-1 text-sm md:text-base">
+                  {id ? `${isViewMode ? 'Visualizando' : 'Editando'} dados de ${formData.patient_name}` : 'Preencha os dados clínicos do seu paciente.'}
+                </p>
+              </div>
             </div>
             <div className="flex flex-wrap gap-2 w-full md:w-auto">
               {isViewMode && !isVisitor && (
@@ -894,13 +904,6 @@ const Evaluation = () => {
               
               {!isViewMode && (
                 <>
-                  <button 
-                    onClick={handleGoHome}
-                    className="p-3 bg-white border border-slate-200 rounded-2xl text-slate-400 hover:text-blue-600 transition-all shadow-sm"
-                    title="Início"
-                  >
-                    <Home size={20} />
-                  </button>
                   <button 
                     onClick={handleGoBack}
                     className="bg-white text-slate-600 border border-slate-200 px-4 py-3 rounded-2xl flex items-center gap-2 hover:bg-slate-50 transition-all font-bold shadow-sm text-sm"

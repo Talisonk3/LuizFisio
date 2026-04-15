@@ -871,24 +871,24 @@ const Evaluation = () => {
         </div>
       </aside>
 
-      <main className="flex-1 overflow-y-auto p-6 md:p-12">
+      <main className="flex-1 overflow-y-auto p-4 md:p-12">
         <div className="max-w-4xl mx-auto">
-          <header className="mb-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div>
-              <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">
+          <header className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div className="w-full md:w-auto">
+              <h1 className="text-2xl md:text-3xl font-extrabold text-slate-800 tracking-tight">
                 {isViewMode ? 'Visualizar Ficha' : (id ? 'Editar Ficha' : 'Nova Avaliação')}
               </h1>
-              <p className="text-slate-500 mt-1">
+              <p className="text-slate-500 mt-1 text-sm md:text-base">
                 {id ? `${isViewMode ? 'Visualizando' : 'Editando'} dados de ${formData.patient_name}` : 'Preencha os dados clínicos do seu paciente.'}
               </p>
             </div>
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-2 w-full md:w-auto">
               {isViewMode && !isVisitor && (
                 <button 
                   onClick={() => setIsDownloadModalOpen(true)}
-                  className="bg-blue-600 text-white px-6 py-3 rounded-2xl flex items-center gap-2 hover:bg-blue-700 transition-all shadow-xl shadow-blue-100 font-bold"
+                  className="flex-1 md:flex-none bg-blue-600 text-white px-4 py-3 rounded-2xl flex items-center justify-center gap-2 hover:bg-blue-700 transition-all shadow-xl shadow-blue-100 font-bold text-sm"
                 >
-                  <Download size={20} /> Baixar Ficha
+                  <Download size={18} /> Baixar Ficha
                 </button>
               )}
               
@@ -903,32 +903,32 @@ const Evaluation = () => {
                   </button>
                   <button 
                     onClick={handleGoBack}
-                    className="bg-white text-slate-600 border border-slate-200 px-6 py-3 rounded-2xl flex items-center gap-2 hover:bg-slate-50 transition-all font-bold shadow-sm"
+                    className="bg-white text-slate-600 border border-slate-200 px-4 py-3 rounded-2xl flex items-center gap-2 hover:bg-slate-50 transition-all font-bold shadow-sm text-sm"
                   >
-                    <ArrowLeft size={20} /> Voltar
+                    <ArrowLeft size={18} /> Voltar
                   </button>
                   
                   <button 
                     onClick={handleSave}
                     disabled={isSaving || !isFormDirty}
-                    className="bg-blue-600 text-white px-8 py-3 rounded-2xl flex items-center gap-2 hover:bg-blue-700 transition-all shadow-xl shadow-blue-100 disabled:opacity-50 disabled:shadow-none font-bold"
+                    className="flex-1 md:flex-none bg-blue-600 text-white px-6 py-3 rounded-2xl flex items-center justify-center gap-2 hover:bg-blue-700 transition-all shadow-xl shadow-blue-100 disabled:opacity-50 disabled:shadow-none font-bold text-sm"
                   >
-                    {isSaving ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
-                    {id ? 'Atualizar Ficha' : 'Salvar Ficha'}
+                    {isSaving ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
+                    {id ? 'Atualizar' : 'Salvar'}
                   </button>
                 </>
               )}
             </div>
           </header>
 
-          <div className="bg-white rounded-[2rem] shadow-xl shadow-slate-200/50 border border-slate-100 p-8 md:p-12">
+          <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] shadow-xl shadow-slate-200/50 border border-slate-100 p-6 md:p-12">
             {activeTab === 'identificacao' && (
               <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
                   <div className="bg-blue-100 p-2 rounded-lg text-blue-600"><User size={20} /></div>
-                  <h3 className="text-xl font-bold text-slate-800">Dados de Identificação</h3>
+                  <h3 className="text-lg md:text-xl font-bold text-slate-800">Dados de Identificação</h3>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
                   <div>
                     <label className={labelClasses}>Nome Completo <span className="text-red-500">*</span></label>
                     <input disabled={isViewMode} name="patient_name" value={formData.patient_name} onChange={handleInputChange} type="text" className={getInputClasses('patient_name')} placeholder="Ex: João da Silva Santos" />
@@ -997,7 +997,7 @@ const Evaluation = () => {
                   </div>
 
                   <div className="md:col-span-2 space-y-4 border-t border-slate-100 pt-8">
-                    <div className="flex justify-between items-center">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                       <label className={labelClasses}>Possui Familiar Responsável ou Cuidador?</label>
                       {formData.has_caregiver === 'Sim' && visibleCaregivers < 3 && !isViewMode && (
                         <button 
@@ -1028,7 +1028,7 @@ const Evaluation = () => {
                     
                     {formData.has_caregiver === 'Sim' && (
                       <div className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
                           <div>
                             <label className={labelClasses}>Nome do Responsável 1 <span className="text-red-500">*</span></label>
                             <input 
@@ -1057,7 +1057,7 @@ const Evaluation = () => {
                         </div>
 
                         {visibleCaregivers >= 2 && (
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in slide-in-from-top-2 duration-300">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 animate-in fade-in slide-in-from-top-2 duration-300">
                             <div>
                               <label className={labelClasses}>Nome do Responsável 2 <span className="text-red-500">*</span></label>
                               <input 
@@ -1097,7 +1097,7 @@ const Evaluation = () => {
                         )}
 
                         {visibleCaregivers >= 3 && (
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in slide-in-from-top-2 duration-300">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 animate-in fade-in slide-in-from-top-2 duration-300">
                             <div>
                               <label className={labelClasses}>Nome do Responsável 3 <span className="text-red-500">*</span></label>
                               <input 
@@ -1140,8 +1140,8 @@ const Evaluation = () => {
                   </div>
 
                   <div className="border-t border-slate-100 pt-8 md:col-span-2">
-                    <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">Informações Médicas (Opcional)</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Informações Médicas (Opcional)</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
                       <div>
                         <label className={labelClasses}>Médico Responsável</label>
                         <input disabled={isViewMode} name="responsible_doctor" value={formData.responsible_doctor} onChange={handleInputChange} type="text" className={getInputClasses('responsible_doctor')} placeholder="Nome do médico" />
@@ -1160,9 +1160,9 @@ const Evaluation = () => {
               <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
                   <div className="bg-blue-100 p-2 rounded-lg text-blue-600"><Activity size={20} /></div>
-                  <h3 className="text-xl font-bold text-slate-800">Sinais Vitais e Exame Físico</h3>
+                  <h3 className="text-lg md:text-xl font-bold text-slate-800">Sinais Vitais e Exame Físico</h3>
                 </div>
-                <div className="grid grid-2 md:grid-cols-5 gap-6">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 md:gap-6">
                   <div>
                     <label className={labelClasses}>PA (mmHg)</label>
                     <input disabled={isViewMode} name="blood_pressure" value={formData.blood_pressure} onChange={handleInputChange} type="text" className={getInputClasses('blood_pressure')} placeholder="120/80" maxLength={6} />
@@ -1184,7 +1184,7 @@ const Evaluation = () => {
                     <input disabled={isViewMode} name="saturation" value={formData.saturation} onChange={handleInputChange} type="text" className={getInputClasses('saturation')} placeholder="98" maxLength={3} />
                   </div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
                   <div>
                     <label className={labelClasses}>Ausculta Cardíaca</label>
                     <textarea disabled={isViewMode} name="cardiac_auscultation" value={formData.cardiac_auscultation} onChange={handleInputChange} className={`${getInputClasses('cardiac_auscultation')} h-24 resize-none`} placeholder="Bulhas rítmicas, sopros..."></textarea>
@@ -1338,7 +1338,7 @@ const Evaluation = () => {
                         
                         <div>
                           <label className={labelClasses}>Arquivos dos Exames (Imagens ou PDF - Máx. 10)</label>
-                          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-2">
+                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 mt-2">
                             {examFiles.map((file, index) => (
                               <div key={index} className="relative group aspect-square rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 flex items-center justify-center">
                                 {file.startsWith('data:application/pdf') ? (
@@ -1405,10 +1405,10 @@ const Evaluation = () => {
               <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
                   <div className="bg-blue-100 p-2 rounded-lg text-blue-600"><ClipboardList size={20} /></div>
-                  <h3 className="text-xl font-bold text-slate-800">Anamnese Completa</h3>
+                  <h3 className="text-lg md:text-xl font-bold text-slate-800">Anamnese Completa</h3>
                 </div>
                 <div className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
                     <div>
                       <label className={labelClasses}>Data da Avaliação</label>
                       <input disabled={isViewMode} name="evaluation_date" value={formData.evaluation_date} onChange={handleInputChange} type="text" className={getInputClasses('evaluation_date')} placeholder="DD/MM/AAAA" maxLength={10} />
@@ -1420,7 +1420,7 @@ const Evaluation = () => {
                     <textarea disabled={isViewMode} name="chief_complaint" value={formData.chief_complaint} onChange={handleInputChange} className={`${getInputClasses('chief_complaint')} h-32 resize-none`} placeholder="Descreva detalhadamente o motivo da consulta..."></textarea>
                   </div>
                   
-                  <div className="bg-slate-50 p-6 rounded-3xl border border-slate-200">
+                  <div className="bg-slate-50 p-4 md:p-6 rounded-3xl border border-slate-200">
                     <label className="text-sm font-bold text-slate-700 mb-4 block ml-1">Escala Visual Analógica de Dor (EVA)</label>
                     <div className="flex flex-wrap gap-2 justify-between">
                       {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
@@ -1429,7 +1429,7 @@ const Evaluation = () => {
                           type="button"
                           disabled={isViewMode}
                           onClick={() => setFormData(prev => ({ ...prev, pain_scale: num.toString() }))}
-                          className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center font-bold transition-all ${
+                          className={`w-9 h-9 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center font-bold transition-all text-sm ${
                             formData.pain_scale === num.toString()
                             ? `${getPainColor(num)} text-white scale-110 shadow-lg ring-4 ring-white`
                             : 'bg-white text-slate-400 border border-slate-200 hover:border-slate-400'
@@ -1446,7 +1446,7 @@ const Evaluation = () => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
                     <div>
                       <label className={labelClasses}>O que piora a dor?</label>
                       <textarea disabled={isViewMode} name="pain_worsening_factors" value={formData.pain_worsening_factors} onChange={handleInputChange} className={`${getInputClasses('pain_worsening_factors')} h-24 resize-none`} placeholder="Ex: Movimentos bruscos, frio, ficar em pé..."></textarea>
@@ -1473,7 +1473,7 @@ const Evaluation = () => {
                   </div>
 
                   <div className="border-t border-slate-100 pt-8 space-y-8">
-                    <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider">Histórico Social</h4>
+                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Histórico Social</h4>
                     
                     <div className="space-y-4">
                       <label className={labelClasses}>Consome bebida alcoólica?</label>
@@ -1660,20 +1660,20 @@ const Evaluation = () => {
               <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
                   <div className="bg-blue-100 p-2 rounded-lg text-blue-600"><Dumbbell size={20} /></div>
-                  <h3 className="text-xl font-bold text-slate-800">Avaliação Funcional e Diagnóstico</h3>
+                  <h3 className="text-lg md:text-xl font-bold text-slate-800">Avaliação Funcional e Diagnóstico</h3>
                 </div>
                 <div className="space-y-8">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
                     <div className="space-y-4">
                       <label className={labelClasses}>Tônus Muscular MMSS</label>
-                      <div className="flex flex-wrap gap-3">
+                      <div className="flex flex-wrap gap-2 md:gap-3">
                         {['Normal', 'Hipertônico', 'Hipotônico'].map((option) => (
                           <button
                             key={option}
                             type="button"
                             disabled={isViewMode}
                             onClick={() => setFormData(prev => ({ ...prev, muscle_tone_mmss: option }))}
-                            className={`px-4 py-2 rounded-xl border transition-all font-medium text-sm ${
+                            className={`px-4 py-2 rounded-xl border transition-all font-medium text-xs md:text-sm ${
                               formData.muscle_tone_mmss === option 
                               ? 'bg-blue-600 text-white border-blue-600 shadow-md' 
                               : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
@@ -1687,14 +1687,14 @@ const Evaluation = () => {
 
                     <div className="space-y-4">
                       <label className={labelClasses}>Tônus Muscular MMII</label>
-                      <div className="flex flex-wrap gap-3">
+                      <div className="flex flex-wrap gap-2 md:gap-3">
                         {['Normal', 'Hipertônico', 'Hipotônico'].map((option) => (
                           <button
                             key={option}
                             type="button"
                             disabled={isViewMode}
                             onClick={() => setFormData(prev => ({ ...prev, muscle_tone_mmii: option }))}
-                            className={`px-4 py-2 rounded-xl border transition-all font-medium text-sm ${
+                            className={`px-4 py-2 rounded-xl border transition-all font-medium text-xs md:text-sm ${
                               formData.muscle_tone_mmii === option 
                               ? 'bg-blue-600 text-white border-blue-600 shadow-md' 
                               : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
@@ -1709,10 +1709,10 @@ const Evaluation = () => {
 
                   <div className="space-y-4">
                     <label className={labelClasses}>Amplitude de Movimento (ADM)</label>
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                       {admRows.map((row, index) => (
-                        <div key={index} className="flex gap-3 items-end animate-in fade-in slide-in-from-left-2 duration-200">
-                          <div className="flex-1">
+                        <div key={index} className="flex flex-col sm:flex-row gap-3 items-start sm:items-end animate-in fade-in slide-in-from-left-2 duration-200 bg-slate-50/50 p-4 rounded-2xl border border-slate-100 sm:bg-transparent sm:p-0 sm:border-0">
+                          <div className="w-full sm:flex-1">
                             <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 mb-1 block">Movimento</label>
                             <input 
                               disabled={isViewMode}
@@ -1723,7 +1723,7 @@ const Evaluation = () => {
                               placeholder="Ex: Flexão de Ombro"
                             />
                           </div>
-                          <div className="w-32">
+                          <div className="w-full sm:w-32">
                             <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 mb-1 block">Grau</label>
                             <input 
                               disabled={isViewMode}
@@ -1737,7 +1737,7 @@ const Evaluation = () => {
                           {admRows.length > 1 && !isViewMode && (
                             <button 
                               onClick={() => removeAdmRow(index)}
-                              className="p-3 text-slate-300 hover:text-red-500 transition-colors mb-0.5"
+                              className="self-end sm:self-auto p-3 text-slate-300 hover:text-red-500 transition-colors sm:mb-0.5"
                             >
                               <Trash2 size={20} />
                             </button>
@@ -1759,9 +1759,9 @@ const Evaluation = () => {
                     <label className={labelClasses}>Força Muscular (Grau 0-5)</label>
                     <textarea disabled={isViewMode} name="muscle_strength" value={formData.muscle_strength} onChange={handleInputChange} className={`${getInputClasses('muscle_strength')} h-28 resize-none`} placeholder="Teste de força manual por grupos musculares..."></textarea>
                   </div>
-                  <div className="bg-blue-50/50 p-6 rounded-3xl border border-blue-100">
+                  <div className="bg-blue-50/50 p-4 md:p-6 rounded-3xl border border-blue-100">
                     <label className="text-sm font-bold text-blue-700 mb-2 block ml-1">Diagnóstico Fisioterapêutico Final</label>
-                    <textarea disabled={isViewMode} name="physio_diagnosis" value={formData.physio_diagnosis} onChange={handleInputChange} className="w-full p-4 bg-white border border-blue-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all h-32 font-medium text-blue-900 placeholder:text-blue-300 disabled:bg-slate-50 disabled:text-slate-500" placeholder="Conclusão clínica e objetivos do tratamento..."></textarea>
+                    <textarea disabled={isViewMode} name="physio_diagnosis" value={formData.physio_diagnosis} onChange={handleInputChange} className="w-full p-4 bg-white border border-blue-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all h-32 font-medium text-blue-900 placeholder:text-blue-300 disabled:bg-slate-50 disabled:text-slate-500 text-sm md:text-base" placeholder="Conclusão clínica e objetivos do tratamento..."></textarea>
                   </div>
                 </div>
               </div>
@@ -1779,27 +1779,27 @@ const Evaluation = () => {
                     const currentIndex = tabs.findIndex(t => t.id === activeTab);
                     setActiveTab(tabs[currentIndex - 1].id);
                   }}
-                  className="flex items-center gap-2 text-slate-400 font-bold hover:text-slate-600 disabled:opacity-20 transition-all px-4 py-2 rounded-xl hover:bg-slate-50"
+                  className="flex items-center gap-2 text-slate-400 font-bold hover:text-slate-600 disabled:opacity-20 transition-all px-3 md:px-4 py-2 rounded-xl hover:bg-slate-50 text-sm"
                 >
-                  <ChevronLeft size={20} /> Voltar
+                  <ChevronLeft size={18} /> <span className="hidden sm:inline">Voltar</span>
                 </button>
               ) : (
                 <div />
               )}
               
-              <div className="flex gap-2">
+              <div className="flex gap-1.5 md:gap-2">
                 {tabs.map((tab) => (
-                  <div key={tab.id} className={`h-1.5 rounded-full transition-all duration-300 ${activeTab === tab.id ? 'w-8 bg-blue-600' : 'w-2 bg-slate-200'}`} />
+                  <div key={tab.id} className={`h-1.5 rounded-full transition-all duration-300 ${activeTab === tab.id ? 'w-6 md:w-8 bg-blue-600' : 'w-1.5 md:w-2 bg-slate-200'}`} />
                 ))}
               </div>
 
               {!(isViewMode && activeTab === 'historico-evolucoes') && (
                 <button 
                   onClick={handleNext}
-                  className="bg-slate-100 text-blue-600 font-black flex items-center gap-2 px-6 py-3 rounded-2xl hover:bg-blue-600 hover:text-white transition-all group"
+                  className="bg-slate-100 text-blue-600 font-black flex items-center gap-2 px-4 md:px-6 py-3 rounded-2xl hover:bg-blue-600 hover:text-white transition-all group text-sm"
                 >
                   {activeTab === 'historico-evolucoes' || activeTab === 'funcional' ? (id ? 'Atualizar' : 'Finalizar') : 'Próximo'} 
-                  <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                  <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
                 </button>
               )}
             </div>

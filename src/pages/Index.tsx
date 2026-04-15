@@ -53,14 +53,14 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-blue-50 flex flex-col">
-      {/* Header */}
-      <header className="bg-white border-b border-slate-200 px-6 py-4 sticky top-0 z-10">
+      {/* Header - Atualizado para bg-blue-100 para dar o destaque solicitado */}
+      <header className="bg-blue-100 border-b border-blue-200 px-6 py-4 sticky top-0 z-10 shadow-sm">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <div className="bg-blue-600 p-2 rounded-xl shadow-lg shadow-blue-100">
+            <div className="bg-blue-600 p-2 rounded-xl shadow-lg shadow-blue-200">
               <Activity className="text-white" size={24} />
             </div>
-            <h1 className="text-xl font-black text-slate-800 tracking-tight">FisioSystem</h1>
+            <h1 className="text-xl font-black text-blue-900 tracking-tight">FisioSystem</h1>
           </div>
           
           <UserMenu />
@@ -84,7 +84,6 @@ const Index = () => {
               onClick={() => navigate(item.path)}
               className={`group relative bg-gradient-to-br ${item.gradient} p-8 rounded-[2.5rem] shadow-2xl ${item.shadow} border-t border-white/20 text-left transition-all hover:scale-[1.03] hover:-translate-y-1 flex flex-col h-full overflow-hidden`}
             >
-              {/* Efeito de brilho sutil no hover */}
               <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               
               <div className="bg-white/20 text-white p-4 rounded-2xl w-fit mb-6 group-hover:scale-110 group-hover:bg-white/30 transition-all duration-300 relative z-10">

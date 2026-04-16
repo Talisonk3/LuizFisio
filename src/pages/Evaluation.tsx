@@ -268,8 +268,9 @@ const Evaluation = () => {
     if (!id) {
       return Object.keys(formData).some(key => {
         if (key === 'evaluation_date') return false;
-        const val = formData[key as keyof typeof formData];
-        return val !== initialFormData[key as keyof typeof initialFormData];
+        const val = formData[key as keyof typeof formData] || '';
+        const initialVal = initialFormData[key as keyof typeof initialFormData] || '';
+        return val.toString().trim() !== initialVal.toString().trim();
       }) || examFiles.length > 0;
     }
 
@@ -277,7 +278,9 @@ const Evaluation = () => {
 
     const hasFormDataChanges = Object.keys(formData).some(key => {
       if (key === 'evaluation_date') return false;
-      return formData[key as keyof typeof formData] !== originalData[key as keyof typeof originalData];
+      const current = formData[key as keyof typeof formData] || '';
+      const original = originalData[key as keyof typeof originalData] || '';
+      return current.toString().trim() !== original.toString().trim();
     });
 
     const hasAdmChanges = JSON.stringify(admRows) !== JSON.stringify(originalAdmRows);

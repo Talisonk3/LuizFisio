@@ -314,21 +314,6 @@ const Evaluation = () => {
     }
   };
 
-  const handleGoBack = () => {
-    if (isFormDirty) {
-      showAlert(
-        'warning', 
-        'Alterações não salvas!', 
-        'Existem alterações nesta ficha que ainda não foram salvas. Deseja realmente voltar para a lista de pacientes?',
-        () => navigate('/pacientes'),
-        'Sim, sair sem salvar',
-        'Não, continuar editando'
-      );
-    } else {
-      navigate('/pacientes');
-    }
-  };
-
   const formatPhone = (value: string) => {
     const numbers = value.replace(/\D/g, '');
     if (numbers.length === 0) return '';
@@ -903,23 +888,14 @@ const Evaluation = () => {
               )}
               
               {!isViewMode && (
-                <>
-                  <button 
-                    onClick={handleGoBack}
-                    className="bg-white text-slate-600 border border-slate-200 px-4 py-3 rounded-2xl flex items-center gap-2 hover:bg-slate-50 transition-all font-bold shadow-sm text-sm"
-                  >
-                    <ArrowLeft size={18} /> Voltar
-                  </button>
-                  
-                  <button 
-                    onClick={handleSave}
-                    disabled={isSaving || !isFormDirty}
-                    className="flex-1 md:flex-none bg-blue-600 text-white px-6 py-3 rounded-2xl flex items-center justify-center gap-2 hover:bg-blue-700 transition-all shadow-xl shadow-blue-100 disabled:opacity-50 disabled:shadow-none font-bold text-sm"
-                  >
-                    {isSaving ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
-                    {id ? 'Atualizar' : 'Salvar'}
-                  </button>
-                </>
+                <button 
+                  onClick={handleSave}
+                  disabled={isSaving || !isFormDirty}
+                  className="flex-1 md:flex-none bg-blue-600 text-white px-6 py-3 rounded-2xl flex items-center justify-center gap-2 hover:bg-blue-700 transition-all shadow-xl shadow-blue-100 disabled:opacity-50 disabled:shadow-none font-bold text-sm"
+                >
+                  {isSaving ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
+                  {id ? 'Atualizar' : 'Salvar'}
+                </button>
               )}
             </div>
           </header>

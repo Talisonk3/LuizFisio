@@ -50,14 +50,14 @@ const UserMenu = () => {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-3 w-56 bg-white border border-slate-100 rounded-[1.5rem] shadow-2xl shadow-slate-200/50 overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200">
+        <div className="absolute right-0 mt-3 w-full bg-white border border-slate-100 rounded-[1.5rem] shadow-2xl shadow-slate-200/50 overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200">
           <div className="p-2">
             <button
               onClick={openProfile}
               className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-all"
             >
               <UserCircle size={20} />
-              Meu Perfil
+              <span className="truncate">Meu Perfil</span>
             </button>
             <div className="h-px bg-slate-50 my-1 mx-2" />
             <button
@@ -65,7 +65,7 @@ const UserMenu = () => {
               className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-red-500 hover:bg-red-50 rounded-xl transition-all"
             >
               <LogOut size={20} />
-              Sair do Sistema
+              <span className="truncate">Sair</span>
             </button>
           </div>
         </div>

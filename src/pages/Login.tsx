@@ -43,14 +43,13 @@ const Login = () => {
 
     if (!isSignUp && !isVisitor && !isForgotPassword) {
       const savedUsername = localStorage.getItem('fisio_username');
-      const savedPassword = localStorage.getItem('fisio_password');
       const savedVisitor = localStorage.getItem('fisio_is_visitor') === 'true';
 
-      if (savedUsername && savedPassword && !savedVisitor) {
+      if (savedUsername && !savedVisitor) {
         setFormData(prev => ({
           ...prev,
           username: savedUsername,
-          password: savedPassword
+          password: '' // Senha sempre em branco por segurança
         }));
         setRememberMe(true);
       }
@@ -125,8 +124,8 @@ const Login = () => {
 
       if (rememberMe && !isSignUp && !isVisitor) {
         localStorage.setItem('fisio_username', formData.username);
-        localStorage.setItem('fisio_password', formData.password);
         localStorage.setItem('fisio_is_visitor', 'false');
+        localStorage.removeItem('fisio_password'); // Remove senha caso existisse de versões anteriores
       } else if (!isSignUp && !isVisitor) {
         localStorage.removeItem('fisio_username');
         localStorage.removeItem('fisio_password');

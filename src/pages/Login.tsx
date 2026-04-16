@@ -97,14 +97,15 @@ const Login = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+    const trimmedValue = value.trimStart(); // Impede espaço no início
     
     if (name === 'fullName') {
-      const filteredValue = value.replace(/[^a-zA-ZÀ-ÿ\s]/g, '');
+      const filteredValue = trimmedValue.replace(/[^a-zA-ZÀ-ÿ\s]/g, '');
       setFormData(prev => ({ ...prev, [name]: filteredValue }));
       return;
     }
 
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData(prev => ({ ...prev, [name]: trimmedValue }));
   };
 
   const handleAuth = async (e: React.FormEvent) => {

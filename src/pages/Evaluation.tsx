@@ -378,7 +378,7 @@ const Evaluation = () => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     if (isViewMode) return;
     const { name, value } = e.target;
-    let filteredValue = value.trimStart();
+    let filteredValue = value.trimStart(); // Impede espaço no início
     
     if (name === 'patient_name' || name === 'responsible_doctor' || name.includes('caregiver') && name.includes('name')) {
       filteredValue = filteredValue.replace(/[^a-zA-ZÀ-ÿ\s]/g, '');
@@ -426,11 +426,11 @@ const Evaluation = () => {
   const handleAdmRowChange = (index: number, field: 'movement' | 'degree', value: string) => {
     if (isViewMode) return;
     const newRows = [...admRows];
-    let filteredValue = value;
+    let filteredValue = value.trimStart(); // Impede espaço no início
     if (field === 'movement') {
-      filteredValue = value.replace(/[^a-zA-ZÀ-ÿ\s]/g, '');
+      filteredValue = filteredValue.replace(/[^a-zA-ZÀ-ÿ\s]/g, '');
     } else if (field === 'degree') {
-      const numbers = value.replace(/\D/g, '').substring(0, 3);
+      const numbers = filteredValue.replace(/\D/g, '').substring(0, 3);
       filteredValue = numbers ? `${numbers}°` : '';
     }
     newRows[index][field] = filteredValue;

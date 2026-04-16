@@ -208,7 +208,7 @@ const Patients = () => {
             type="text"
             placeholder="Buscar paciente pelo nome..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => setSearchTerm(e.target.value.trimStart())}
             className="w-full pl-12 pr-4 py-4 bg-white border border-slate-200 rounded-[1.5rem] shadow-sm outline-none text-sm md:text-base"
           />
         </div>

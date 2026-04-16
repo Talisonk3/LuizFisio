@@ -112,17 +112,17 @@ const SessionEvolutionModal = ({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    let filteredValue = value;
+    let filteredValue = value.trimStart(); // Impede espaço no início
 
     if (name === 'session_date') {
-      filteredValue = formatDate(value);
+      filteredValue = formatDate(filteredValue);
     } else if (name === 'blood_pressure') {
-      const numbers = value.replace(/\D/g, '').substring(0, 5);
+      const numbers = filteredValue.replace(/\D/g, '').substring(0, 5);
       filteredValue = numbers.length > 2 ? `${numbers.slice(0, 2)}/${numbers.slice(2)}` : numbers;
     } else if (['heart_rate', 'respiratory_rate', 'saturation'].includes(name)) {
-      filteredValue = value.replace(/\D/g, '').substring(0, 3);
+      filteredValue = filteredValue.replace(/\D/g, '').substring(0, 3);
     } else if (name === 'temperature') {
-      const numbers = value.replace(/\D/g, '').substring(0, 3);
+      const numbers = filteredValue.replace(/\D/g, '').substring(0, 3);
       filteredValue = numbers.length > 2 ? `${numbers.slice(0, 2)}.${numbers.slice(2)}` : numbers;
     }
 
@@ -246,7 +246,176 @@ const SessionEvolutionModal = ({
 
         <div className="flex-1 overflow-y-auto p-8">
           {errorMessage && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-2xl flex items-center gap-3 text-red-600 text-sm font-bold animate-in fade-in slide-in-from-top-2">
+            <div className="mb-6 p-4 bg-red-50 border border-red-think
+The user is pointing out that my previous response was cut off. I need to continue the code block for `src/components/SessionEvolutionModal.tsx` and then proceed with the other files I planned to update (`ShareModal.tsx`, `ManagePasswordModal.tsx`, `ProfileModal.tsx`, `ResetPasswordModal.tsx`, `Patients.tsx`, `PatientSelectorModal.tsx`, `AssignPatientModal.tsx`).
+
+Looking at the previous output:
+The last file was `src/components/SessionEvolutionModal.tsx`.
+It cut off at:
+```tsx
+        <div className="flex-1 overflow-y-auto p-8">
+          {errorMessage && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-
+```
+
+I need to complete this file and then provide the rest.
+
+Wait, the user said "Continue exactly where you left off without any preamble".
+
+Let's finish `src/components/SessionEvolutionModal.tsx`.
+
+```tsx
+100 rounded-2xl flex items-center gap-3 text-red-600 text-sm font-bold animate-in fade-in slide-in-from-top-2">
+              <AlertCircle size={20} />
+              {errorMessage}
+            </div>
+          )}
+
+          <div className="space-y-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div className="col-span-2 md:col-span-1">
+                <label className={labelClasses}>Data da Sessão</label>
+                <input 
+                  type="text" 
+                  name="session_date"
+                  value={formData.session_date}
+                  onChange={handleInputChange}
+                  placeholder="DD/MM/AAAA"
+                  maxLength={10}
+                  className={inputClasses}
+                />
+              </div>
+              <div>
+                <label className={labelClasses}>PA (mmHg)</label>
+                <input 
+                  type="text" 
+                  name="blood_pressure"
+                  value={formData.blood_pressure}
+                  onChange={handleInputChange}
+                  placeholder="120/80"
+                  className={inputClasses}
+                />
+              </div>
+              <div>
+                <label className={labelClasses}>FC (bpm)</label>
+                <input 
+                  type="text" 
+                  name="heart_rate"
+                  value={formData.heart_rate}
+                  onChange={handleInputChange}
+                  placeholder="70"
+                  className={inputClasses}
+                />
+              </div>
+              <div>
+                <label className={labelClasses}>FR (irpm)</label>
+                <input 
+                  type="text" 
+                  name="respiratory_rate"
+                  value={formData.respiratory_rate}
+                  onChange={handleInputChange}
+                  placeholder="16"
+                  className={inputClasses}
+                />
+              </div>
+              <div>
+                <label className={labelClasses}>Temp (°C)</label>
+                <input 
+                  type="text" 
+                  name="temperature"
+                  value={formData.temperature}
+                  onChange={handleInputChange}
+                  placeholder="36.5"
+                  className={inputClasses}
+                />
+              </div>
+              <div>
+                <label className={labelClasses}>SatO2 (%)</label>
+                <input 
+                  type="text" 
+                  name="saturation"
+                  value={formData.saturation}
+                  onChange={handleInputChange}
+                  placeholder="98"
+                  className={inputClasses}
+                />
+              </div>
+            </div>
+
+            <div className="bg-slate-50 p-6 rounded-3xl border border-slate-200">
+              <label className="text-sm font-bold text-slate-700 mb-4 block ml-1">Escala Visual Analógica de Dor (EVA)</label>
+              <div className="flex flex-wrap gap-2 justify-between">
+                {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
+                  <button
+                    key={num}
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, pain_scale: num.toString() }))}
+                    className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${
+                      formData.pain_scale === num.toString()
+                      ? `${getPainColor(num)} text-white scale-110 shadow-lg ring-4 ring-white`
+                      : 'bg-white text-slate-400 border border-slate-200 hover:border-slate-400'
+                    }`}
+                  >
+                    {num}
+                  </button>
+                ))}
+              </div>
+              <div className="flex justify-between mt-3 px-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                <span>Sem Dor</span>
+                <span>Dor Moderada</span>
+                <span>Dor Máxima</span>
+              </div>
+            </div>
+
+            <div>
+              <label className={labelClasses}>Descrição da Evolução</label>
+              <textarea
+                name="evolution_text"
+                value={formData.evolution_text}
+                onChange={handleInputChange}
+                placeholder="Descreva o atendimento, condutas e resposta do paciente..."
+                className="w-full p-4 bg-white border border-slate-200 rounded-2xl focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 outline-none transition-all h-64 resize-none text-sm text-slate-700"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="p-8 bg-slate-50/50 border-t border-slate-100 flex gap-3">
+          <button
+            onClick={handleSave}
+            disabled={isSaving || !isDirty}
+            className="flex-1 bg-emerald-600 text-white py-4 rounded-2xl flex items-center justify-center gap-2 hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-100 disabled:opacity-50 font-bold"
+          >
+            {isSaving ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
+            {evolutionData ? 'Atualizar Evolução' : 'Salvar Evolução'}
+          </button>
+          <button
+            onClick={onClose}
+            className="px-8 bg-white text-slate-600 py-4 rounded-2xl font-bold border border-slate-200 hover:bg-slate-100 transition-all"
+          >
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default SessionEvolutionModal;
+```
+
+Then I need to provide the other files.
+
+Files to update:
+1. `src/components/ShareModal.tsx`
+2. `src/components/ManagePasswordModal.tsx`
+3. `src/components/ProfileModal.tsx`
+4. `src/components/ResetPasswordModal.tsx`
+5. `src/pages/Patients.tsx`
+6. `src/components/PatientSelectorModal.tsx`
+7. `src/components/AssignPatientModal.tsx`
+
+Let's go.100 rounded-2xl flex items-center gap-3 text-red-600 text-sm font-bold animate-in fade-in slide-in-from-top-2">
               <AlertCircle size={20} />
               {errorMessage}
             </div>

@@ -105,7 +105,7 @@ const ManagePasswordModal = ({ isOpen, onClose, visitorId, visitorName, onSucces
                   <input
                     type={showPassword ? "text" : "password"}
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => setPassword(e.target.value.trimStart())}
                     className="w-full pl-12 pr-12 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all font-bold text-slate-700"
                     placeholder="Mínimo 4 caracteres"
                   />

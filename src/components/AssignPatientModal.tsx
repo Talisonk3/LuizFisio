@@ -115,8 +115,8 @@ const AssignPatientModal = ({ isOpen, onClose, visitorId, visitorName, userId }:
               type="text"
               placeholder="Buscar paciente..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-2xl focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 outline-none transition-all"
+              onChange={(e) => setSearchTerm(e.target.value.trimStart())}
+              className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-2xl focus:ring-4 focus:ring-purple-500/10 focus:border-blue-500 outline-none transition-all"
             />
           </div>
         </div>

@@ -39,6 +39,11 @@ const ResetPasswordModal = ({ isOpen, onClose }: ResetPasswordModalProps) => {
 
   const canSave = validations.hasMinLength && validations.matches;
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value.trimStart() }));
+  };
+
   const handleSave = async () => {
     if (!canSave) return;
 
@@ -104,8 +109,9 @@ const ResetPasswordModal = ({ isOpen, onClose }: ResetPasswordModalProps) => {
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
                 <input 
                   type={showPassword ? "text" : "password"}
+                  name="password"
                   value={formData.password}
-                  onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+                  onChange={handleInputChange}
                   className={inputClasses}
                   placeholder="Mínimo 6 caracteres"
                 />
@@ -128,8 +134,9 @@ const ResetPasswordModal = ({ isOpen, onClose }: ResetPasswordModalProps) => {
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
                 <input 
                   type={showConfirmPassword ? "text" : "password"}
+                  name="confirmPassword"
                   value={formData.confirmPassword}
-                  onChange={(e) => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                  onChange={handleInputChange}
                   className={inputClasses}
                   placeholder="Repita a senha"
                 />

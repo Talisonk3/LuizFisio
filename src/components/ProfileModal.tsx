@@ -86,19 +86,19 @@ const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    let filteredValue = value;
+    let filteredValue = value.trimStart(); // Impede espaço no início
 
     if (name === 'full_name') {
-      filteredValue = value.replace(/[^a-zA-ZÀ-ÿ\s]/g, '');
+      filteredValue = filteredValue.replace(/[^a-zA-ZÀ-ÿ\s]/g, '');
     } else if (name === 'phone') {
-      const numbers = value.replace(/\D/g, '');
+      const numbers = filteredValue.replace(/\D/g, '');
       if (numbers.length === 0) filteredValue = '';
       else if (numbers.length <= 2) filteredValue = `(${numbers}`;
       else if (numbers.length <= 6) filteredValue = `(${numbers.slice(0, 2)}) ${numbers.slice(2)}`;
       else if (numbers.length <= 10) filteredValue = `(${numbers.slice(0, 2)}) ${numbers.slice(2, 6)}-${numbers.slice(6)}`;
       else filteredValue = `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7, 11)}`;
     } else if (name === 'crefito') {
-      filteredValue = value.toUpperCase().replace(/[^0-9-F]/g, '').substring(0, 8);
+      filteredValue = filteredValue.toUpperCase().replace(/[^0-9-F]/g, '').substring(0, 8);
     }
 
     setFormData(prev => ({ ...prev, [name]: filteredValue }));

@@ -30,6 +30,11 @@ const ShareModal = ({ isOpen, onClose, onSuccess, userId }: ShareModalProps) => 
 
   if (!isOpen) return null;
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value.trimStart() }));
+  };
+
   const handleSave = async () => {
     setError(null);
 
@@ -102,8 +107,9 @@ const ShareModal = ({ isOpen, onClose, onSuccess, userId }: ShareModalProps) => 
                 <User className="absolute left-3 top-3 text-slate-400" size={20} />
                 <input
                   type="text"
+                  name="username"
                   value={formData.username}
-                  onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value }))}
+                  onChange={handleInputChange}
                   className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all"
                   placeholder="Ex: assistente_clinica"
                 />
@@ -116,8 +122,9 @@ const ShareModal = ({ isOpen, onClose, onSuccess, userId }: ShareModalProps) => 
                 <Lock className="absolute left-3 top-3 text-slate-400" size={20} />
                 <input
                   type="text"
+                  name="password"
                   value={formData.password}
-                  onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+                  onChange={handleInputChange}
                   className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all"
                   placeholder="Defina uma senha"
                 />
@@ -130,8 +137,9 @@ const ShareModal = ({ isOpen, onClose, onSuccess, userId }: ShareModalProps) => 
                 <Lock className="absolute left-3 top-3 text-slate-400" size={20} />
                 <input
                   type="text"
+                  name="confirmPassword"
                   value={formData.confirmPassword}
-                  onChange={(e) => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                  onChange={handleInputChange}
                   className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all"
                   placeholder="Repita a senha"
                 />

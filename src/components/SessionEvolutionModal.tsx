@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { X, Save, Loader2, MessageSquarePlus, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import NotificationModal, { ModalType } from './NotificationModal';
 
 interface SessionEvolutionModalProps {
   isOpen: boolean;
@@ -24,7 +25,18 @@ const SessionEvolutionModal = ({
   evolutionData 
 }: SessionEvolutionModalProps) => {
   const [isSaving, setIsSaving] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [errors, setErrors] = useState<string[]>([]);
+  const [alertConfig, setAlertConfig] = useState<{
+    isOpen: boolean;
+    type: ModalType;
+    title: string;
+    message: string;
+  }>({
+    isOpen: false,
+    type: 'info',
+    title: '',
+    message: ''
+  });
 
   const formatDate = (value: string) => {
     const numbers = value.replace(/\D/g, '');
@@ -55,7 +67,7 @@ const SessionEvolutionModal = ({
 
   useEffect(() => {
     if (isOpen) {
-      setErrorMessage(null);
+      setErrors([]);
       if (evolutionData) {
         let sessionDate = '';
         if (evolutionData.session_date) {
@@ -112,7 +124,7 @@ const SessionEvolutionModal = ({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    let filteredValue = value.trimStart(); // Impede espaço no início
+    let filteredValue = value.trimStart();
 
     if (name === 'session_date') {
       filteredValue = formatDate(filteredValue);
@@ -126,19 +138,38 @@ const SessionEvolutionModal = ({
       filteredValue = numbers.length > 2 ? `${numbers.slice(0, 2)}.${numbers.slice(2)}` : numbers;
     }
 
+    if (errors.includes(name)) {
+      setErrors(prev => prev.filter(err => err !== name));
+    }
+
     setFormData(prev => ({ ...prev, [name]: filteredValue }));
   };
 
   const handleSave = async () => {
-    setErrorMessage(null);
+    const newErrors: string[] = [];
+    
+    if (!formData.session_date || formData.session_date.length < 10) {
+      newErrors.push('session_date');
+    }
+    
+    if (!formData.evolution_text.trim()) {
+      newErrors.push('evolution_text');
+    }
+
+    if (newErrors.length > 0) {
+      setErrors(newErrors);
+      setAlertConfig({
+        isOpen: true,
+        type: 'warning',
+        title: 'Campos Obrigatórios',
+        message: 'Por favor, preencha a data da sessão e a descrição da evolução antes de salvar.'
+      });
+      return;
+    }
+
     const visitorId = sessionStorage.getItem('visitor_id');
     const effectiveUserId = userId || visitorId;
 
-    if (!formData.evolution_text.trim() || !evaluationId) {
-      setErrorMessage("A descrição da evolução é obrigatória.");
-      return;
-    }
-    
     let isoDate = null;
     const parts = formData.session_date.split('/');
     if (parts.length === 3) {
@@ -205,7 +236,12 @@ const SessionEvolutionModal = ({
       onClose();
     } catch (error: any) {
       console.error('Erro ao salvar evolução:', error);
-      setErrorMessage(error.message || "Erro ao salvar.");
+      setAlertConfig({
+        isOpen: true,
+        type: 'error',
+        title: 'Erro ao Salvar',
+        message: error.message || "Não foi possível salvar a evolução. Tente novamente."
+      });
     } finally {
       setIsSaving(false);
     }
@@ -222,7 +258,11 @@ const SessionEvolutionModal = ({
   if (!isOpen || isReadOnly) return null;
 
   const labelClasses = "text-[10px] font-bold text-slate-400 uppercase ml-1 mb-1 block";
-  const inputClasses = "w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-sm";
+  const getInputClasses = (fieldName: string) => {
+    const base = "w-full p-3 bg-slate-50 border rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-sm";
+    const errorState = errors.includes(fieldName) ? "border-red-500 bg-red-50" : "border-slate-200";
+    return `${base} ${errorState}`;
+  };
 
   return (
     <div className="fixed inset-0 z-[140] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
@@ -245,17 +285,10 @@ const SessionEvolutionModal = ({
         </div>
 
         <div className="flex-1 overflow-y-auto p-8">
-          {errorMessage && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-2xl flex items-center gap-3 text-red-600 text-sm font-bold animate-in fade-in slide-in-from-top-2">
-              <AlertCircle size={20} />
-              {errorMessage}
-            </div>
-          )}
-
           <div className="space-y-6">
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               <div className="col-span-2 md:col-span-1">
-                <label className={labelClasses}>Data da Sessão</label>
+                <label className={labelClasses}>Data da Sessão <span className="text-red-500">*</span></label>
                 <input 
                   type="text" 
                   name="session_date"
@@ -263,7 +296,7 @@ const SessionEvolutionModal = ({
                   onChange={handleInputChange}
                   placeholder="DD/MM/AAAA"
                   maxLength={10}
-                  className={inputClasses}
+                  className={getInputClasses('session_date')}
                 />
               </div>
               <div>
@@ -274,7 +307,7 @@ const SessionEvolutionModal = ({
                   value={formData.blood_pressure}
                   onChange={handleInputChange}
                   placeholder="120/80"
-                  className={inputClasses}
+                  className={getInputClasses('blood_pressure')}
                 />
               </div>
               <div>
@@ -285,7 +318,7 @@ const SessionEvolutionModal = ({
                   value={formData.heart_rate}
                   onChange={handleInputChange}
                   placeholder="70"
-                  className={inputClasses}
+                  className={getInputClasses('heart_rate')}
                 />
               </div>
               <div>
@@ -296,7 +329,7 @@ const SessionEvolutionModal = ({
                   value={formData.respiratory_rate}
                   onChange={handleInputChange}
                   placeholder="16"
-                  className={inputClasses}
+                  className={getInputClasses('respiratory_rate')}
                 />
               </div>
               <div>
@@ -307,7 +340,7 @@ const SessionEvolutionModal = ({
                   value={formData.temperature}
                   onChange={handleInputChange}
                   placeholder="36.5"
-                  className={inputClasses}
+                  className={getInputClasses('temperature')}
                 />
               </div>
               <div>
@@ -318,7 +351,7 @@ const SessionEvolutionModal = ({
                   value={formData.saturation}
                   onChange={handleInputChange}
                   placeholder="98"
-                  className={inputClasses}
+                  className={getInputClasses('saturation')}
                 />
               </div>
             </div>
@@ -349,13 +382,13 @@ const SessionEvolutionModal = ({
             </div>
 
             <div>
-              <label className={labelClasses}>Descrição da Evolução</label>
+              <label className={labelClasses}>Descrição da Evolução <span className="text-red-500">*</span></label>
               <textarea
                 name="evolution_text"
                 value={formData.evolution_text}
                 onChange={handleInputChange}
                 placeholder="Descreva o atendimento, condutas e resposta do paciente..."
-                className="w-full p-4 bg-white border border-slate-200 rounded-2xl focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 outline-none transition-all h-64 resize-none text-sm text-slate-700"
+                className={`${getInputClasses('evolution_text')} h-64 resize-none text-slate-700`}
               />
             </div>
           </div>
@@ -378,6 +411,14 @@ const SessionEvolutionModal = ({
           </button>
         </div>
       </div>
+
+      <NotificationModal 
+        isOpen={alertConfig.isOpen}
+        onClose={() => setAlertConfig(prev => ({ ...prev, isOpen: false }))}
+        type={alertConfig.type}
+        title={alertConfig.title}
+        message={alertConfig.message}
+      />
     </div>
   );
 };

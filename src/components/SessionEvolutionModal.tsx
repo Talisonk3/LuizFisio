@@ -48,10 +48,32 @@ const SessionEvolutionModal = ({
     if (day && day !== '0' && day !== '00' && parseInt(day) === 0) day = '01';
     if (month && parseInt(month) > 12) month = '12';
     if (month && month !== '0' && month !== '00' && parseInt(month) === 0) month = '01';
-    if (year && year.length === 4 && parseInt(year) > currentYear) year = currentYear.toString();
+    if (year && year.length === 4 && parseInt(year) > currentYear + 1) year = (currentYear + 1).toString();
     if (numbers.length <= 2) return day;
     if (numbers.length <= 4) return `${day}/${month}`;
     return `${day}/${month}/${year}`;
+  };
+
+  const isValidDate = (dateStr: string) => {
+    if (dateStr.length !== 10) return false;
+    const [d, m, y] = dateStr.split('/').map(Number);
+    const date = new Date(y, m - 1, d);
+    
+    // Verifica se a data é válida no calendário (ex: evita 31/02)
+    const isCalendarValid = date.getFullYear() === y && date.getMonth() === m - 1 && date.getDate() === d;
+    // Verifica se o ano é razoável (maior que 1900)
+    const isYearValid = y > 1900;
+    
+    return isCalendarValid && isYearValid;
+  };
+
+  const isFutureDate = (dateStr: string) => {
+    if (dateStr.length !== 10) return false;
+    const [d, m, y] = dateStr.split('/').map(Number);
+    const date = new Date(y, m - 1, d);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return date > today;
   };
 
   const [formData, setFormData] = useState({
@@ -150,19 +172,48 @@ const SessionEvolutionModal = ({
     
     if (!formData.session_date || formData.session_date.length < 10) {
       newErrors.push('session_date');
-    }
-    
-    if (!formData.evolution_text.trim()) {
-      newErrors.push('evolution_text');
-    }
-
-    if (newErrors.length > 0) {
       setErrors(newErrors);
       setAlertConfig({
         isOpen: true,
         type: 'warning',
-        title: 'Campos Obrigatórios',
-        message: 'Por favor, preencha a data da sessão e a descrição da evolução antes de salvar.'
+        title: 'Data Incompleta',
+        message: 'Por favor, preencha a data da sessão corretamente no formato DD/MM/AAAA.'
+      });
+      return;
+    }
+
+    if (!isValidDate(formData.session_date)) {
+      newErrors.push('session_date');
+      setErrors(newErrors);
+      setAlertConfig({
+        isOpen: true,
+        type: 'error',
+        title: 'Data Não Aceita',
+        message: 'A data informada é inválida ou o ano está fora do intervalo permitido. Verifique se o dia e o mês existem.'
+      });
+      return;
+    }
+
+    if (isFutureDate(formData.session_date)) {
+      newErrors.push('session_date');
+      setErrors(newErrors);
+      setAlertConfig({
+        isOpen: true,
+        type: 'warning',
+        title: 'Data Futura',
+        message: 'Não é possível registrar uma evolução para uma data futura.'
+      });
+      return;
+    }
+    
+    if (!formData.evolution_text.trim()) {
+      newErrors.push('evolution_text');
+      setErrors(newErrors);
+      setAlertConfig({
+        isOpen: true,
+        type: 'warning',
+        title: 'Campo Obrigatório',
+        message: 'Por favor, descreva a evolução do paciente antes de salvar.'
       });
       return;
     }
@@ -236,11 +287,17 @@ const SessionEvolutionModal = ({
       onClose();
     } catch (error: any) {
       console.error('Erro ao salvar evolução:', error);
+      let userMessage = "Não foi possível salvar a evolução. Tente novamente.";
+      
+      if (error.message?.includes('out of range')) {
+        userMessage = "A data informada está fora do intervalo aceito pelo sistema. Por favor, utilize uma data válida.";
+      }
+
       setAlertConfig({
         isOpen: true,
         type: 'error',
         title: 'Erro ao Salvar',
-        message: error.message || "Não foi possível salvar a evolução. Tente novamente."
+        message: userMessage
       });
     } finally {
       setIsSaving(false);

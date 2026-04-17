@@ -88,6 +88,32 @@ const Share = () => {
   }, [user]);
 
   const toggleVisitorStatus = async (id: string, currentStatus: boolean) => {
+    // Se estiver tentando desativar (mudar de true para false)
+    if (currentStatus === true) {
+      try {
+        // Verificar se existem pacientes vinculados
+        const { count, error: countError } = await supabase
+          .from('visitor_evaluations')
+          .select('*', { count: 'exact', head: true })
+          .eq('visitor_id', id);
+
+        if (countError) throw countError;
+
+        if (count && count > 0) {
+          setAlertConfig({
+            isOpen: true,
+            type: 'warning',
+            title: 'Ação Bloqueada',
+            message: 'Para inativar este usuário, você deve primeiro desvincular todos os pacientes ligados a ele na opção "Autorizar Pacientes".'
+          });
+          return;
+        }
+      } catch (error) {
+        console.error('Erro ao verificar vínculos:', error);
+        return;
+      }
+    }
+
     try {
       const { error } = await supabase
         .from('visitors')

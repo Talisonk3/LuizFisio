@@ -25,40 +25,51 @@ const AssignPatientModal = ({ isOpen, onClose, visitorId, visitorName, userId }:
   const [processingId, setProcessingId] = useState<string | null>(null);
 
   const fetchData = async () => {
-    if (!isOpen || !visitorId) return;
+    if (!isOpen || !visitorId || !userId) return;
+    
     setLoading(true);
     try {
-      // 1. Buscar todos os pacientes do profissional
-      const { data: allPatients } = await supabase
+      // 1. Buscar todos os pacientes que pertencem a este profissional (userId)
+      const { data: allPatients, error: patientsError } = await supabase
         .from('evaluations')
         .select('id, patient_name')
         .eq('user_id', userId)
         .order('patient_name', { ascending: true });
 
-      // 2. Buscar TODAS as associações de pacientes feitas por este profissional
-      // Isso nos permite saber quais pacientes já estão com outros usuários
-      const { data: allAssigned } = await supabase
+      if (patientsError) throw patientsError;
+
+      // 2. Buscar associações existentes para identificar o que já está ocupado
+      // O RLS já garante que só veremos associações dos nossos próprios visitantes
+      const { data: allAssigned, error: assignedError } = await supabase
         .from('visitor_evaluations')
         .select('evaluation_id, visitor_id');
 
-      const assignedToCurrentList = allAssigned
+      if (assignedError) throw assignedError;
+
+      // IDs vinculados ao visitante que estamos editando agora
+      const currentVisitorAssigned = allAssigned
         ?.filter(a => a.visitor_id === visitorId)
         .map(a => a.evaluation_id) || [];
 
-      const assignedToOthersList = allAssigned
+      // IDs vinculados a QUALQUER OUTRO visitante do mesmo profissional
+      const otherVisitorsAssigned = allAssigned
         ?.filter(a => a.visitor_id !== visitorId)
         .map(a => a.evaluation_id) || [];
       
-      // 3. Filtrar: Mostrar apenas pacientes que NÃO estão com outros usuários
-      // Pacientes já associados ao usuário ATUAL devem aparecer para permitir a exclusão
-      const availablePatients = allPatients ? allPatients.filter(p => 
-        !assignedToOthersList.includes(p.id)
-      ) : [];
+      // 3. Filtrar a lista:
+      // Mostramos o paciente se:
+      // - Ele já estiver com o visitante atual (para permitir remover)
+      // - OU se ele NÃO estiver com nenhum outro visitante
+      const availablePatients = allPatients ? allPatients.filter(p => {
+        const isWithCurrent = currentVisitorAssigned.includes(p.id);
+        const isWithOthers = otherVisitorsAssigned.includes(p.id);
+        return isWithCurrent || !isWithOthers;
+      }) : [];
 
-      // Ordenar: primeiro os autorizados (do usuário atual), depois por nome
+      // Ordenar: primeiro os que já estão autorizados para este visitante
       const sortedPatients = [...availablePatients].sort((a, b) => {
-        const aAssigned = assignedToCurrentList.includes(a.id);
-        const bAssigned = assignedToCurrentList.includes(b.id);
+        const aAssigned = currentVisitorAssigned.includes(a.id);
+        const bAssigned = currentVisitorAssigned.includes(b.id);
         
         if (aAssigned && !bAssigned) return -1;
         if (!aAssigned && bAssigned) return 1;
@@ -66,9 +77,9 @@ const AssignPatientModal = ({ isOpen, onClose, visitorId, visitorName, userId }:
       });
 
       setPatients(sortedPatients);
-      setAssignedIds(assignedToCurrentList);
+      setAssignedIds(currentVisitorAssigned);
     } catch (error) {
-      console.error('Erro ao carregar dados:', error);
+      console.error('Erro ao carregar dados de autorização:', error);
     } finally {
       setLoading(false);
     }
@@ -76,26 +87,30 @@ const AssignPatientModal = ({ isOpen, onClose, visitorId, visitorName, userId }:
 
   useEffect(() => {
     fetchData();
-  }, [isOpen, visitorId]);
+  }, [isOpen, visitorId, userId]);
 
   const toggleAssignment = async (patientId: string, isAssigned: boolean) => {
     setProcessingId(patientId);
     try {
       if (isAssigned) {
-        await supabase
+        const { error } = await supabase
           .from('visitor_evaluations')
           .delete()
           .eq('visitor_id', visitorId)
           .eq('evaluation_id', patientId);
+        
+        if (error) throw error;
         setAssignedIds(prev => prev.filter(id => id !== patientId));
       } else {
-        await supabase
+        const { error } = await supabase
           .from('visitor_evaluations')
           .insert([{ visitor_id: visitorId, evaluation_id: patientId }]);
+        
+        if (error) throw error;
         setAssignedIds(prev => [...prev, patientId]);
       }
     } catch (error) {
-      console.error('Erro ao atualizar associação:', error);
+      console.error('Erro ao atualizar autorização:', error);
     } finally {
       setProcessingId(null);
     }
@@ -182,7 +197,7 @@ const AssignPatientModal = ({ isOpen, onClose, visitorId, visitorName, userId }:
             })
           ) : (
             <div className="text-center py-12 text-slate-400">
-              <p className="font-medium">Nenhum paciente disponível para autorização.</p>
+              <p className="font-medium">Nenhum paciente disponível.</p>
               <p className="text-[10px] mt-1 uppercase font-bold">Pacientes já vinculados a outros usuários não aparecem aqui.</p>
             </div>
           )}

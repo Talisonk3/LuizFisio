@@ -29,7 +29,7 @@ const AssignPatientModal = ({ isOpen, onClose, visitorId, visitorName, userId }:
     
     setLoading(true);
     try {
-      // 1. Buscar todos os pacientes que pertencem a este profissional (userId)
+      // 1. Buscar apenas os pacientes que pertencem a este profissional
       const { data: allPatients, error: patientsError } = await supabase
         .from('evaluations')
         .select('id, patient_name')
@@ -38,11 +38,19 @@ const AssignPatientModal = ({ isOpen, onClose, visitorId, visitorName, userId }:
 
       if (patientsError) throw patientsError;
 
-      // 2. Buscar associações existentes para identificar o que já está ocupado
-      // O RLS já garante que só veremos associações dos nossos próprios visitantes
+      // 2. Buscar associações existentes APENAS dos visitantes deste profissional
+      // Isso evita que o código tente processar dados de outros usuários do sistema
+      const { data: myVisitors } = await supabase
+        .from('visitors')
+        .select('id')
+        .eq('created_by', userId);
+      
+      const myVisitorIds = myVisitors?.map(v => v.id) || [];
+
       const { data: allAssigned, error: assignedError } = await supabase
         .from('visitor_evaluations')
-        .select('evaluation_id, visitor_id');
+        .select('evaluation_id, visitor_id')
+        .in('visitor_id', myVisitorIds);
 
       if (assignedError) throw assignedError;
 
@@ -57,26 +65,14 @@ const AssignPatientModal = ({ isOpen, onClose, visitorId, visitorName, userId }:
         .map(a => a.evaluation_id) || [];
       
       // 3. Filtrar a lista:
-      // Mostramos o paciente se:
-      // - Ele já estiver com o visitante atual (para permitir remover)
-      // - OU se ele NÃO estiver com nenhum outro visitante
+      // Mostramos o paciente se ele for do profissional e não estiver com outro visitante
       const availablePatients = allPatients ? allPatients.filter(p => {
         const isWithCurrent = currentVisitorAssigned.includes(p.id);
         const isWithOthers = otherVisitorsAssigned.includes(p.id);
         return isWithCurrent || !isWithOthers;
       }) : [];
 
-      // Ordenar: primeiro os que já estão autorizados para este visitante
-      const sortedPatients = [...availablePatients].sort((a, b) => {
-        const aAssigned = currentVisitorAssigned.includes(a.id);
-        const bAssigned = currentVisitorAssigned.includes(b.id);
-        
-        if (aAssigned && !bAssigned) return -1;
-        if (!aAssigned && bAssigned) return 1;
-        return a.patient_name.localeCompare(b.patient_name);
-      });
-
-      setPatients(sortedPatients);
+      setPatients(availablePatients);
       setAssignedIds(currentVisitorAssigned);
     } catch (error) {
       console.error('Erro ao carregar dados de autorização:', error);
@@ -129,7 +125,7 @@ const AssignPatientModal = ({ isOpen, onClose, visitorId, visitorName, userId }:
   );
 
   return (
-    <div className="fixed inset-0 z-[130] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
+    <div className="fixed inset-0 z-[130] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
       <div className="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[80vh] animate-in zoom-in-95 duration-300">
         <div className="p-8 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
           <div>

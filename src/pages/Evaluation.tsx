@@ -798,6 +798,7 @@ const Evaluation = () => {
   }
 
   const isFinalTab = activeTab === 'historico-evolucoes' || activeTab === 'funcional';
+  const canGoNext = isViewMode || !isFinalTab || isFormDirty;
 
   return (
     <div className="min-h-screen bg-blue-50 flex">
@@ -1779,10 +1780,10 @@ const Evaluation = () => {
               {!(isViewMode && activeTab === 'historico-evolucoes') && (
                 <button 
                   onClick={handleNext}
-                  disabled={isSaving || (isFinalTab && !isFormDirty)}
+                  disabled={isSaving || !canGoNext}
                   className="bg-slate-100 text-blue-600 font-black flex items-center gap-2 px-4 md:px-6 py-3 rounded-2xl hover:bg-blue-600 hover:text-white transition-all group text-sm disabled:opacity-50"
                 >
-                  {isFinalTab ? (id ? 'Atualizar' : 'Finalizar') : 'Próximo'} 
+                  {(isViewMode || !isFinalTab) ? 'Próximo' : (id ? 'Atualizar' : 'Finalizar')} 
                   <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
                 </button>
               )}

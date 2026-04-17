@@ -28,33 +28,45 @@ const AssignPatientModal = ({ isOpen, onClose, visitorId, visitorName, userId }:
     if (!isOpen || !visitorId) return;
     setLoading(true);
     try {
-      // Buscar todos os pacientes do profissional
+      // 1. Buscar todos os pacientes do profissional
       const { data: allPatients } = await supabase
         .from('evaluations')
         .select('id, patient_name')
         .eq('user_id', userId)
         .order('patient_name', { ascending: true });
 
-      // Buscar pacientes já associados a este visitante
-      const { data: assigned } = await supabase
+      // 2. Buscar TODAS as associações de pacientes feitas por este profissional
+      // Isso nos permite saber quais pacientes já estão com outros usuários
+      const { data: allAssigned } = await supabase
         .from('visitor_evaluations')
-        .select('evaluation_id')
-        .eq('visitor_id', visitorId);
+        .select('evaluation_id, visitor_id');
 
-      const assignedIdsList = assigned?.map(a => a.evaluation_id) || [];
+      const assignedToCurrentList = allAssigned
+        ?.filter(a => a.visitor_id === visitorId)
+        .map(a => a.evaluation_id) || [];
+
+      const assignedToOthersList = allAssigned
+        ?.filter(a => a.visitor_id !== visitorId)
+        .map(a => a.evaluation_id) || [];
       
-      // Ordenar: primeiro os autorizados, depois por nome
-      const sortedPatients = allPatients ? [...allPatients].sort((a, b) => {
-        const aAssigned = assignedIdsList.includes(a.id);
-        const bAssigned = assignedIdsList.includes(b.id);
+      // 3. Filtrar: Mostrar apenas pacientes que NÃO estão com outros usuários
+      // Pacientes já associados ao usuário ATUAL devem aparecer para permitir a exclusão
+      const availablePatients = allPatients ? allPatients.filter(p => 
+        !assignedToOthersList.includes(p.id)
+      ) : [];
+
+      // Ordenar: primeiro os autorizados (do usuário atual), depois por nome
+      const sortedPatients = [...availablePatients].sort((a, b) => {
+        const aAssigned = assignedToCurrentList.includes(a.id);
+        const bAssigned = assignedToCurrentList.includes(b.id);
         
         if (aAssigned && !bAssigned) return -1;
         if (!aAssigned && bAssigned) return 1;
         return a.patient_name.localeCompare(b.patient_name);
-      }) : [];
+      });
 
       setPatients(sortedPatients);
-      setAssignedIds(assignedIdsList);
+      setAssignedIds(assignedToCurrentList);
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
     } finally {
@@ -170,7 +182,8 @@ const AssignPatientModal = ({ isOpen, onClose, visitorId, visitorName, userId }:
             })
           ) : (
             <div className="text-center py-12 text-slate-400">
-              <p className="font-medium">Nenhum paciente encontrado.</p>
+              <p className="font-medium">Nenhum paciente disponível para autorização.</p>
+              <p className="text-[10px] mt-1 uppercase font-bold">Pacientes já vinculados a outros usuários não aparecem aqui.</p>
             </div>
           )}
         </div>

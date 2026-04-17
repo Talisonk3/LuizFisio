@@ -88,10 +88,8 @@ const Share = () => {
   }, [user]);
 
   const toggleVisitorStatus = async (id: string, currentStatus: boolean) => {
-    // Se estiver tentando desativar (mudar de true para false)
     if (currentStatus === true) {
       try {
-        // Verificar se existem pacientes vinculados
         const { count, error: countError } = await supabase
           .from('visitor_evaluations')
           .select('*', { count: 'exact', head: true })
@@ -212,8 +210,13 @@ const Share = () => {
 
                       <button
                         onClick={() => setAssignModal({ isOpen: true, visitorId: visitor.id, visitorName: visitor.username })}
-                        className="p-2.5 md:p-3 bg-purple-50 text-purple-600 rounded-xl hover:bg-purple-600 hover:text-white transition-all shadow-sm"
-                        title="Autorizar Pacientes"
+                        disabled={!visitor.is_active}
+                        className={`p-2.5 md:p-3 rounded-xl transition-all shadow-sm ${
+                          visitor.is_active 
+                          ? 'bg-purple-50 text-purple-600 hover:bg-purple-600 hover:text-white' 
+                          : 'bg-slate-50 text-slate-300 cursor-not-allowed'
+                        }`}
+                        title={visitor.is_active ? "Autorizar Pacientes" : "Usuário inativo"}
                       >
                         <UserPlus size={18} className="md:w-5 md:h-5" />
                       </button>

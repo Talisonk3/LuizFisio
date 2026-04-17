@@ -32,7 +32,14 @@ const ShareModal = ({ isOpen, onClose, onSuccess, userId }: ShareModalProps) => 
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value.trimStart() }));
+    let filteredValue = value.trimStart(); // Impede espaço no início
+
+    if (name === 'username') {
+      // Aceita apenas letras (incluindo acentuadas) e espaços
+      filteredValue = filteredValue.replace(/[^a-zA-ZÀ-ÿ\s]/g, '');
+    }
+
+    setFormData(prev => ({ ...prev, [name]: filteredValue }));
   };
 
   const handleSave = async () => {
@@ -111,7 +118,7 @@ const ShareModal = ({ isOpen, onClose, onSuccess, userId }: ShareModalProps) => 
                   value={formData.username}
                   onChange={handleInputChange}
                   className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all"
-                  placeholder="Ex: assistente_clinica"
+                  placeholder="Ex: assistente clinica"
                 />
               </div>
             </div>

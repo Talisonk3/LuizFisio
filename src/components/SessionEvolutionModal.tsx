@@ -58,12 +58,8 @@ const SessionEvolutionModal = ({
     if (dateStr.length !== 10) return false;
     const [d, m, y] = dateStr.split('/').map(Number);
     const date = new Date(y, m - 1, d);
-    
-    // Verifica se a data é válida no calendário (ex: evita 31/02)
     const isCalendarValid = date.getFullYear() === y && date.getMonth() === m - 1 && date.getDate() === d;
-    // Verifica se o ano é razoável (maior que 1900)
     const isYearValid = y > 1900;
-    
     return isCalendarValid && isYearValid;
   };
 
@@ -288,11 +284,9 @@ const SessionEvolutionModal = ({
     } catch (error: any) {
       console.error('Erro ao salvar evolução:', error);
       let userMessage = "Não foi possível salvar a evolução. Tente novamente.";
-      
       if (error.message?.includes('out of range')) {
         userMessage = "A data informada está fora do intervalo aceito pelo sistema. Por favor, utilize uma data válida.";
       }
-
       setAlertConfig({
         isOpen: true,
         type: 'error',
@@ -322,18 +316,18 @@ const SessionEvolutionModal = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[140] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
-      <div className="bg-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-300">
-        <div className="p-8 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
+    <div className="fixed inset-0 z-[140] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+      <div className="bg-white w-full max-w-2xl rounded-[2rem] md:rounded-[2.5rem] shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-300">
+        <div className="p-6 md:p-8 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
           <div className="flex items-center gap-3">
-            <div className="bg-emerald-600 p-2.5 rounded-xl text-white shadow-lg shadow-emerald-100">
-              <MessageSquarePlus size={24} />
+            <div className="bg-emerald-600 p-2 md:p-2.5 rounded-xl text-white shadow-lg shadow-emerald-100">
+              <MessageSquarePlus size={24} className="w-5 h-5 md:w-6 md:h-6" />
             </div>
-            <div>
-              <h3 className="text-xl font-bold text-slate-800 tracking-tight">
+            <div className="min-w-0">
+              <h3 className="text-lg md:text-xl font-bold text-slate-800 tracking-tight truncate">
                 {evolutionData ? 'Editar Evolução' : 'Nova Evolução'}
               </h3>
-              <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">{patientName}</p>
+              <p className="text-[10px] md:text-xs text-slate-500 font-medium uppercase tracking-wider truncate">{patientName}</p>
             </div>
           </div>
           <button onClick={onClose} className="p-2 text-slate-400 hover:bg-white rounded-xl transition-all shadow-sm">
@@ -341,9 +335,9 @@ const SessionEvolutionModal = ({
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-8">
+        <div className="flex-1 overflow-y-auto p-6 md:p-8">
           <div className="space-y-6">
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
               <div className="col-span-2 md:col-span-1">
                 <label className={labelClasses}>Data da Sessão <span className="text-red-500">*</span></label>
                 <input 
@@ -413,15 +407,15 @@ const SessionEvolutionModal = ({
               </div>
             </div>
 
-            <div className="bg-slate-50 p-6 rounded-3xl border border-slate-200">
-              <label className="text-sm font-bold text-slate-700 mb-4 block ml-1">Escala Visual Analógica de Dor (EVA)</label>
-              <div className="flex flex-wrap gap-2 justify-between">
+            <div className="bg-slate-50 p-4 md:p-6 rounded-3xl border border-slate-200">
+              <label className="text-xs md:text-sm font-bold text-slate-700 mb-4 block ml-1">Escala Visual Analógica de Dor (EVA)</label>
+              <div className="flex flex-wrap gap-1.5 md:gap-2 justify-between">
                 {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
                   <button
                     key={num}
                     type="button"
                     onClick={() => setFormData(prev => ({ ...prev, pain_scale: num.toString() }))}
-                    className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${
+                    className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold transition-all text-xs md:text-sm ${
                       formData.pain_scale === num.toString()
                       ? `${getPainColor(num)} text-white scale-110 shadow-lg ring-4 ring-white`
                       : 'bg-white text-slate-400 border border-slate-200 hover:border-slate-400'
@@ -431,7 +425,7 @@ const SessionEvolutionModal = ({
                   </button>
                 ))}
               </div>
-              <div className="flex justify-between mt-3 px-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+              <div className="flex justify-between mt-3 px-1 text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                 <span>Sem Dor</span>
                 <span>Dor Moderada</span>
                 <span>Dor Máxima</span>
@@ -445,24 +439,24 @@ const SessionEvolutionModal = ({
                 value={formData.evolution_text}
                 onChange={handleInputChange}
                 placeholder="Descreva o atendimento, condutas e resposta do paciente..."
-                className={`${getInputClasses('evolution_text')} h-64 resize-none text-slate-700`}
+                className={`${getInputClasses('evolution_text')} h-48 md:h-64 resize-none text-slate-700`}
               />
             </div>
           </div>
         </div>
 
-        <div className="p-8 bg-slate-50/50 border-t border-slate-100 flex gap-3">
+        <div className="p-6 md:p-8 bg-slate-50/50 border-t border-slate-100 flex flex-col sm:flex-row gap-3">
           <button
             onClick={handleSave}
             disabled={isSaving || !isDirty}
-            className="flex-1 bg-emerald-600 text-white py-4 rounded-2xl flex items-center justify-center gap-2 hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-100 disabled:opacity-50 font-bold"
+            className="flex-1 bg-emerald-600 text-white py-3.5 md:py-4 rounded-2xl flex items-center justify-center gap-2 hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-100 disabled:opacity-50 font-bold text-sm md:text-base"
           >
             {isSaving ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
             {evolutionData ? 'Atualizar Evolução' : 'Salvar Evolução'}
           </button>
           <button
             onClick={onClose}
-            className="px-8 bg-white text-slate-600 py-4 rounded-2xl font-bold border border-slate-200 hover:bg-slate-100 transition-all"
+            className="px-8 bg-white text-slate-600 py-3.5 md:py-4 rounded-2xl font-bold border border-slate-200 hover:bg-slate-100 transition-all text-sm md:text-base"
           >
             Cancelar
           </button>

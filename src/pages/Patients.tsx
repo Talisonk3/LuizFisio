@@ -198,7 +198,7 @@ const Patients = () => {
               <h1 className="text-2xl md:text-3xl font-extrabold text-slate-800 tracking-tight">
                 {isVisitor ? 'Pacientes Autorizados' : 'Meus Pacientes'}
               </h1>
-              <p className="text-sm md:text-base text-slate-500">
+              <p className="text-xs md:text-base text-slate-500">
                 {isVisitor ? 'Visualize as fichas clínicas autorizadas.' : 'Gerencie o histórico clínico de seus atendimentos.'}
               </p>
             </div>
@@ -235,7 +235,7 @@ const Patients = () => {
                   <div className="flex-1 min-w-0">
                     <button 
                       onClick={() => navigate(`/avaliacao/${patient.id}?mode=view`)} 
-                      className="font-bold text-slate-800 text-base md:text-lg hover:text-blue-600 transition-colors text-left truncate w-full block"
+                      className="font-bold text-slate-800 text-sm md:text-lg hover:text-blue-600 transition-colors text-left truncate w-full block"
                       title={getFullFormattedName(patient.patient_name)}
                     >
                       {formatDisplayName(patient.patient_name)}

@@ -58,12 +58,12 @@ const NotificationModal = ({
   const { icon: Icon, color, bg, button } = config[type];
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
-      <div className="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl shadow-slate-900/20 border border-slate-100 overflow-hidden animate-in zoom-in-95 duration-300">
-        <div className="p-8">
+    <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
+      <div className="bg-white w-full max-w-md rounded-[2rem] md:rounded-[2.5rem] shadow-2xl shadow-slate-900/20 border border-slate-100 overflow-hidden animate-in zoom-in-95 duration-300 max-h-[90vh] flex flex-col">
+        <div className="p-6 md:p-8 overflow-y-auto">
           <div className="flex justify-between items-start mb-6">
-            <div className={`${bg} p-4 rounded-2xl ${color}`}>
-              <Icon size={32} />
+            <div className={`${bg} p-3 md:p-4 rounded-2xl ${color}`}>
+              <Icon size={28} className="md:w-8 md:h-8" />
             </div>
             <button 
               onClick={onClose}
@@ -73,10 +73,10 @@ const NotificationModal = ({
             </button>
           </div>
           
-          <h3 className="text-2xl font-extrabold text-slate-800 mb-3 tracking-tight">
+          <h3 className="text-xl md:text-2xl font-extrabold text-slate-800 mb-3 tracking-tight">
             {title}
           </h3>
-          <p className="text-slate-500 leading-relaxed mb-8">
+          <p className="text-sm md:text-base text-slate-500 leading-relaxed mb-8">
             {message}
           </p>
           
@@ -85,13 +85,13 @@ const NotificationModal = ({
               <>
                 <button
                   onClick={onConfirm}
-                  className={`flex-1 text-white py-4 rounded-2xl font-bold transition-all shadow-lg ${button}`}
+                  className={`flex-1 text-white py-3.5 md:py-4 rounded-2xl font-bold transition-all shadow-lg text-sm md:text-base ${button}`}
                 >
                   {confirmLabel}
                 </button>
                 <button
                   onClick={onClose}
-                  className="flex-1 bg-slate-100 text-slate-600 py-4 rounded-2xl font-bold hover:bg-slate-200 transition-all"
+                  className="flex-1 bg-slate-100 text-slate-600 py-3.5 md:py-4 rounded-2xl font-bold hover:bg-slate-200 transition-all text-sm md:text-base"
                 >
                   {cancelLabel}
                 </button>
@@ -99,7 +99,7 @@ const NotificationModal = ({
             ) : (
               <button
                 onClick={onClose}
-                className={`w-full text-white py-4 rounded-2xl font-bold transition-all shadow-lg ${button}`}
+                className={`w-full text-white py-3.5 md:py-4 rounded-2xl font-bold transition-all shadow-lg text-sm md:text-base ${button}`}
               >
                 Entendido
               </button>

@@ -771,12 +771,12 @@ const Evaluation = () => {
   ];
 
   const getInputClasses = (fieldName: string) => {
-    const base = "w-full p-3 bg-slate-50 border rounded-2xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all hover:border-slate-300 placeholder:text-slate-400 appearance-none disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed";
+    const base = "w-full p-3 bg-slate-50 border rounded-2xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all hover:border-slate-300 placeholder:text-slate-400 appearance-none disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed text-sm md:text-base";
     const errorState = errors.includes(fieldName) ? "border-red-500 bg-red-50" : "border-slate-200";
     return `${base} ${errorState}`;
   };
 
-  const labelClasses = "text-sm font-semibold text-slate-600 mb-1 block ml-1";
+  const labelClasses = "text-xs md:text-sm font-semibold text-slate-600 mb-1 block ml-1";
 
   const getPainColor = (value: number) => {
     if (value === 0) return 'bg-green-500';
@@ -865,7 +865,6 @@ const Evaluation = () => {
         <div className="max-w-4xl mx-auto">
           <header className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div className="w-full md:w-auto flex items-center gap-3">
-              {/* Botão Home visível apenas em mobile/tablet */}
               <button 
                 onClick={handleGoHome}
                 className="lg:hidden p-3 bg-white border border-slate-200 rounded-2xl text-slate-400 hover:text-blue-600 transition-all shadow-sm"
@@ -873,11 +872,11 @@ const Evaluation = () => {
               >
                 <Home size={20} />
               </button>
-              <div>
-                <h1 className="text-2xl md:text-3xl font-extrabold text-slate-800 tracking-tight">
+              <div className="min-w-0">
+                <h1 className="text-xl md:text-3xl font-extrabold text-slate-800 tracking-tight truncate">
                   {isViewMode ? 'Visualizar Ficha' : (id ? 'Editar Ficha' : 'Nova Avaliação')}
                 </h1>
-                <p className="text-slate-500 mt-1 text-sm md:text-base">
+                <p className="text-slate-500 mt-1 text-xs md:text-base truncate">
                   {id ? `${isViewMode ? 'Visualizando' : 'Editando'} dados de ${formData.patient_name}` : 'Preencha os dados clínicos do seu paciente.'}
                 </p>
               </div>
@@ -905,14 +904,14 @@ const Evaluation = () => {
             </div>
           </header>
 
-          <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] shadow-xl shadow-slate-200/50 border border-slate-100 p-6 md:p-12">
+          <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] shadow-xl shadow-slate-200/50 border border-slate-100 p-5 md:p-12">
             {activeTab === 'identificacao' && (
               <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
                   <div className="bg-blue-100 p-2 rounded-lg text-blue-600"><User size={20} /></div>
                   <h3 className="text-lg md:text-xl font-bold text-slate-800">Dados de Identificação</h3>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-8">
                   <div>
                     <label className={labelClasses}>Nome Completo <span className="text-red-500">*</span></label>
                     <input disabled={isViewMode} name="patient_name" value={formData.patient_name} onChange={handleInputChange} type="text" className={getInputClasses('patient_name')} placeholder="Ex: João da Silva Santos" />
@@ -949,7 +948,7 @@ const Evaluation = () => {
                       disabled={isViewMode}
                     />
                   </div>
-                  <div className="md:col-span-2 grid grid-cols-4 gap-4">
+                  <div className="md:col-span-2 grid grid-cols-4 gap-3 md:gap-4">
                     <div className="col-span-3">
                       <label className={labelClasses}>Endereço <span className="text-red-500">*</span></label>
                       <input disabled={isViewMode} name="address" value={formData.address} onChange={handleInputChange} type="text" className={getInputClasses('address')} placeholder="Rua, bairro, cidade" />
@@ -992,14 +991,14 @@ const Evaluation = () => {
                         </button>
                       )}
                     </div>
-                    <div className="flex gap-4">
+                    <div className="flex gap-3 md:gap-4">
                       {['Não', 'Sim'].map((option) => (
                         <button
                           key={option}
                           type="button"
                           disabled={isViewMode}
                           onClick={() => setFormData(prev => ({ ...prev, has_caregiver: option }))}
-                          className={`px-6 py-2 rounded-xl border transition-all font-medium ${
+                          className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl border transition-all font-medium text-sm md:text-base ${
                             formData.has_caregiver === option 
                             ? 'bg-blue-600 text-white border-blue-600 shadow-md' 
                             : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
@@ -1012,7 +1011,7 @@ const Evaluation = () => {
                     
                     {formData.has_caregiver === 'Sim' && (
                       <div className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-8">
                           <div>
                             <label className={labelClasses}>Nome do Responsável 1 <span className="text-red-500">*</span></label>
                             <input 
@@ -1041,7 +1040,7 @@ const Evaluation = () => {
                         </div>
 
                         {visibleCaregivers >= 2 && (
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 animate-in fade-in slide-in-from-top-2 duration-300">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-8 animate-in fade-in slide-in-from-top-2 duration-300">
                             <div>
                               <label className={labelClasses}>Nome do Responsável 2 <span className="text-red-500">*</span></label>
                               <input 
@@ -1081,7 +1080,7 @@ const Evaluation = () => {
                         )}
 
                         {visibleCaregivers >= 3 && (
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 animate-in fade-in slide-in-from-top-2 duration-300">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-8 animate-in fade-in slide-in-from-top-2 duration-300">
                             <div>
                               <label className={labelClasses}>Nome do Responsável 3 <span className="text-red-500">*</span></label>
                               <input 
@@ -1124,8 +1123,8 @@ const Evaluation = () => {
                   </div>
 
                   <div className="border-t border-slate-100 pt-8 md:col-span-2">
-                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Informações Médicas (Opcional)</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+                    <h4 className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Informações Médicas (Opcional)</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-8">
                       <div>
                         <label className={labelClasses}>Médico Responsável</label>
                         <input disabled={isViewMode} name="responsible_doctor" value={formData.responsible_doctor} onChange={handleInputChange} type="text" className={getInputClasses('responsible_doctor')} placeholder="Nome do médico" />
@@ -1146,7 +1145,7 @@ const Evaluation = () => {
                   <div className="bg-blue-100 p-2 rounded-lg text-blue-600"><Activity size={20} /></div>
                   <h3 className="text-lg md:text-xl font-bold text-slate-800">Sinais Vitais e Exame Físico</h3>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 md:gap-6">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 md:gap-6">
                   <div>
                     <label className={labelClasses}>PA (mmHg)</label>
                     <input disabled={isViewMode} name="blood_pressure" value={formData.blood_pressure} onChange={handleInputChange} type="text" className={getInputClasses('blood_pressure')} placeholder="120/80" maxLength={6} />
@@ -1168,7 +1167,7 @@ const Evaluation = () => {
                     <input disabled={isViewMode} name="saturation" value={formData.saturation} onChange={handleInputChange} type="text" className={getInputClasses('saturation')} placeholder="98" maxLength={3} />
                   </div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-8">
                   <div>
                     <label className={labelClasses}>Ausculta Cardíaca</label>
                     <textarea disabled={isViewMode} name="cardiac_auscultation" value={formData.cardiac_auscultation} onChange={handleInputChange} className={`${getInputClasses('cardiac_auscultation')} h-24 resize-none`} placeholder="Bulhas rítmicas, sopros..."></textarea>
@@ -1182,14 +1181,14 @@ const Evaluation = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-slate-100 pt-8">
                   <div className="space-y-4">
                     <label className={labelClasses}>Alterações Auditivas</label>
-                    <div className="flex gap-4">
+                    <div className="flex gap-3 md:gap-4">
                       {['Não', 'Sim'].map((option) => (
                         <button
                           key={option}
                           type="button"
                           disabled={isViewMode}
                           onClick={() => setFormData(prev => ({ ...prev, auditory_alteration: option }))}
-                          className={`px-6 py-2 rounded-xl border transition-all font-medium ${
+                          className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl border transition-all font-medium text-sm md:text-base ${
                             formData.auditory_alteration === option 
                             ? 'bg-blue-600 text-white border-blue-600 shadow-md' 
                             : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
@@ -1217,14 +1216,14 @@ const Evaluation = () => {
 
                   <div className="space-y-4">
                     <label className={labelClasses}>Alterações Visuais</label>
-                    <div className="flex gap-4">
+                    <div className="flex gap-3 md:gap-4">
                       {['Não', 'Sim'].map((option) => (
                         <button
                           key={option}
                           type="button"
                           disabled={isViewMode}
                           onClick={() => setFormData(prev => ({ ...prev, visual_alteration: option }))}
-                          className={`px-6 py-2 rounded-xl border transition-all font-medium ${
+                          className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl border transition-all font-medium text-sm md:text-base ${
                             formData.visual_alteration === option 
                             ? 'bg-blue-600 text-white border-blue-600 shadow-md' 
                             : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
@@ -1254,14 +1253,14 @@ const Evaluation = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-slate-100 pt-8">
                   <div className="space-y-4">
                     <label className={labelClasses}>Dispositivo para Auxílio de Marcha</label>
-                    <div className="flex gap-4">
+                    <div className="flex gap-3 md:gap-4">
                       {['Não', 'Sim'].map((option) => (
                         <button
                           key={option}
                           type="button"
                           disabled={isViewMode}
                           onClick={() => setFormData(prev => ({ ...prev, gait_aid: option }))}
-                          className={`px-6 py-2 rounded-xl border transition-all font-medium ${
+                          className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl border transition-all font-medium text-sm md:text-base ${
                             formData.gait_aid === option 
                             ? 'bg-blue-600 text-white border-blue-600 shadow-md' 
                             : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
@@ -1289,14 +1288,14 @@ const Evaluation = () => {
 
                   <div className="space-y-4">
                     <label className={labelClasses}>Exames Complementares?</label>
-                    <div className="flex gap-4">
+                    <div className="flex gap-3 md:gap-4">
                       {['Não', 'Sim'].map((option) => (
                         <button
                           key={option}
                           type="button"
                           disabled={isViewMode}
                           onClick={() => setFormData(prev => ({ ...prev, has_complementary_exams: option }))}
-                          className={`px-6 py-2 rounded-xl border transition-all font-medium ${
+                          className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl border transition-all font-medium text-sm md:text-base ${
                             formData.has_complementary_exams === option 
                             ? 'bg-blue-600 text-white border-blue-600 shadow-md' 
                             : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
@@ -1322,7 +1321,7 @@ const Evaluation = () => {
                         
                         <div>
                           <label className={labelClasses}>Arquivos dos Exames (Imagens ou PDF - Máx. 10)</label>
-                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 mt-2">
+                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 md:gap-4 mt-2">
                             {examFiles.map((file, index) => (
                               <div key={index} className="relative group aspect-square rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 flex items-center justify-center">
                                 {file.startsWith('data:application/pdf') ? (
@@ -1392,7 +1391,7 @@ const Evaluation = () => {
                   <h3 className="text-lg md:text-xl font-bold text-slate-800">Anamnese Completa</h3>
                 </div>
                 <div className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-8">
                     <div>
                       <label className={labelClasses}>Data da Avaliação</label>
                       <input disabled={isViewMode} name="evaluation_date" value={formData.evaluation_date} onChange={handleInputChange} type="text" className={getInputClasses('evaluation_date')} placeholder="DD/MM/AAAA" maxLength={10} />
@@ -1405,15 +1404,15 @@ const Evaluation = () => {
                   </div>
                   
                   <div className="bg-slate-50 p-4 md:p-6 rounded-3xl border border-slate-200">
-                    <label className="text-sm font-bold text-slate-700 mb-4 block ml-1">Escala Visual Analógica de Dor (EVA)</label>
-                    <div className="flex flex-wrap gap-2 justify-between">
+                    <label className="text-xs md:text-sm font-bold text-slate-700 mb-4 block ml-1">Escala Visual Analógica de Dor (EVA)</label>
+                    <div className="flex flex-wrap gap-1.5 md:gap-2 justify-between">
                       {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
                         <button
                           key={num}
                           type="button"
                           disabled={isViewMode}
                           onClick={() => setFormData(prev => ({ ...prev, pain_scale: num.toString() }))}
-                          className={`w-9 h-9 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center font-bold transition-all text-sm ${
+                          className={`w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center font-bold transition-all text-xs md:text-sm ${
                             formData.pain_scale === num.toString()
                             ? `${getPainColor(num)} text-white scale-110 shadow-lg ring-4 ring-white`
                             : 'bg-white text-slate-400 border border-slate-200 hover:border-slate-400'
@@ -1423,14 +1422,14 @@ const Evaluation = () => {
                         </button>
                       ))}
                     </div>
-                    <div className="flex justify-between mt-3 px-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                    <div className="flex justify-between mt-3 px-1 text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                       <span>Sem Dor</span>
                       <span>Dor Moderada</span>
                       <span>Dor Máxima</span>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-8">
                     <div>
                       <label className={labelClasses}>O que piora a dor?</label>
                       <textarea disabled={isViewMode} name="pain_worsening_factors" value={formData.pain_worsening_factors} onChange={handleInputChange} className={`${getInputClasses('pain_worsening_factors')} h-24 resize-none`} placeholder="Ex: Movimentos bruscos, frio, ficar em pé..."></textarea>
@@ -1457,18 +1456,18 @@ const Evaluation = () => {
                   </div>
 
                   <div className="border-t border-slate-100 pt-8 space-y-8">
-                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Histórico Social</h4>
+                    <h4 className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-wider">Histórico Social</h4>
                     
                     <div className="space-y-4">
                       <label className={labelClasses}>Consome bebida alcoólica?</label>
-                      <div className="flex gap-4">
+                      <div className="flex gap-3 md:gap-4">
                         {['Não', 'Sim'].map((option) => (
                           <button
                             key={option}
                             type="button"
                             disabled={isViewMode}
                             onClick={() => setFormData(prev => ({ ...prev, drinks: option }))}
-                            className={`px-6 py-2 rounded-xl border transition-all font-medium ${
+                            className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl border transition-all font-medium text-sm md:text-base ${
                               formData.drinks === option 
                               ? 'bg-blue-600 text-white border-blue-600 shadow-md' 
                               : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
@@ -1496,14 +1495,14 @@ const Evaluation = () => {
 
                     <div className="space-y-4">
                       <label className={labelClasses}>É fumante ou ex-fumante?</label>
-                      <div className="flex gap-4">
+                      <div className="flex gap-3 md:gap-4">
                         {['Não', 'Sim'].map((option) => (
                           <button
                             key={option}
                             type="button"
                             disabled={isViewMode}
                             onClick={() => setFormData(prev => ({ ...prev, smokes: option }))}
-                            className={`px-6 py-2 rounded-xl border transition-all font-medium ${
+                            className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl border transition-all font-medium text-sm md:text-base ${
                               formData.smokes === option 
                               ? 'bg-blue-600 text-white border-blue-600 shadow-md' 
                               : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
@@ -1531,14 +1530,14 @@ const Evaluation = () => {
 
                     <div className="space-y-4">
                       <label className={labelClasses}>Pratica atividade física?</label>
-                      <div className="flex gap-4">
+                      <div className="flex gap-3 md:gap-4">
                         {['Não', 'Sim'].map((option) => (
                           <button
                             key={option}
                             type="button"
                             disabled={isViewMode}
                             onClick={() => setFormData(prev => ({ ...prev, sedentary: option }))}
-                            className={`px-6 py-2 rounded-xl border transition-all font-medium ${
+                            className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl border transition-all font-medium text-sm md:text-base ${
                               formData.sedentary === option 
                               ? 'bg-blue-600 text-white border-blue-600 shadow-md' 
                               : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
@@ -1568,14 +1567,14 @@ const Evaluation = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-slate-100 pt-8">
                     <div className="space-y-4">
                       <label className={labelClasses}>Faz uso de medicamentos?</label>
-                      <div className="flex gap-4">
+                      <div className="flex gap-3 md:gap-4">
                         {['Não', 'Sim'].map((option) => (
                           <button
                             key={option}
                             type="button"
                             disabled={isViewMode}
                             onClick={() => setFormData(prev => ({ ...prev, has_medications: option }))}
-                            className={`px-6 py-2 rounded-xl border transition-all font-medium ${
+                            className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl border transition-all font-medium text-sm md:text-base ${
                               formData.has_medications === option 
                               ? 'bg-blue-600 text-white border-blue-600 shadow-md' 
                               : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
@@ -1603,14 +1602,14 @@ const Evaluation = () => {
 
                     <div className="space-y-4">
                       <label className={labelClasses}>Cirurgias Prévias?</label>
-                      <div className="flex gap-4">
+                      <div className="flex gap-3 md:gap-4">
                         {['Não', 'Sim'].map((option) => (
                           <button
                             key={option}
                             type="button"
                             disabled={isViewMode}
                             onClick={() => setFormData(prev => ({ ...prev, has_surgeries: option }))}
-                            className={`px-6 py-2 rounded-xl border transition-all font-medium ${
+                            className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl border transition-all font-medium text-sm md:text-base ${
                               formData.has_surgeries === option 
                               ? 'bg-blue-600 text-white border-blue-600 shadow-md' 
                               : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
@@ -1657,7 +1656,7 @@ const Evaluation = () => {
                             type="button"
                             disabled={isViewMode}
                             onClick={() => setFormData(prev => ({ ...prev, muscle_tone_mmss: option }))}
-                            className={`px-4 py-2 rounded-xl border transition-all font-medium text-xs md:text-sm ${
+                            className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl border transition-all font-medium text-xs md:text-sm ${
                               formData.muscle_tone_mmss === option 
                               ? 'bg-blue-600 text-white border-blue-600 shadow-md' 
                               : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
@@ -1678,7 +1677,7 @@ const Evaluation = () => {
                             type="button"
                             disabled={isViewMode}
                             onClick={() => setFormData(prev => ({ ...prev, muscle_tone_mmii: option }))}
-                            className={`px-4 py-2 rounded-xl border transition-all font-medium text-xs md:text-sm ${
+                            className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl border transition-all font-medium text-xs md:text-sm ${
                               formData.muscle_tone_mmii === option 
                               ? 'bg-blue-600 text-white border-blue-600 shadow-md' 
                               : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
@@ -1744,7 +1743,7 @@ const Evaluation = () => {
                     <textarea disabled={isViewMode} name="muscle_strength" value={formData.muscle_strength} onChange={handleInputChange} className={`${getInputClasses('muscle_strength')} h-28 resize-none`} placeholder="Teste de força manual por grupos musculares..."></textarea>
                   </div>
                   <div className="bg-blue-50/50 p-4 md:p-6 rounded-3xl border border-blue-100">
-                    <label className="text-sm font-bold text-blue-700 mb-2 block ml-1">Diagnóstico Fisioterapêutico Final</label>
+                    <label className="text-xs md:text-sm font-bold text-blue-700 mb-2 block ml-1">Diagnóstico Fisioterapêutico Final</label>
                     <textarea disabled={isViewMode} name="physio_diagnosis" value={formData.physio_diagnosis} onChange={handleInputChange} className="w-full p-4 bg-white border border-blue-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all h-32 font-medium text-blue-900 placeholder:text-blue-300 disabled:bg-slate-50 disabled:text-slate-500 text-sm md:text-base" placeholder="Conclusão clínica e objetivos do tratamento..."></textarea>
                   </div>
                 </div>
@@ -1763,7 +1762,7 @@ const Evaluation = () => {
                     const currentIndex = tabs.findIndex(t => t.id === activeTab);
                     setActiveTab(tabs[currentIndex - 1].id);
                   }}
-                  className="flex items-center gap-2 text-slate-400 font-bold hover:text-slate-600 disabled:opacity-20 transition-all px-3 md:px-4 py-2 rounded-xl hover:bg-slate-50 text-sm"
+                  className="flex items-center gap-2 text-slate-400 font-bold hover:text-slate-600 disabled:opacity-20 transition-all px-3 md:px-4 py-2 rounded-xl hover:bg-slate-50 text-xs md:text-sm"
                 >
                   <ChevronLeft size={18} /> <span className="hidden sm:inline">Voltar</span>
                 </button>
@@ -1771,17 +1770,22 @@ const Evaluation = () => {
                 <div />
               )}
               
-              <div className="flex gap-1.5 md:gap-2">
-                {tabs.map((tab) => (
-                  <div key={tab.id} className={`h-1.5 rounded-full transition-all duration-300 ${activeTab === tab.id ? 'w-6 md:w-8 bg-blue-600' : 'w-1.5 md:w-2 bg-slate-200'}`} />
-                ))}
+              <div className="flex flex-col items-center gap-2">
+                <div className="flex gap-1.5 md:gap-2">
+                  {tabs.map((tab) => (
+                    <div key={tab.id} className={`h-1.5 rounded-full transition-all duration-300 ${activeTab === tab.id ? 'w-6 md:w-8 bg-blue-600' : 'w-1.5 md:w-2 bg-slate-200'}`} />
+                  ))}
+                </div>
+                <span className="lg:hidden text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                  {tabs.find(t => t.id === activeTab)?.label}
+                </span>
               </div>
 
               {!(isViewMode && activeTab === 'historico-evolucoes') && (
                 <button 
                   onClick={handleNext}
                   disabled={isSaving || !canGoNext}
-                  className="bg-slate-100 text-blue-600 font-black flex items-center gap-2 px-4 md:px-6 py-3 rounded-2xl hover:bg-blue-600 hover:text-white transition-all group text-sm disabled:opacity-50"
+                  className="bg-slate-100 text-blue-600 font-black flex items-center gap-2 px-4 md:px-6 py-3 rounded-2xl hover:bg-blue-600 hover:text-white transition-all group text-xs md:text-sm disabled:opacity-50"
                 >
                   {(isViewMode || !isFinalTab) ? 'Próximo' : (id ? 'Atualizar' : 'Finalizar')} 
                   <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />

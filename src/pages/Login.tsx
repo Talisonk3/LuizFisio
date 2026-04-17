@@ -231,7 +231,7 @@ const Login = () => {
   if (isForgotPassword && resetSent) {
     return (
       <div className="min-h-screen bg-blue-50 flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white rounded-3xl shadow-2xl p-10 border border-slate-100 text-center">
+        <div className="max-w-md w-full bg-white rounded-3xl shadow-2xl p-8 md:p-10 border border-slate-100 text-center">
           <div className="bg-emerald-100 p-4 rounded-2xl w-fit mx-auto mb-6 text-emerald-600">
             <Mail size={40} />
           </div>
@@ -252,18 +252,18 @@ const Login = () => {
 
   return (
     <div className="min-h-screen bg-blue-50 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-3xl shadow-2xl p-10 border border-slate-100">
+      <div className="max-w-md w-full bg-white rounded-3xl shadow-2xl p-6 md:p-10 border border-slate-100">
         <div className="flex flex-col items-center mb-8">
           <div className={`${isVisitor ? 'bg-purple-600 shadow-purple-200' : 'bg-blue-600 shadow-blue-200'} p-4 rounded-2xl shadow-lg mb-4 transition-colors duration-500`}>
             {isVisitor ? <UserCircle className="text-white w-10 h-10" /> : <Stethoscope className="text-white w-10 h-10" />}
           </div>
-          <h1 className="text-3xl font-black text-slate-800 tracking-tight">FisioSystem</h1>
+          <h1 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tight">FisioSystem</h1>
           <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px] mt-1">
             {isVisitor ? 'Acesso de Visitante' : 'Gestão Fisioterapêutica'}
           </p>
         </div>
 
-        <form onSubmit={handleAuth} className="space-y-5">
+        <form onSubmit={handleAuth} className="space-y-4 md:space-y-5">
           {isSignUp && (
             <div>
               <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-1 block">Nome Completo</label>
@@ -275,7 +275,7 @@ const Login = () => {
                   required
                   value={formData.fullName}
                   onChange={handleInputChange}
-                  className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all"
+                  className="w-full pl-12 pr-4 py-3.5 md:py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-sm md:text-base"
                   placeholder="Seu nome completo"
                 />
               </div>
@@ -293,7 +293,7 @@ const Login = () => {
                   required
                   value={formData.email}
                   onChange={handleInputChange}
-                  className={`w-full pl-12 pr-4 py-4 bg-slate-50 border rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all ${emailError ? 'border-red-500' : 'border-slate-200'}`}
+                  className={`w-full pl-12 pr-4 py-3.5 md:py-4 bg-slate-50 border rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-sm md:text-base ${emailError ? 'border-red-500' : 'border-slate-200'}`}
                   placeholder="seu@email.com"
                 />
               </div>
@@ -314,7 +314,7 @@ const Login = () => {
                     required
                     value={formData.username}
                     onChange={handleInputChange}
-                    className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all"
+                    className="w-full pl-12 pr-4 py-3.5 md:py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-sm md:text-base"
                     placeholder={isVisitor ? "Ex: assistente_clinica" : "Seu usuário"}
                   />
                 </div>
@@ -331,7 +331,7 @@ const Login = () => {
                       required
                       value={formData.email}
                       onChange={handleInputChange}
-                      className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all"
+                      className="w-full pl-12 pr-4 py-3.5 md:py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-sm md:text-base"
                       placeholder="seu@email.com"
                     />
                   </div>
@@ -359,7 +359,7 @@ const Login = () => {
                     required
                     value={formData.password}
                     onChange={handleInputChange}
-                    className="w-full pl-12 pr-12 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all"
+                    className="w-full pl-12 pr-12 py-3.5 md:py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-sm md:text-base"
                     placeholder="••••••••"
                   />
                   <button 
@@ -380,7 +380,75 @@ const Login = () => {
               onClick={() => setRememberMe(!rememberMe)}
               className="flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-blue-600 transition-colors group"
             >
-              {rememberMe ? <CheckSquare size={18} className="text-blue-600" /> : <Square size={18} className="group-hover:border-blue-400" />}
+              {rememberMe ? <CheckSquare size={18} className="text-blue-600" /> : <Square size={18} className="group-hover:borderthink
+The user is pointing out that my previous response was cut off. I need to continue the code block for `src/pages/Login.tsx` exactly where it stopped and then finish the rest of the requested changes for responsiveness.
+
+Looking at the previous output:
+```tsx
+          {!isSignUp && !isVisitor && !isForgotPassword && (
+            <button 
+              type="button"
+              onClick={() => setRememberMe(!rememberMe)}
+              className="flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-blue-600 transition-colors group"
+            >
+              {rememberMe ? <CheckSquare size={18} className="text-blue-600" /> : <Square size={18} className="group-hover:border
+```
+It stopped at `group-hover:border`.
+
+I will continue from there.
+
+Plan:
+1. Complete `src/pages/Login.tsx`.
+2. Update `src/components/NotificationModal.tsx` for better mobile responsiveness (scrollable content, better padding).
+3. Update `src/components/SessionEvolutionModal.tsx` for better mobile responsiveness (grid layout, padding).
+4. Update `src/components/HistoryModal.tsx` for better mobile responsiveness.
+5. Update `src/components/SessionHistoryModal.tsx` for better mobile responsiveness.
+6. Update `src/components/DownloadModal.tsx` for better mobile responsiveness.
+7. Update `src/components/ProfileModal.tsx` for better mobile responsiveness.
+8. Update `src/components/ResetPasswordModal.tsx` for better mobile responsiveness.
+9. Update `src/components/ShareModal.tsx` for better mobile responsiveness.
+10. Update `src/components/AssignPatientModal.tsx` for better mobile responsiveness.
+11. Update `src/components/ManagePasswordModal.tsx` for better mobile responsiveness.
+12. Update `src/components/PatientSelectorModal.tsx` for better mobile responsiveness.
+
+Wait, the user asked to "continue exactly where you left off".
+
+The previous file was `src/pages/Login.tsx`.
+
+Let's finish `src/pages/Login.tsx` first.
+
+Then I should check if I need to update other files mentioned in my previous "thought" process which were part of the "responsiveness" task.
+
+The previous response had:
+1. `src/pages/Evaluation.tsx` (Done)
+2. `src/pages/Patients.tsx` (Done)
+3. `src/pages/Login.tsx` (Cut off)
+
+I will finish `Login.tsx` and then proceed with the other components to ensure full system responsiveness as requested.
+
+Actually, I should probably just provide the full `Login.tsx` again to be safe, or just the continuation. The instructions say "Continue exactly where you left off".
+
+However, `dyad-write` requires the full file content. I cannot just write a partial file.
+
+So I will rewrite the full `src/pages/Login.tsx` and then continue with the other files.
+
+Wait, the user said "Continue exactly where you left off without any preamble". This usually implies just the code. But since I must use `dyad-write` and it must be a complete file, I will provide the complete files for the remaining parts of the responsiveness task.
+
+Files to update for responsiveness:
+- `src/pages/Login.tsx` (Complete)
+- `src/components/NotificationModal.tsx`
+- `src/components/SessionEvolutionModal.tsx`
+- `src/components/HistoryModal.tsx`
+- `src/components/SessionHistoryModal.tsx`
+- `src/components/DownloadModal.tsx`
+- `src/components/ProfileModal.tsx`
+- `src/components/ResetPasswordModal.tsx`
+- `src/components/ShareModal.tsx`
+- `src/components/AssignPatientModal.tsx`
+- `src/components/ManagePasswordModal.tsx`
+- `src/components/PatientSelectorModal.tsx`
+
+I'll start with `Login.tsx`.-blue-400" />}
               Lembrar meus dados
             </button>
           )}

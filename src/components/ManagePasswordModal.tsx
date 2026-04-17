@@ -22,7 +22,11 @@ const ManagePasswordModal = ({ isOpen, onClose, visitorId, visitorName, onSucces
   useEffect(() => {
     const fetchPassword = async () => {
       if (!isOpen || !visitorId) return;
+      
+      // Sempre resetar para oculto ao abrir
+      setShowPassword(false);
       setLoading(true);
+      
       try {
         const { data, error } = await supabase
           .from('visitors')

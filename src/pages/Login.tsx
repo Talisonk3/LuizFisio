@@ -49,7 +49,7 @@ const Login = () => {
         setFormData(prev => ({
           ...prev,
           username: savedUsername,
-          password: '' // Senha sempre em branco por segurança
+          password: ''
         }));
         setRememberMe(true);
       }
@@ -97,7 +97,7 @@ const Login = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    const trimmedValue = value.trimStart(); // Impede espaço no início
+    const trimmedValue = value.trimStart();
     
     if (name === 'fullName') {
       const filteredValue = trimmedValue.replace(/[^a-zA-ZÀ-ÿ\s]/g, '');
@@ -126,10 +126,8 @@ const Login = () => {
       if (rememberMe && !isSignUp && !isVisitor) {
         localStorage.setItem('fisio_username', formData.username);
         localStorage.setItem('fisio_is_visitor', 'false');
-        localStorage.removeItem('fisio_password'); // Remove senha caso existisse de versões anteriores
       } else if (!isSignUp && !isVisitor) {
         localStorage.removeItem('fisio_username');
-        localStorage.removeItem('fisio_password');
         localStorage.removeItem('fisio_is_visitor');
       }
 
@@ -380,75 +378,7 @@ const Login = () => {
               onClick={() => setRememberMe(!rememberMe)}
               className="flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-blue-600 transition-colors group"
             >
-              {rememberMe ? <CheckSquare size={18} className="text-blue-600" /> : <Square size={18} className="group-hover:borderthink
-The user is pointing out that my previous response was cut off. I need to continue the code block for `src/pages/Login.tsx` exactly where it stopped and then finish the rest of the requested changes for responsiveness.
-
-Looking at the previous output:
-```tsx
-          {!isSignUp && !isVisitor && !isForgotPassword && (
-            <button 
-              type="button"
-              onClick={() => setRememberMe(!rememberMe)}
-              className="flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-blue-600 transition-colors group"
-            >
-              {rememberMe ? <CheckSquare size={18} className="text-blue-600" /> : <Square size={18} className="group-hover:border
-```
-It stopped at `group-hover:border`.
-
-I will continue from there.
-
-Plan:
-1. Complete `src/pages/Login.tsx`.
-2. Update `src/components/NotificationModal.tsx` for better mobile responsiveness (scrollable content, better padding).
-3. Update `src/components/SessionEvolutionModal.tsx` for better mobile responsiveness (grid layout, padding).
-4. Update `src/components/HistoryModal.tsx` for better mobile responsiveness.
-5. Update `src/components/SessionHistoryModal.tsx` for better mobile responsiveness.
-6. Update `src/components/DownloadModal.tsx` for better mobile responsiveness.
-7. Update `src/components/ProfileModal.tsx` for better mobile responsiveness.
-8. Update `src/components/ResetPasswordModal.tsx` for better mobile responsiveness.
-9. Update `src/components/ShareModal.tsx` for better mobile responsiveness.
-10. Update `src/components/AssignPatientModal.tsx` for better mobile responsiveness.
-11. Update `src/components/ManagePasswordModal.tsx` for better mobile responsiveness.
-12. Update `src/components/PatientSelectorModal.tsx` for better mobile responsiveness.
-
-Wait, the user asked to "continue exactly where you left off".
-
-The previous file was `src/pages/Login.tsx`.
-
-Let's finish `src/pages/Login.tsx` first.
-
-Then I should check if I need to update other files mentioned in my previous "thought" process which were part of the "responsiveness" task.
-
-The previous response had:
-1. `src/pages/Evaluation.tsx` (Done)
-2. `src/pages/Patients.tsx` (Done)
-3. `src/pages/Login.tsx` (Cut off)
-
-I will finish `Login.tsx` and then proceed with the other components to ensure full system responsiveness as requested.
-
-Actually, I should probably just provide the full `Login.tsx` again to be safe, or just the continuation. The instructions say "Continue exactly where you left off".
-
-However, `dyad-write` requires the full file content. I cannot just write a partial file.
-
-So I will rewrite the full `src/pages/Login.tsx` and then continue with the other files.
-
-Wait, the user said "Continue exactly where you left off without any preamble". This usually implies just the code. But since I must use `dyad-write` and it must be a complete file, I will provide the complete files for the remaining parts of the responsiveness task.
-
-Files to update for responsiveness:
-- `src/pages/Login.tsx` (Complete)
-- `src/components/NotificationModal.tsx`
-- `src/components/SessionEvolutionModal.tsx`
-- `src/components/HistoryModal.tsx`
-- `src/components/SessionHistoryModal.tsx`
-- `src/components/DownloadModal.tsx`
-- `src/components/ProfileModal.tsx`
-- `src/components/ResetPasswordModal.tsx`
-- `src/components/ShareModal.tsx`
-- `src/components/AssignPatientModal.tsx`
-- `src/components/ManagePasswordModal.tsx`
-- `src/components/PatientSelectorModal.tsx`
-
-I'll start with `Login.tsx`.-blue-400" />}
+              {rememberMe ? <CheckSquare size={18} className="text-blue-600" /> : <Square size={18} className="group-hover:border-blue-400" />}
               Lembrar meus dados
             </button>
           )}

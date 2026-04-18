@@ -35,10 +35,10 @@ const UserMenu = () => {
     <div className="relative" ref={menuRef}>
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-3 p-1.5 pr-4 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-2xl transition-all group"
+        className="flex items-center gap-2 md:gap-3 p-1.5 pr-2 md:pr-4 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-2xl transition-all group"
       >
-        <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-100 group-hover:scale-105 transition-transform">
-          <User size={20} />
+        <div className="w-9 h-9 md:w-10 md:h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-100 group-hover:scale-105 transition-transform">
+          <User size={18} className="md:w-5 md:h-5" />
         </div>
         <div className="hidden md:block text-left">
           <p className="text-xs font-black text-slate-800 leading-tight uppercase tracking-tight">
@@ -46,26 +46,30 @@ const UserMenu = () => {
           </p>
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Fisioterapeuta</p>
         </div>
-        <ChevronDown size={16} className={`text-slate-400 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
+        <ChevronDown size={14} className={`text-slate-400 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-3 w-full bg-white border border-slate-100 rounded-[1.5rem] shadow-2xl shadow-slate-200/50 overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200">
-          <div className="p-2">
+        <div className="absolute right-0 mt-3 w-14 sm:w-48 bg-white border border-slate-100 rounded-[1.2rem] sm:rounded-[1.5rem] shadow-2xl shadow-slate-200/50 overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200">
+          <div className="p-1.5 sm:p-2">
             <button
               onClick={openProfile}
-              className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-all"
+              className="w-full flex items-center justify-center sm:justify-start gap-3 px-2 sm:px-4 py-3 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-all"
+              title="Meu Perfil"
             >
-              <UserCircle size={20} />
-              <span className="truncate">Meu Perfil</span>
+              <UserCircle size={20} className="shrink-0" />
+              <span className="hidden sm:inline truncate">Meu Perfil</span>
             </button>
-            <div className="h-px bg-slate-50 my-1 mx-2" />
+            
+            <div className="h-px bg-slate-50 my-1 mx-1 sm:mx-2" />
+            
             <button
               onClick={handleSignOut}
-              className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-red-500 hover:bg-red-50 rounded-xl transition-all"
+              className="w-full flex items-center justify-center sm:justify-start gap-3 px-2 sm:px-4 py-3 text-sm font-bold text-red-500 hover:bg-red-50 rounded-xl transition-all"
+              title="Sair"
             >
-              <LogOut size={20} />
-              <span className="truncate">Sair</span>
+              <LogOut size={20} className="shrink-0" />
+              <span className="hidden sm:inline truncate">Sair</span>
             </button>
           </div>
         </div>

@@ -45,12 +45,10 @@ const DownloadModal = ({ isOpen, onClose, evaluationData, patientName }: Downloa
     let day = numbers.slice(0, 2);
     let month = numbers.slice(2, 4);
     let year = numbers.slice(4, 8);
-    
     if (day && parseInt(day) > 31) day = '31';
     if (day && day !== '0' && day !== '00' && parseInt(day) === 0) day = '01';
     if (month && parseInt(month) > 12) month = '12';
     if (month && month !== '0' && month !== '00' && parseInt(month) === 0) month = '01';
-    
     if (numbers.length <= 2) return day;
     if (numbers.length <= 4) return `${day}/${month}`;
     return `${day}/${month}/${year}`;
@@ -121,20 +119,10 @@ const DownloadModal = ({ isOpen, onClose, evaluationData, patientName }: Downloa
 
   const generatePDF = async () => {
     setError(null);
-
     if (selectedOptions.evolucao) {
-      if (dateRange.start.length > 0 && dateRange.start.length < 10) {
-        setError('Data inicial incompleta.');
-        return;
-      }
-      if (dateRange.end.length > 0 && dateRange.end.length < 10) {
-        setError('Data final incompleta.');
-        return;
-      }
-      if (isFutureDate(dateRange.start) || isFutureDate(dateRange.end)) {
-        setError('Não é permitido selecionar datas futuras.');
-        return;
-      }
+      if (dateRange.start.length > 0 && dateRange.start.length < 10) { setError('Data inicial incompleta.'); return; }
+      if (dateRange.end.length > 0 && dateRange.end.length < 10) { setError('Data final incompleta.'); return; }
+      if (isFutureDate(dateRange.start) || isFutureDate(dateRange.end)) { setError('Não é permitido selecionar datas futuras.'); return; }
     }
 
     setLoading(true);
@@ -143,21 +131,18 @@ const DownloadModal = ({ isOpen, onClose, evaluationData, patientName }: Downloa
       const pageWidth = doc.internal.pageSize.getWidth();
       let currentY = 20;
 
-      // Estilização do Cabeçalho
-      doc.setFillColor(239, 246, 255); // blue-50
+      // Cabeçalho Otimizado
+      doc.setFillColor(239, 246, 255);
       doc.rect(0, 0, pageWidth, 45, 'F');
-      
       doc.setFontSize(24);
-      doc.setTextColor(30, 64, 175); // blue-800
+      doc.setTextColor(30, 64, 175);
       doc.setFont('helvetica', 'bold');
       doc.text('FisioSystem', 20, 25);
-      
       doc.setFontSize(10);
-      doc.setTextColor(100, 116, 139); // slate-500
+      doc.setTextColor(100, 116, 139);
       doc.setFont('helvetica', 'normal');
       doc.text('RELATÓRIO CLÍNICO DIGITAL', 20, 32);
 
-      // Dados do Profissional no Cabeçalho (Direita)
       doc.setFontSize(9);
       doc.setTextColor(30, 64, 175);
       doc.setFont('helvetica', 'bold');
@@ -168,29 +153,24 @@ const DownloadModal = ({ isOpen, onClose, evaluationData, patientName }: Downloa
       doc.text(`Tel: ${professionalInfo?.phone || '-'}`, pageWidth - 20, 32, { align: 'right' });
 
       currentY = 60;
-
-      // Título do Paciente
       doc.setFontSize(18);
-      doc.setTextColor(30, 41, 59); // slate-800
+      doc.setTextColor(30, 41, 59);
       doc.setFont('helvetica', 'bold');
       doc.text(formatName(patientName), 20, currentY);
-      
       doc.setFontSize(9);
-      doc.setTextColor(148, 163, 184); // slate-400
+      doc.setTextColor(148, 163, 184);
       doc.setFont('helvetica', 'normal');
       doc.text(`Documento gerado em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`, 20, currentY + 7);
 
       currentY += 20;
 
       if (selectedOptions.ficha) {
-        // Seção Ficha
-        doc.setFillColor(37, 99, 235); // blue-600
+        doc.setFillColor(37, 99, 235);
         doc.rect(20, currentY, 5, 8, 'F');
         doc.setFontSize(14);
         doc.setTextColor(30, 64, 175);
         doc.setFont('helvetica', 'bold');
         doc.text('Ficha de Avaliação', 28, currentY + 6);
-        
         currentY += 12;
 
         const fichaData = [
@@ -215,85 +195,34 @@ const DownloadModal = ({ isOpen, onClose, evaluationData, patientName }: Downloa
           head: [fichaData[0]],
           body: fichaData.slice(1),
           theme: 'striped',
-          headStyles: { 
-            fillColor: [37, 99, 235],
-            fontSize: 10,
-            fontStyle: 'bold',
-            halign: 'left'
-          },
-          bodyStyles: {
-            fontSize: 9,
-            textColor: [51, 65, 85],
-            cellPadding: 4
-          },
-          columnStyles: {
-            0: { fontStyle: 'bold', cellWidth: 50, textColor: [30, 64, 175] },
-            1: { cellWidth: 'auto' }
-          },
+          headStyles: { fillColor: [37, 99, 235], fontSize: 10, fontStyle: 'bold', halign: 'left' },
+          bodyStyles: { fontSize: 9, textColor: [51, 65, 85], cellPadding: 4 },
+          columnStyles: { 0: { fontStyle: 'bold', cellWidth: 50, textColor: [30, 64, 175] }, 1: { cellWidth: 'auto' } },
           margin: { left: 20, right: 20 },
           alternateRowStyles: { fillColor: [248, 250, 252] }
         });
-
         currentY = (doc as any).lastAutoTable.finalY + 20;
       }
 
       if (selectedOptions.evolucao) {
-        if (currentY > 240) {
-          doc.addPage();
-          currentY = 20;
-        }
-
-        // Seção Evoluções
-        doc.setFillColor(16, 185, 129); // emerald-500
+        if (currentY > 240) { doc.addPage(); currentY = 20; }
+        doc.setFillColor(16, 185, 129);
         doc.rect(20, currentY, 5, 8, 'F');
         doc.setFontSize(14);
-        doc.setTextColor(6, 95, 70); // emerald-800
+        doc.setTextColor(6, 95, 70);
         doc.setFont('helvetica', 'bold');
         doc.text('Histórico de Evoluções', 28, currentY + 6);
-        
-        if (dateRange.start || dateRange.end) {
-          doc.setFontSize(9);
-          doc.setTextColor(100);
-          doc.setFont('helvetica', 'normal');
-          doc.text(`Período selecionado: ${dateRange.start || 'Início'} até ${dateRange.end || 'Hoje'}`, 20, currentY + 13);
-          currentY += 20;
-        } else {
-          currentY += 12;
-        }
+        currentY += 12;
 
-        let query = supabase
-          .from('session_evolutions')
-          .select('*')
-          .eq('evaluation_id', evaluationData.id)
-          .order('session_date', { ascending: false });
-
-        if (dateRange.start.length === 10) {
-          const [d, m, y] = dateRange.start.split('/');
-          query = query.gte('session_date', `${y}-${m}-${d}`);
-        }
-        if (dateRange.end.length === 10) {
-          const [d, m, y] = dateRange.end.split('/');
-          query = query.lte('session_date', `${y}-${m}-${d}`);
-        }
+        let query = supabase.from('session_evolutions').select('*').eq('evaluation_id', evaluationData.id).order('session_date', { ascending: false });
+        if (dateRange.start.length === 10) { const [d, m, y] = dateRange.start.split('/'); query = query.gte('session_date', `${y}-${m}-${d}`); }
+        if (dateRange.end.length === 10) { const [d, m, y] = dateRange.end.split('/'); query = query.lte('session_date', `${y}-${m}-${d}`); }
 
         const { data: evolutions } = await query;
-
         if (evolutions && evolutions.length > 0) {
           const evoRows = evolutions.map(evo => {
-            const sinais = [
-              evo.blood_pressure ? `PA: ${evo.blood_pressure}` : null,
-              evo.heart_rate ? `FC: ${evo.heart_rate}` : null,
-              evo.respiratory_rate ? `FR: ${evo.respiratory_rate}` : null,
-              evo.temperature ? `T: ${evo.temperature}°C` : null,
-              evo.saturation ? `Sat: ${evo.saturation}%` : null,
-              evo.pain_scale !== null ? `Dor: ${evo.pain_scale}/10` : null
-            ].filter(Boolean).join(' | ');
-
-            return [
-              evo.session_date ? new Date(evo.session_date + 'T00:00:00').toLocaleDateString('pt-BR') : '-',
-              sinais || 'Não informados',
-              evo.evolution_text || '-'
-            ];
+            const sinais = [evo.blood_pressure ? `PA: ${evo.blood_pressure}` : null, evo.heart_rate ? `FC: ${evo.heart_rate}` : null, evo.respiratory_rate ? `FR: ${evo.respiratory_rate}` : null, evo.temperature ? `T: ${evo.temperature}°C` : null, evo.saturation ? `Sat: ${evo.saturation}%` : null, evo.pain_scale !== null ? `Dor: ${evo.pain_scale}/10` : null].filter(Boolean).join(' | ');
+            return [evo.session_date ? new Date(evo.session_date + 'T00:00:00').toLocaleDateString('pt-BR') : '-', sinais || 'Não informados', evo.evolution_text || '-'];
           });
 
           autoTable(doc, {
@@ -301,21 +230,9 @@ const DownloadModal = ({ isOpen, onClose, evaluationData, patientName }: Downloa
             head: [['Data', 'Sinais Vitais e Dor', 'Evolução Detalhada']],
             body: evoRows,
             theme: 'grid',
-            headStyles: { 
-              fillColor: [16, 185, 129],
-              fontSize: 10,
-              fontStyle: 'bold'
-            },
-            bodyStyles: {
-              fontSize: 8.5,
-              textColor: [51, 65, 85],
-              cellPadding: 5
-            },
-            columnStyles: {
-              0: { cellWidth: 25, fontStyle: 'bold', halign: 'center' },
-              1: { cellWidth: 50, fontStyle: 'italic', textColor: [16, 185, 129] },
-              2: { cellWidth: 'auto' }
-            },
+            headStyles: { fillColor: [16, 185, 129], fontSize: 10, fontStyle: 'bold' },
+            bodyStyles: { fontSize: 8.5, textColor: [51, 65, 85], cellPadding: 5 },
+            columnStyles: { 0: { cellWidth: 25, fontStyle: 'bold', halign: 'center' }, 1: { cellWidth: 50, fontStyle: 'italic', textColor: [16, 185, 129] }, 2: { cellWidth: 'auto' } },
             margin: { left: 20, right: 20 },
             styles: { overflow: 'linebreak' }
           });
@@ -326,7 +243,6 @@ const DownloadModal = ({ isOpen, onClose, evaluationData, patientName }: Downloa
         }
       }
 
-      // Rodapé em todas as páginas
       const pageCount = (doc as any).internal.getNumberOfPages();
       for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
@@ -350,118 +266,40 @@ const DownloadModal = ({ isOpen, onClose, evaluationData, patientName }: Downloa
       <div className="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl border border-slate-100 overflow-hidden animate-in zoom-in-95 duration-300">
         <div className="p-8">
           <div className="flex justify-between items-start mb-6">
-            <div className="bg-blue-50 p-4 rounded-2xl text-blue-600">
-              <Download size={32} />
-            </div>
-            <button onClick={onClose} className="p-2 text-slate-400 hover:bg-slate-50 rounded-xl transition-all">
-              <X size={20} />
-            </button>
+            <div className="bg-blue-50 p-4 rounded-2xl text-blue-600"><Download size={32} /></div>
+            <button onClick={onClose} className="p-2 text-slate-400 hover:bg-slate-50 rounded-xl transition-all"><X size={20} /></button>
           </div>
-          
-          <h3 className="text-2xl font-extrabold text-slate-800 mb-2 tracking-tight">
-            Exportar Documento
-          </h3>
-          <p className="text-slate-500 leading-relaxed mb-8">
-            Selecione o que deseja incluir no arquivo PDF para download.
-          </p>
-          
+          <h3 className="text-2xl font-extrabold text-slate-800 mb-2 tracking-tight">Exportar Documento</h3>
+          <p className="text-slate-500 leading-relaxed mb-8">Selecione o que deseja incluir no arquivo PDF para download.</p>
           <div className="space-y-3 mb-6">
-            <button
-              onClick={() => setSelectedOptions(prev => ({ ...prev, ficha: !prev.ficha }))}
-              className={`w-full flex items-center justify-between p-5 rounded-2xl border-2 transition-all ${
-                selectedOptions.ficha ? 'border-blue-500 bg-blue-50/50' : 'border-slate-100 bg-slate-50 hover:border-slate-200'
-              }`}
-            >
+            <button onClick={() => setSelectedOptions(prev => ({ ...prev, ficha: !prev.ficha }))} className={`w-full flex items-center justify-between p-5 rounded-2xl border-2 transition-all ${selectedOptions.ficha ? 'border-blue-500 bg-blue-50/50' : 'border-slate-100 bg-slate-50 hover:border-slate-200'}`}>
               <div className="flex items-center gap-4">
-                <div className={`p-2 rounded-lg ${selectedOptions.ficha ? 'bg-blue-500 text-white' : 'bg-slate-200 text-slate-400'}`}>
-                  <FileText size={20} />
-                </div>
-                <div className="text-left">
-                  <p className={`font-bold ${selectedOptions.ficha ? 'text-blue-900' : 'text-slate-600'}`}>Ficha de Avaliação</p>
-                  <p className="text-xs text-slate-400">Dados cadastrais e anamnese</p>
-                </div>
+                <div className={`p-2 rounded-lg ${selectedOptions.ficha ? 'bg-blue-500 text-white' : 'bg-slate-200 text-slate-400'}`}><FileText size={20} /></div>
+                <div className="text-left"><p className={`font-bold ${selectedOptions.ficha ? 'text-blue-900' : 'text-slate-600'}`}>Ficha de Avaliação</p><p className="text-xs text-slate-400">Dados cadastrais e anamnese</p></div>
               </div>
               {selectedOptions.ficha && <CheckCircle2 size={20} className="text-blue-500" />}
             </button>
-
-            <button
-              onClick={() => setSelectedOptions(prev => ({ ...prev, evolucao: !prev.evolucao }))}
-              className={`w-full flex items-center justify-between p-5 rounded-2xl border-2 transition-all ${
-                selectedOptions.evolucao ? 'border-emerald-500 bg-emerald-50/50' : 'border-slate-100 bg-slate-50 hover:border-slate-200'
-              }`}
-            >
+            <button onClick={() => setSelectedOptions(prev => ({ ...prev, evolucao: !prev.evolucao }))} className={`w-full flex items-center justify-between p-5 rounded-2xl border-2 transition-all ${selectedOptions.evolucao ? 'border-emerald-500 bg-emerald-50/50' : 'border-slate-100 bg-slate-50 hover:border-slate-200'}`}>
               <div className="flex items-center gap-4">
-                <div className={`p-2 rounded-lg ${selectedOptions.evolucao ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-400'}`}>
-                  <History size={20} />
-                </div>
-                <div className="text-left">
-                  <p className={`font-bold ${selectedOptions.evolucao ? 'text-emerald-900' : 'text-slate-600'}`}>Histórico de Evoluções</p>
-                  <p className="text-xs text-slate-400">Todas as sessões registradas</p>
-                </div>
+                <div className={`p-2 rounded-lg ${selectedOptions.evolucao ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-400'}`}><History size={20} /></div>
+                <div className="text-left"><p className={`font-bold ${selectedOptions.evolucao ? 'text-emerald-900' : 'text-slate-600'}`}>Histórico de Evoluções</p><p className="text-xs text-slate-400">Todas as sessões registradas</p></div>
               </div>
               {selectedOptions.evolucao && <CheckCircle2 size={20} className="text-emerald-500" />}
             </button>
           </div>
-
           {selectedOptions.evolucao && (
             <div className="mb-8 p-6 bg-slate-50 rounded-3xl border border-slate-100 animate-in slide-in-from-top-2 duration-300">
-              <div className="flex items-center gap-2 mb-4 text-emerald-600">
-                <Calendar size={18} />
-                <span className="text-xs font-bold uppercase tracking-wider">Filtrar Período (Opcional)</span>
-              </div>
+              <div className="flex items-center gap-2 mb-4 text-emerald-600"><Calendar size={18} /><span className="text-xs font-bold uppercase tracking-wider">Filtrar Período (Opcional)</span></div>
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 mb-1 block">Data Inicial</label>
-                  <input 
-                    type="text" 
-                    value={dateRange.start}
-                    onChange={(e) => handleDateChange('start', e.target.value)}
-                    placeholder="DD/MM/AAAA"
-                    maxLength={10}
-                    className={`w-full p-3 bg-white border rounded-xl text-sm outline-none transition-all ${
-                      isFutureDate(dateRange.start) ? 'border-red-500 text-red-600' : 'border-slate-200 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500'
-                    }`}
-                  />
-                </div>
-                <div>
-                  <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 mb-1 block">Data Final</label>
-                  <input 
-                    type="text" 
-                    value={dateRange.end}
-                    onChange={(e) => handleDateChange('end', e.target.value)}
-                    placeholder="DD/MM/AAAA"
-                    maxLength={10}
-                    className={`w-full p-3 bg-white border rounded-xl text-sm outline-none transition-all ${
-                      isFutureDate(dateRange.end) ? 'border-red-500 text-red-600' : 'border-slate-200 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500'
-                    }`}
-                  />
-                </div>
+                <div><label className="text-[10px] font-bold text-slate-400 uppercase ml-1 mb-1 block">Data Inicial</label><input type="text" value={dateRange.start} onChange={(e) => handleDateChange('start', e.target.value)} placeholder="DD/MM/AAAA" maxLength={10} className={`w-full p-3 bg-white border rounded-xl text-sm outline-none transition-all ${isFutureDate(dateRange.start) ? 'border-red-500 text-red-600' : 'border-slate-200 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500'}`} /></div>
+                <div><label className="text-[10px] font-bold text-slate-400 uppercase ml-1 mb-1 block">Data Final</label><input type="text" value={dateRange.end} onChange={(e) => handleDateChange('end', e.target.value)} placeholder="DD/MM/AAAA" maxLength={10} className={`w-full p-3 bg-white border rounded-xl text-sm outline-none transition-all ${isFutureDate(dateRange.end) ? 'border-red-500 text-red-600' : 'border-slate-200 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500'}`} /></div>
               </div>
-              {error && (
-                <div className="mt-4 flex items-center gap-2 text-red-500 text-[10px] font-bold uppercase tracking-wider">
-                  <AlertCircle size={14} />
-                  {error}
-                </div>
-              )}
+              {error && <div className="mt-4 flex items-center gap-2 text-red-500 text-[10px] font-bold uppercase tracking-wider"><AlertCircle size={14} />{error}</div>}
             </div>
           )}
-          
           <div className="flex flex-col gap-3">
-            <button
-              onClick={generatePDF}
-              disabled={loading || (!selectedOptions.ficha && !selectedOptions.evolucao)}
-              className="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-            >
-              {loading ? <Loader2 className="animate-spin" size={20} /> : <Download size={20} />}
-              Gerar PDF e Baixar
-            </button>
-            
-            <button
-              onClick={onClose}
-              className="w-full bg-slate-100 text-slate-600 py-4 rounded-2xl font-bold hover:bg-slate-200 transition-all"
-            >
-              Cancelar
-            </button>
+            <button onClick={generatePDF} disabled={loading || (!selectedOptions.ficha && !selectedOptions.evolucao)} className="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all flex items-center justify-center gap-2 disabled:opacity-50">{loading ? <Loader2 className="animate-spin" size={20} /> : <Download size={20} />}Gerar PDF e Baixar</button>
+            <button onClick={onClose} className="w-full bg-slate-100 text-slate-600 py-4 rounded-2xl font-bold hover:bg-slate-200 transition-all">Cancelar</button>
           </div>
         </div>
       </div>

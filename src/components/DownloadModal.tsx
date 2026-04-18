@@ -143,43 +143,55 @@ const DownloadModal = ({ isOpen, onClose, evaluationData, patientName }: Downloa
       const pageWidth = doc.internal.pageSize.getWidth();
       let currentY = 20;
 
-      doc.setFontSize(22);
-      doc.setTextColor(30, 64, 175);
-      doc.text('FisioSystem - Relatório Clínico', pageWidth / 2, currentY, { align: 'center' });
+      // Estilização do Cabeçalho
+      doc.setFillColor(239, 246, 255); // blue-50
+      doc.rect(0, 0, pageWidth, 45, 'F');
       
-      currentY += 15;
-
+      doc.setFontSize(24);
+      doc.setTextColor(30, 64, 175); // blue-800
+      doc.setFont('helvetica', 'bold');
+      doc.text('FisioSystem', 20, 25);
+      
       doc.setFontSize(10);
-      doc.setTextColor(80, 80, 80);
-      doc.setFont('helvetica', 'bold');
-      doc.text('DADOS DO PROFISSIONAL', 20, currentY);
+      doc.setTextColor(100, 116, 139); // slate-500
       doc.setFont('helvetica', 'normal');
-      currentY += 6;
-      doc.text(`Nome: ${formatName(professionalInfo?.full_name || 'Não informado')}`, 20, currentY);
-      currentY += 5;
-      doc.text(`CREFITO: ${professionalInfo?.crefito || 'Não informado'}`, 20, currentY);
-      currentY += 5;
-      doc.text(`Telefone: ${professionalInfo?.phone || 'Não informado'}`, 20, currentY);
-      
-      currentY += 10;
-      
+      doc.text('RELATÓRIO CLÍNICO DIGITAL', 20, 32);
+
+      // Dados do Profissional no Cabeçalho (Direita)
+      doc.setFontSize(9);
+      doc.setTextColor(30, 64, 175);
       doc.setFont('helvetica', 'bold');
-      doc.text('DADOS DO PACIENTE', 20, currentY);
+      doc.text(formatName(professionalInfo?.full_name || 'Profissional'), pageWidth - 20, 22, { align: 'right' });
       doc.setFont('helvetica', 'normal');
-      currentY += 6;
-      doc.text(`Paciente: ${formatName(patientName)}`, 20, currentY);
-      doc.text(`Data de Emissão: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth - 20, currentY, { align: 'right' });
+      doc.setTextColor(100, 116, 139);
+      doc.text(`CREFITO: ${professionalInfo?.crefito || '-'}`, pageWidth - 20, 27, { align: 'right' });
+      doc.text(`Tel: ${professionalInfo?.phone || '-'}`, pageWidth - 20, 32, { align: 'right' });
+
+      currentY = 60;
+
+      // Título do Paciente
+      doc.setFontSize(18);
+      doc.setTextColor(30, 41, 59); // slate-800
+      doc.setFont('helvetica', 'bold');
+      doc.text(formatName(patientName), 20, currentY);
       
-      currentY += 8;
-      doc.setDrawColor(226, 232, 240);
-      doc.line(20, currentY, pageWidth - 20, currentY);
-      currentY += 15;
+      doc.setFontSize(9);
+      doc.setTextColor(148, 163, 184); // slate-400
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Documento gerado em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`, 20, currentY + 7);
+
+      currentY += 20;
 
       if (selectedOptions.ficha) {
-        doc.setFontSize(16);
+        // Seção Ficha
+        doc.setFillColor(37, 99, 235); // blue-600
+        doc.rect(20, currentY, 5, 8, 'F');
+        doc.setFontSize(14);
         doc.setTextColor(30, 64, 175);
-        doc.text('1. Ficha de Avaliação', 20, currentY);
-        currentY += 10;
+        doc.setFont('helvetica', 'bold');
+        doc.text('Ficha de Avaliação', 28, currentY + 6);
+        
+        currentY += 12;
 
         const fichaData = [
           ['Campo', 'Informação'],
@@ -191,6 +203,10 @@ const DownloadModal = ({ isOpen, onClose, evaluationData, patientName }: Downloa
           ['Endereço', evaluationData.address || '-'],
           ['Queixa Principal', evaluationData.chief_complaint || '-'],
           ['HDA', evaluationData.history_present_illness || '-'],
+          ['HDP', evaluationData.previous_illness_history || '-'],
+          ['Histórico Familiar', evaluationData.family_history || '-'],
+          ['Medicamentos', evaluationData.medications || '-'],
+          ['Cirurgias Prévias', evaluationData.previous_surgeries || '-'],
           ['Diagnóstico Fisioterapêutico', evaluationData.physio_diagnosis || '-'],
         ];
 
@@ -199,30 +215,50 @@ const DownloadModal = ({ isOpen, onClose, evaluationData, patientName }: Downloa
           head: [fichaData[0]],
           body: fichaData.slice(1),
           theme: 'striped',
-          headStyles: { fillColor: [37, 99, 235] },
+          headStyles: { 
+            fillColor: [37, 99, 235],
+            fontSize: 10,
+            fontStyle: 'bold',
+            halign: 'left'
+          },
+          bodyStyles: {
+            fontSize: 9,
+            textColor: [51, 65, 85],
+            cellPadding: 4
+          },
+          columnStyles: {
+            0: { fontStyle: 'bold', cellWidth: 50, textColor: [30, 64, 175] },
+            1: { cellWidth: 'auto' }
+          },
           margin: { left: 20, right: 20 },
+          alternateRowStyles: { fillColor: [248, 250, 252] }
         });
 
         currentY = (doc as any).lastAutoTable.finalY + 20;
       }
 
       if (selectedOptions.evolucao) {
-        if (currentY > 250) {
+        if (currentY > 240) {
           doc.addPage();
           currentY = 20;
         }
 
-        doc.setFontSize(16);
-        doc.setTextColor(30, 64, 175);
-        doc.text('2. Histórico de Evoluções', 20, currentY);
+        // Seção Evoluções
+        doc.setFillColor(16, 185, 129); // emerald-500
+        doc.rect(20, currentY, 5, 8, 'F');
+        doc.setFontSize(14);
+        doc.setTextColor(6, 95, 70); // emerald-800
+        doc.setFont('helvetica', 'bold');
+        doc.text('Histórico de Evoluções', 28, currentY + 6);
         
         if (dateRange.start || dateRange.end) {
-          doc.setFontSize(10);
+          doc.setFontSize(9);
           doc.setTextColor(100);
-          doc.text(`Período: ${dateRange.start || 'Início'} até ${dateRange.end || 'Hoje'}`, 20, currentY + 7);
-          currentY += 15;
+          doc.setFont('helvetica', 'normal');
+          doc.text(`Período selecionado: ${dateRange.start || 'Início'} até ${dateRange.end || 'Hoje'}`, 20, currentY + 13);
+          currentY += 20;
         } else {
-          currentY += 10;
+          currentY += 12;
         }
 
         let query = supabase
@@ -244,39 +280,60 @@ const DownloadModal = ({ isOpen, onClose, evaluationData, patientName }: Downloa
 
         if (evolutions && evolutions.length > 0) {
           const evoRows = evolutions.map(evo => {
-            const pa = evo.blood_pressure || '-';
-            const fc = evo.heart_rate || '-';
-            const fr = evo.respiratory_rate || '-';
-            const temp = evo.temperature ? `${evo.temperature}°C` : '-';
-            const sat = evo.saturation ? `${evo.saturation}%` : '-';
-            const dor = evo.pain_scale !== null && evo.pain_scale !== undefined ? `${evo.pain_scale}/10` : '0/10';
+            const sinais = [
+              evo.blood_pressure ? `PA: ${evo.blood_pressure}` : null,
+              evo.heart_rate ? `FC: ${evo.heart_rate}` : null,
+              evo.respiratory_rate ? `FR: ${evo.respiratory_rate}` : null,
+              evo.temperature ? `T: ${evo.temperature}°C` : null,
+              evo.saturation ? `Sat: ${evo.saturation}%` : null,
+              evo.pain_scale !== null ? `Dor: ${evo.pain_scale}/10` : null
+            ].filter(Boolean).join(' | ');
 
             return [
               evo.session_date ? new Date(evo.session_date + 'T00:00:00').toLocaleDateString('pt-BR') : '-',
-              `PA: ${pa}\nFC: ${fc}\nFR: ${fr}\nTemp: ${temp}\nSat: ${sat}\nDor: ${dor}`,
+              sinais || 'Não informados',
               evo.evolution_text || '-'
             ];
           });
 
           autoTable(doc, {
             startY: currentY,
-            head: [['Data', 'Sinais Vitais e Dor', 'Evolução']],
+            head: [['Data', 'Sinais Vitais e Dor', 'Evolução Detalhada']],
             body: evoRows,
             theme: 'grid',
-            headStyles: { fillColor: [16, 185, 129] },
+            headStyles: { 
+              fillColor: [16, 185, 129],
+              fontSize: 10,
+              fontStyle: 'bold'
+            },
+            bodyStyles: {
+              fontSize: 8.5,
+              textColor: [51, 65, 85],
+              cellPadding: 5
+            },
             columnStyles: {
-              0: { cellWidth: 25 },
-              1: { cellWidth: 45 },
+              0: { cellWidth: 25, fontStyle: 'bold', halign: 'center' },
+              1: { cellWidth: 50, fontStyle: 'italic', textColor: [16, 185, 129] },
               2: { cellWidth: 'auto' }
             },
-            styles: { fontSize: 9 },
             margin: { left: 20, right: 20 },
+            styles: { overflow: 'linebreak' }
           });
         } else {
           doc.setFontSize(10);
           doc.setTextColor(150);
-          doc.text('Nenhuma evolução encontrada para o período selecionado.', 20, currentY);
+          doc.text('Nenhum registro de evolução encontrado para o período.', 20, currentY);
         }
+      }
+
+      // Rodapé em todas as páginas
+      const pageCount = (doc as any).internal.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setTextColor(148, 163, 184);
+        doc.text(`Página ${i} de ${pageCount}`, pageWidth / 2, doc.internal.pageSize.getHeight() - 10, { align: 'center' });
+        doc.text('Gerado por FisioSystem - Gestão Fisioterapêutica Inteligente', 20, doc.internal.pageSize.getHeight() - 10);
       }
 
       doc.save(`Relatorio_${patientName.replace(/\s+/g, '_')}.pdf`);

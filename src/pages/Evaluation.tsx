@@ -75,6 +75,7 @@ const fieldLabels: Record<string, string> = {
   muscle_strength: 'Força',
   muscle_tone_mmss: 'Tônus MMSS',
   muscle_tone_mmii: 'Tônus MMII',
+  treatment_objective: 'Objetivo do Tratamento',
   physio_diagnosis: 'Diagnóstico Cinético Funcional',
   complementary_exams_details: 'Exames Compl.'
 };
@@ -176,6 +177,7 @@ const Evaluation = () => {
     muscle_strength: '',
     muscle_tone_mmss: 'Normal',
     muscle_tone_mmii: 'Normal',
+    treatment_objective: '',
     physio_diagnosis: '',
     has_complementary_exams: 'Não',
     complementary_exams_details: ''
@@ -1307,9 +1309,31 @@ const Evaluation = () => {
                     {!isViewMode && (<button onClick={addAdmRow} className="mt-2 flex items-center gap-2 text-blue-600 font-bold text-sm hover:bg-blue-50 px-4 py-2 rounded-xl transition-all"><Plus size={18} /> Adicionar Movimento</button>)}
                   </div>
                   <div><label className={labelClasses}>Força Muscular (Grau 0-5)</label><textarea disabled={isViewMode} name="muscle_strength" value={formData.muscle_strength} onChange={handleInputChange} className={`${getInputClasses('muscle_strength')} h-28 resize-none`} placeholder="Teste de força manual por grupos musculares..."></textarea></div>
-                  <div className="bg-blue-50/50 p-4 md:p-6 rounded-3xl border border-blue-100">
-                    <label className="text-xs md:text-sm font-bold text-blue-700 mb-2 block ml-1">Diagnóstico Cinético Funcional</label>
-                    <textarea disabled={isViewMode} name="physio_diagnosis" value={formData.physio_diagnosis} onChange={handleInputChange} className="w-full p-4 bg-white border border-blue-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all h-32 font-medium text-blue-900 placeholder:text-blue-300 disabled:bg-slate-50 disabled:text-slate-500 text-sm md:text-base" placeholder="Conclusão clínica e objetivos do tratamento..."></textarea>
+                  
+                  <div className="space-y-6">
+                    <div>
+                      <label className={labelClasses}>Objetivo do Tratamento</label>
+                      <textarea 
+                        disabled={isViewMode} 
+                        name="treatment_objective" 
+                        value={formData.treatment_objective} 
+                        onChange={handleInputChange} 
+                        className={`${getInputClasses('treatment_objective')} h-32 resize-none`} 
+                        placeholder="Descreva os objetivos terapêuticos de curto, médio e longo prazo..."
+                      />
+                    </div>
+
+                    <div className="bg-blue-50/50 p-4 md:p-6 rounded-3xl border border-blue-100">
+                      <label className="text-xs md:text-sm font-bold text-blue-700 mb-2 block ml-1">Diagnóstico Cinético Funcional</label>
+                      <textarea 
+                        disabled={isViewMode} 
+                        name="physio_diagnosis" 
+                        value={formData.physio_diagnosis} 
+                        onChange={handleInputChange} 
+                        className="w-full p-4 bg-white border border-blue-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all h-32 font-medium text-blue-900 placeholder:text-blue-300 disabled:bg-slate-50 disabled:text-slate-500 text-sm md:text-base" 
+                        placeholder="Conclusão clínica baseada na avaliação funcional..."
+                      />
+                    </div>
                   </div>
                 </div>
               </div>

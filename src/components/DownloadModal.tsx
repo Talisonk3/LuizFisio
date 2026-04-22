@@ -187,6 +187,7 @@ const DownloadModal = ({ isOpen, onClose, evaluationData, patientName }: Downloa
           ['Histórico Familiar', evaluationData.family_history || '-'],
           ['Medicamentos', evaluationData.medications || '-'],
           ['Cirurgias Prévias', evaluationData.previous_surgeries || '-'],
+          ['Objetivo do Tratamento', evaluationData.treatment_objective || '-'],
           ['Diagnóstico Cinético Funcional', evaluationData.physio_diagnosis || '-'],
         ];
 

@@ -1170,7 +1170,7 @@ const Evaluation = () => {
                 </div>
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-8">
-                    <div><label className={labelClasses}>Data da Avaliação</label><input disabled={isViewMode} name="evaluation_date" value={formData.evaluation_date} onChange={handleInputChange} type="text" className={getInputClasses('evaluation_date')} placeholder="DD/MM/AAAA" maxLength={10} /></div>
+                    <div><label className={labelClasses}>Data da Avaliação</label><input disabled name="evaluation_date" value={formData.evaluation_date} type="text" className={`${getInputClasses('evaluation_date')} bg-slate-100 text-slate-500 cursor-not-allowed`} placeholder="DD/MM/AAAA" /></div>
                   </div>
                   <div><label className={labelClasses}>Queixa Principal</label><textarea disabled={isViewMode} name="chief_complaint" value={formData.chief_complaint} onChange={handleInputChange} className={`${getInputClasses('chief_complaint')} h-32 resize-none`} placeholder="Descreva detalhadamente o motivo da consulta..."></textarea></div>
                   

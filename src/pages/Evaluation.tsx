@@ -38,8 +38,6 @@ const fieldLabels: Record<string, string> = {
   marital_status: 'Est. Civil',
   gender: 'Gênero',
   profession: 'Profissão',
-  weight: 'Peso',
-  height: 'Altura',
   caregiver_name: 'Responsável 1',
   caregiver_phone: 'Tel. Responsável 1',
   caregiver2_name: 'Responsável 2',
@@ -129,8 +127,6 @@ const Evaluation = () => {
     marital_status: '',
     gender: '',
     profession: '',
-    weight: '',
-    height: '',
     has_caregiver: 'Não',
     caregiver_name: '',
     caregiver_phone: '',
@@ -359,13 +355,6 @@ const Evaluation = () => {
     return `${day}/${month}/${year}`;
   };
 
-  const formatHeight = (value: string) => {
-    const numbers = value.replace(/\D/g, '').substring(0, 3);
-    if (numbers.length <= 1) return numbers;
-    if (numbers.length === 2) return `${numbers.slice(0, 1)}.${numbers.slice(1)}`;
-    return `${numbers.slice(0, 1)}.${numbers.slice(1, 3)}`;
-  };
-
   const formatPA = (value: string) => {
     const numbers = value.replace(/\D/g, '').substring(0, 5);
     if (numbers.length <= 2) return numbers;
@@ -391,10 +380,6 @@ const Evaluation = () => {
       filteredValue = filteredValue.replace(/[^a-zA-ZÀ-ÿ\s]/g, '');
     } else if (name === 'address') {
       filteredValue = filteredValue.replace(/[^a-zA-ZÀ-ÿ0-9\s]/g, '');
-    } else if (name === 'weight') {
-      filteredValue = filteredValue.replace(/\D/g, '').substring(0, 3);
-    } else if (name === 'height') {
-      filteredValue = formatHeight(filteredValue);
     } else if (name === 'phone' || name === 'doctor_phone' || name.includes('caregiver') && name.includes('phone')) {
       filteredValue = formatPhone(filteredValue);
     } else if (name === 'birth_date' || name === 'evaluation_date') {
@@ -934,14 +919,6 @@ const Evaluation = () => {
                   <div>
                     <label className={labelClasses}>E-mail do Paciente</label>
                     <input disabled={isViewMode} name="email" value={formData.email} onChange={handleInputChange} type="email" className={getInputClasses('email')} placeholder="exemplo@email.com" />
-                  </div>
-                  <div>
-                    <label className={labelClasses}>Peso (kg)</label>
-                    <input disabled={isViewMode} name="weight" value={formData.weight} onChange={handleInputChange} type="text" className={getInputClasses('weight')} placeholder="Ex: 75" maxLength={3} />
-                  </div>
-                  <div>
-                    <label className={labelClasses}>Altura (m)</label>
-                    <input disabled={isViewMode} name="height" value={formData.height} onChange={handleInputChange} type="text" className={getInputClasses('height')} placeholder="Ex: 1.75" maxLength={4} />
                   </div>
 
                   <div className="md:col-span-2 space-y-4 border-t border-slate-100 pt-8">

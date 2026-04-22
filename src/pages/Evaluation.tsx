@@ -75,7 +75,7 @@ const fieldLabels: Record<string, string> = {
   muscle_strength: 'Força',
   muscle_tone_mmss: 'Tônus MMSS',
   muscle_tone_mmii: 'Tônus MMII',
-  physio_diagnosis: 'Diagnóstico',
+  physio_diagnosis: 'Diagnóstico Cinético Funcional',
   complementary_exams_details: 'Exames Compl.'
 };
 
@@ -1308,7 +1308,7 @@ const Evaluation = () => {
                   </div>
                   <div><label className={labelClasses}>Força Muscular (Grau 0-5)</label><textarea disabled={isViewMode} name="muscle_strength" value={formData.muscle_strength} onChange={handleInputChange} className={`${getInputClasses('muscle_strength')} h-28 resize-none`} placeholder="Teste de força manual por grupos musculares..."></textarea></div>
                   <div className="bg-blue-50/50 p-4 md:p-6 rounded-3xl border border-blue-100">
-                    <label className="text-xs md:text-sm font-bold text-blue-700 mb-2 block ml-1">Diagnóstico Fisioterapêutico Final</label>
+                    <label className="text-xs md:text-sm font-bold text-blue-700 mb-2 block ml-1">Diagnóstico Cinético Funcional</label>
                     <textarea disabled={isViewMode} name="physio_diagnosis" value={formData.physio_diagnosis} onChange={handleInputChange} className="w-full p-4 bg-white border border-blue-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all h-32 font-medium text-blue-900 placeholder:text-blue-300 disabled:bg-slate-50 disabled:text-slate-500 text-sm md:text-base" placeholder="Conclusão clínica e objetivos do tratamento..."></textarea>
                   </div>
                 </div>

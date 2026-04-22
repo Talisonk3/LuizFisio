@@ -187,7 +187,7 @@ const DownloadModal = ({ isOpen, onClose, evaluationData, patientName }: Downloa
           ['Histórico Familiar', evaluationData.family_history || '-'],
           ['Medicamentos', evaluationData.medications || '-'],
           ['Cirurgias Prévias', evaluationData.previous_surgeries || '-'],
-          ['Diagnóstico Fisioterapêutico', evaluationData.physio_diagnosis || '-'],
+          ['Diagnóstico Cinético Funcional', evaluationData.physio_diagnosis || '-'],
         ];
 
         autoTable(doc, {

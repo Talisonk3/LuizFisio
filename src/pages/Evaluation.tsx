@@ -525,6 +525,12 @@ const Evaluation = () => {
     return date > today;
   };
 
+  const isYearTooOld = (dateStr: string) => {
+    if (dateStr.length !== 10) return false;
+    const [d, m, y] = dateStr.split('/').map(Number);
+    return y < 1900;
+  };
+
   const validateCurrentTab = () => {
     const newErrors: string[] = [];
     
@@ -542,6 +548,7 @@ const Evaluation = () => {
       
       if (formData.birth_date.length < 10 && !newErrors.includes('birth_date')) newErrors.push('birth_date');
       else if (isFutureDate(formData.birth_date)) newErrors.push('birth_date');
+      else if (isYearTooOld(formData.birth_date)) newErrors.push('birth_date');
 
       const phoneFields = ['phone', 'caregiver_phone', 'caregiver2_phone', 'caregiver3_phone', 'doctor_phone'];
       phoneFields.forEach(field => {
@@ -583,6 +590,7 @@ const Evaluation = () => {
     
     if (formData.birth_date.length < 10 && !newErrors.includes('birth_date')) newErrors.push('birth_date');
     else if (isFutureDate(formData.birth_date)) newErrors.push('birth_date');
+    else if (isYearTooOld(formData.birth_date)) newErrors.push('birth_date');
 
     const phoneFields = ['phone', 'caregiver_phone', 'caregiver2_phone', 'caregiver3_phone', 'doctor_phone'];
     phoneFields.forEach(field => {
@@ -611,6 +619,7 @@ const Evaluation = () => {
     if (isViewMode) return;
     if (!validateAll()) {
       const hasFutureDate = isFutureDate(formData.birth_date);
+      const hasOldYear = isYearTooOld(formData.birth_date);
       const hasIncompletePhone = ['phone', 'caregiver_phone', 'caregiver2_phone', 'caregiver3_phone', 'doctor_phone'].some(f => {
         const val = formData[f as keyof typeof formData] as string;
         return val && val.trim() !== '' && val.length < 15;
@@ -622,6 +631,9 @@ const Evaluation = () => {
       if (hasFutureDate) {
         title = 'Data Inválida';
         message = 'A data de nascimento não pode ser posterior à data de hoje.';
+      } else if (hasOldYear) {
+        title = 'Ano Inválido';
+        message = 'O ano de nascimento não pode ser anterior a 1900.';
       } else if (hasIncompletePhone) {
         title = 'Telefone Incompleto';
         message = 'Os números de telefone devem ser preenchidos completamente no formato (00) 00000-0000.';
@@ -733,6 +745,7 @@ const Evaluation = () => {
     if (!isViewMode) {
       if (!validateCurrentTab()) {
         const hasFutureDate = isFutureDate(formData.birth_date);
+        const hasOldYear = isYearTooOld(formData.birth_date);
         const hasIncompletePhone = ['phone', 'caregiver_phone', 'caregiver2_phone', 'caregiver3_phone', 'doctor_phone'].some(f => {
           const val = formData[f as keyof typeof formData] as string;
           return val && val.trim() !== '' && val.length < 15;
@@ -740,6 +753,7 @@ const Evaluation = () => {
         let message = 'Preencha os campos obrigatórios marcados em vermelho antes de prosseguir.';
         let title = 'Campos Obrigatórios';
         if (hasFutureDate) { title = 'Data Inválida'; message = 'A data de nascimento não pode ser posterior à data de hoje.'; }
+        else if (hasOldYear) { title = 'Ano Inválido'; message = 'O ano de nascimento não pode ser anterior a 1900.'; }
         else if (hasIncompletePhone) { title = 'Telefone Incompleto'; message = 'Os números de telefone devem ser preenchidos completamente no formato (00) 00000-0000.'; }
         showAlert('warning', title, message);
         return;
@@ -802,6 +816,7 @@ const Evaluation = () => {
               onClick={() => {
                 if (!isViewMode && !validateCurrentTab()) {
                   const hasFutureDate = isFutureDate(formData.birth_date);
+                  const hasOldYear = isYearTooOld(formData.birth_date);
                   const hasIncompletePhone = ['phone', 'caregiver_phone', 'caregiver2_phone', 'caregiver3_phone', 'doctor_phone'].some(f => {
                     const val = formData[f as keyof typeof formData] as string;
                     return val && val.trim() !== '' && val.length < 15;
@@ -809,6 +824,7 @@ const Evaluation = () => {
                   let message = 'Preencha os campos obrigatórios antes de mudar de aba.';
                   let title = 'Campos Obrigatórios';
                   if (hasFutureDate) { title = 'Data Inválida'; message = 'A data de nascimento não pode ser posterior à data de hoje.'; }
+                  else if (hasOldYear) { title = 'Ano Inválido'; message = 'O ano de nascimento não pode ser anterior a 1900.'; }
                   else if (hasIncompletePhone) { title = 'Telefone Incompleto'; message = 'Os números de telefone devem ser preenchidos completamente no formato (00) 00000-0000.'; }
                   showAlert('warning', title, message);
                   return;

@@ -183,6 +183,23 @@ const Evaluation = () => {
 
   const [formData, setFormData] = useState(initialFormData);
 
+  // Cálculo automático de idade
+  const patientAge = useMemo(() => {
+    if (!formData.birth_date || formData.birth_date.length < 10) return '';
+    const [day, month, year] = formData.birth_date.split('/').map(Number);
+    const birthDate = new Date(year, month - 1, day);
+    const today = new Date();
+    
+    if (isNaN(birthDate.getTime()) || year < 1900 || birthDate > today) return '';
+    
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age >= 0 ? `${age} anos` : '';
+  }, [formData.birth_date]);
+
   useEffect(() => {
     const fetchEvaluation = async () => {
       if (!id) return;
@@ -878,9 +895,15 @@ const Evaluation = () => {
                     <label className={labelClasses}>Nome Completo <span className="text-red-500">*</span></label>
                     <input disabled={isViewMode} name="patient_name" value={formData.patient_name} onChange={handleInputChange} type="text" className={getInputClasses('patient_name')} placeholder="Ex: João da Silva Santos" />
                   </div>
-                  <div>
-                    <label className={labelClasses}>Data de Nascimento <span className="text-red-500">*</span></label>
-                    <input disabled={isViewMode} name="birth_date" value={formData.birth_date} onChange={handleInputChange} type="text" className={getInputClasses('birth_date')} placeholder="DD/MM/AAAA" maxLength={10} />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className={labelClasses}>Data de Nascimento <span className="text-red-500">*</span></label>
+                      <input disabled={isViewMode} name="birth_date" value={formData.birth_date} onChange={handleInputChange} type="text" className={getInputClasses('birth_date')} placeholder="DD/MM/AAAA" maxLength={10} />
+                    </div>
+                    <div>
+                      <label className={labelClasses}>Idade</label>
+                      <input disabled value={patientAge} className={`${getInputClasses('age')} bg-slate-100 text-slate-500 font-bold`} placeholder="Calculada" />
+                    </div>
                   </div>
                   <div>
                     <label className={labelClasses}>Gênero <span className="text-red-500">*</span></label>

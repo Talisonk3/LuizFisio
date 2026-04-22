@@ -902,7 +902,7 @@ const Evaluation = () => {
                     </div>
                     <div>
                       <label className={labelClasses}>Idade</label>
-                      <input disabled value={patientAge} className={`${getInputClasses('age')} bg-slate-100 text-slate-500 font-bold`} placeholder="Calculada" />
+                      <input disabled value={patientAge} className={`${getInputClasses('age')} bg-slate-100 text-slate-500 font-bold`} />
                     </div>
                   </div>
                   <div>

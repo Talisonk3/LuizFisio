@@ -1123,7 +1123,36 @@ const Evaluation = () => {
                     )}
                   </div>
                 </div>
-                <div><label className={labelClasses}>Inspeção e Palpação</label><textarea disabled={isViewMode} name="inspection_palpation" value={formData.inspection_palpation} onChange={handleInputChange} className={`${getInputClasses('inspection_palpation')} h-32 resize-none`} placeholder="Avaliação postural, presença de edema, cicatrizes, pontos gatilho..."></textarea></div>
+                <div>
+                  <label className={labelClasses}>Inspeção e Palpação</label>
+                  <textarea disabled={isViewMode} name="inspection_palpation" value={formData.inspection_palpation} onChange={handleInputChange} className={`${getInputClasses('inspection_palpation')} h-32 resize-none`} placeholder="Avaliação postural, presença de edema, cicatrizes, pontos gatilho..."></textarea>
+                </div>
+
+                <div className="bg-slate-50 p-4 md:p-6 rounded-3xl border border-slate-200 mt-8">
+                  <label className="text-xs md:text-sm font-bold text-slate-700 mb-4 block ml-1">Escala Visual Analógica de Dor (EVA)</label>
+                  <div className="flex flex-wrap gap-1.5 md:gap-2 justify-between">
+                    {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
+                      <button
+                        key={num}
+                        type="button"
+                        disabled={isViewMode}
+                        onClick={() => setFormData(prev => ({ ...prev, pain_scale: num.toString() }))}
+                        className={`w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center font-bold transition-all text-xs md:text-sm ${
+                          formData.pain_scale === num.toString()
+                          ? `${getPainColor(num)} text-white scale-110 shadow-lg ring-4 ring-white`
+                          : 'bg-white text-slate-400 border border-slate-200 hover:border-slate-400'
+                        } disabled:opacity-50`}
+                      >
+                        {num}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex justify-between mt-3 px-1 text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                    <span>Sem Dor</span>
+                    <span>Dor Moderada</span>
+                    <span>Dor Máxima</span>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -1138,15 +1167,7 @@ const Evaluation = () => {
                     <div><label className={labelClasses}>Data da Avaliação</label><input disabled={isViewMode} name="evaluation_date" value={formData.evaluation_date} onChange={handleInputChange} type="text" className={getInputClasses('evaluation_date')} placeholder="DD/MM/AAAA" maxLength={10} /></div>
                   </div>
                   <div><label className={labelClasses}>Queixa Principal</label><textarea disabled={isViewMode} name="chief_complaint" value={formData.chief_complaint} onChange={handleInputChange} className={`${getInputClasses('chief_complaint')} h-32 resize-none`} placeholder="Descreva detalhadamente o motivo da consulta..."></textarea></div>
-                  <div className="bg-slate-50 p-4 md:p-6 rounded-3xl border border-slate-200">
-                    <label className="text-xs md:text-sm font-bold text-slate-700 mb-4 block ml-1">Escala Visual Analógica de Dor (EVA)</label>
-                    <div className="flex flex-wrap gap-1.5 md:gap-2 justify-between">
-                      {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
-                        <button key={num} type="button" disabled={isViewMode} onClick={() => setFormData(prev => ({ ...prev, pain_scale: num.toString() }))} className={`w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center font-bold transition-all text-xs md:text-sm ${formData.pain_scale === num.toString() ? `${getPainColor(num)} text-white scale-110 shadow-lg ring-4 ring-white` : 'bg-white text-slate-400 border border-slate-200 hover:border-slate-400'} disabled:opacity-50`}>{num}</button>
-                      ))}
-                    </div>
-                    <div className="flex justify-between mt-3 px-1 text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-wider"><span>Sem Dor</span><span>Dor Moderada</span><span>Dor Máxima</span></div>
-                  </div>
+                  
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-8">
                     <div><label className={labelClasses}>O que piora a dor?</label><textarea disabled={isViewMode} name="pain_worsening_factors" value={formData.pain_worsening_factors} onChange={handleInputChange} className={`${getInputClasses('pain_worsening_factors')} h-24 resize-none`} placeholder="Ex: Movimentos bruscos, frio, ficar em pé..."></textarea></div>
                     <div><label className={labelClasses}>O que melhora a dor?</label><textarea disabled={isViewMode} name="pain_improvement_factors" value={formData.pain_improvement_factors} onChange={handleInputChange} className={`${getInputClasses('pain_improvement_factors')} h-24 resize-none`} placeholder="Ex: Repouso, calor local, medicação..."></textarea></div>

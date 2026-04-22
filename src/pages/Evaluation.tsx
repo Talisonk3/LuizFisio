@@ -1014,8 +1014,8 @@ const Evaluation = () => {
                     <CustomSelect 
                       options={[
                         { value: 'Lúcido/Orientado', label: 'Lúcido/Orientado' },
-                        { value: 'Desorientado', label: 'Desorientado' },
                         { value: 'Lúcido com momentos de desorientação', label: 'Lúcido com momentos de desorientação' },
+                        { value: 'Desorientado', label: 'Desorientado' },
                         { value: 'Inconsciente', label: 'Inconsciente' }
                       ]} 
                       value={formData.consciousness_level} 

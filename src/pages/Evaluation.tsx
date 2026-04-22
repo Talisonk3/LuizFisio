@@ -1216,6 +1216,16 @@ const Evaluation = () => {
                       </div>
 
                       <div className="space-y-4">
+                        <label className={labelClasses}>Faz uso de medicamentos?</label>
+                        <div className="flex gap-3 md:gap-4">
+                          {['Não', 'Sim'].map((option) => (
+                            <button key={option} type="button" disabled={isViewMode} onClick={() => setFormData(prev => ({ ...prev, has_medications: option }))} className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl border transition-all font-medium text-sm md:text-base ${formData.has_medications === option ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'} disabled:opacity-50`}>{option}</button>
+                          ))}
+                        </div>
+                        {formData.has_medications === 'Sim' && (<div className="animate-in fade-in slide-in-from-top-2 duration-300"><label className={labelClasses}>Quais medicamentos? <span className="text-red-500">*</span></label><input disabled={isViewMode} name="medications" value={formData.medications} onChange={handleInputChange} type="text" className={getInputClasses('medications')} placeholder="Quais medicamentos?" /></div>)}
+                      </div>
+
+                      <div className="space-y-4">
                         <label className={labelClasses}>Qualidade do Sono</label>
                         <CustomSelect 
                           options={[
@@ -1241,16 +1251,6 @@ const Evaluation = () => {
                           placeholder="Ex: 08" 
                           maxLength={2} 
                         />
-                      </div>
-
-                      <div className="space-y-4">
-                        <label className={labelClasses}>Faz uso de medicamentos?</label>
-                        <div className="flex gap-3 md:gap-4">
-                          {['Não', 'Sim'].map((option) => (
-                            <button key={option} type="button" disabled={isViewMode} onClick={() => setFormData(prev => ({ ...prev, has_medications: option }))} className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl border transition-all font-medium text-sm md:text-base ${formData.has_medications === option ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'} disabled:opacity-50`}>{option}</button>
-                          ))}
-                        </div>
-                        {formData.has_medications === 'Sim' && (<div className="animate-in fade-in slide-in-from-top-2 duration-300"><label className={labelClasses}>Quais medicamentos? <span className="text-red-500">*</span></label><input disabled={isViewMode} name="medications" value={formData.medications} onChange={handleInputChange} type="text" className={getInputClasses('medications')} placeholder="Quais medicamentos?" /></div>)}
                       </div>
 
                       <div className="space-y-4">

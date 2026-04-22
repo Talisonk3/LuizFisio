@@ -53,6 +53,8 @@ const fieldLabels: Record<string, string> = {
   drinks_details: 'Álcool',
   smokes_details: 'Fumo',
   sedentary_details: 'Ativ. Física',
+  sleep_quality: 'Qualidade do Sono',
+  sleep_hours: 'Horas de Sono',
   medications: 'Medicamentos',
   previous_surgeries: 'Cirurgias',
   pain_scale: 'Dor (EVA)',
@@ -147,6 +149,8 @@ const Evaluation = () => {
     smokes_details: '',
     sedentary: 'Não',
     sedentary_details: '',
+    sleep_quality: '',
+    sleep_hours: '',
     has_medications: 'Não',
     medications: '',
     has_surgeries: 'Não',
@@ -388,6 +392,8 @@ const Evaluation = () => {
       filteredValue = filteredValue.replace(/\D/g, '').substring(0, 3);
     } else if (name === 'address_number') {
       filteredValue = filteredValue.replace(/\D/g, '').substring(0, 4);
+    } else if (name === 'sleep_hours') {
+      filteredValue = filteredValue.replace(/\D/g, '').substring(0, 2);
     }
 
     if (errors.includes(name)) {
@@ -1175,54 +1181,87 @@ const Evaluation = () => {
                   <div><label className={labelClasses}>História da Doença Atual (HDA)</label><textarea disabled={isViewMode} name="history_present_illness" value={formData.history_present_illness} onChange={handleInputChange} className={`${getInputClasses('history_present_illness')} h-32 resize-none`} placeholder="Início dos sintomas, evolução, fatores de melhora/piora..."></textarea></div>
                   <div><label className={labelClasses}>História da Doença Pregressa (HDP)</label><textarea disabled={isViewMode} name="previous_illness_history" value={formData.previous_illness_history} onChange={handleInputChange} className={`${getInputClasses('previous_illness_history')} h-32 resize-none`} placeholder="Doenças anteriores, traumas, internações..."></textarea></div>
                   <div><label className={labelClasses}>Histórico Familiar</label><textarea disabled={isViewMode} name="family_history" value={formData.family_history} onChange={handleInputChange} className={`${getInputClasses('family_history')} h-32 resize-none`} placeholder="Doenças hereditárias, histórico de saúde da família..."></textarea></div>
-                  <div className="border-t border-slate-100 pt-8 space-y-8">
-                    <h4 className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-wider">Histórico Social</h4>
-                    <div className="space-y-4">
-                      <label className={labelClasses}>Consome bebida alcoólica?</label>
-                      <div className="flex gap-3 md:gap-4">
-                        {['Não', 'Sim'].map((option) => (
-                          <button key={option} type="button" disabled={isViewMode} onClick={() => setFormData(prev => ({ ...prev, drinks: option }))} className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl border transition-all font-medium text-sm md:text-base ${formData.drinks === option ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'} disabled:opacity-50`}>{option}</button>
-                        ))}
+                  
+                  <div className="border-t border-slate-100 pt-8">
+                    <h4 className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-wider mb-6">Histórico Social e Hábitos</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-10">
+                      <div className="space-y-4">
+                        <label className={labelClasses}>Consome bebida alcoólica?</label>
+                        <div className="flex gap-3 md:gap-4">
+                          {['Não', 'Sim'].map((option) => (
+                            <button key={option} type="button" disabled={isViewMode} onClick={() => setFormData(prev => ({ ...prev, drinks: option }))} className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl border transition-all font-medium text-sm md:text-base ${formData.drinks === option ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'} disabled:opacity-50`}>{option}</button>
+                          ))}
+                        </div>
+                        {formData.drinks === 'Sim' && (<div className="animate-in fade-in slide-in-from-top-2 duration-300"><label className={labelClasses}>Frequência e tipo <span className="text-red-500">*</span></label><input disabled={isViewMode} name="drinks_details" value={formData.drinks_details} onChange={handleInputChange} type="text" className={getInputClasses('drinks_details')} placeholder="Frequência e tipo de bebida..." /></div>)}
                       </div>
-                      {formData.drinks === 'Sim' && (<div className="animate-in fade-in slide-in-from-top-2 duration-300"><label className={labelClasses}>Frequência e tipo <span className="text-red-500">*</span></label><input disabled={isViewMode} name="drinks_details" value={formData.drinks_details} onChange={handleInputChange} type="text" className={getInputClasses('drinks_details')} placeholder="Frequência e tipo de bebida..." /></div>)}
-                    </div>
-                    <div className="space-y-4">
-                      <label className={labelClasses}>É fumante ou ex-fumante?</label>
-                      <div className="flex gap-3 md:gap-4">
-                        {['Não', 'Sim'].map((option) => (
-                          <button key={option} type="button" disabled={isViewMode} onClick={() => setFormData(prev => ({ ...prev, smokes: option }))} className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl border transition-all font-medium text-sm md:text-base ${formData.smokes === option ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'} disabled:opacity-50`}>{option}</button>
-                        ))}
+
+                      <div className="space-y-4">
+                        <label className={labelClasses}>É fumante ou ex-fumante?</label>
+                        <div className="flex gap-3 md:gap-4">
+                          {['Não', 'Sim'].map((option) => (
+                            <button key={option} type="button" disabled={isViewMode} onClick={() => setFormData(prev => ({ ...prev, smokes: option }))} className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl border transition-all font-medium text-sm md:text-base ${formData.smokes === option ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'} disabled:opacity-50`}>{option}</button>
+                          ))}
+                        </div>
+                        {formData.smokes === 'Sim' && (<div className="animate-in fade-in slide-in-from-top-2 duration-300"><label className={labelClasses}>Quantidade e tempo <span className="text-red-500">*</span></label><input disabled={isViewMode} name="smokes_details" value={formData.smokes_details} onChange={handleInputChange} type="text" className={getInputClasses('smokes_details')} placeholder="Quantidade de cigarros por dia/tempo..." /></div>)}
                       </div>
-                      {formData.smokes === 'Sim' && (<div className="animate-in fade-in slide-in-from-top-2 duration-300"><label className={labelClasses}>Quantidade e tempo <span className="text-red-500">*</span></label><input disabled={isViewMode} name="smokes_details" value={formData.smokes_details} onChange={handleInputChange} type="text" className={getInputClasses('smokes_details')} placeholder="Quantidade de cigarros por dia/tempo..." /></div>)}
-                    </div>
-                    <div className="space-y-4">
-                      <label className={labelClasses}>Pratica atividade física?</label>
-                      <div className="flex gap-3 md:gap-4">
-                        {['Não', 'Sim'].map((option) => (
-                          <button key={option} type="button" disabled={isViewMode} onClick={() => setFormData(prev => ({ ...prev, sedentary: option }))} className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl border transition-all font-medium text-sm md:text-base ${formData.sedentary === option ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'} disabled:opacity-50`}>{option}</button>
-                        ))}
+
+                      <div className="space-y-4">
+                        <label className={labelClasses}>Pratica atividade física?</label>
+                        <div className="flex gap-3 md:gap-4">
+                          {['Não', 'Sim'].map((option) => (
+                            <button key={option} type="button" disabled={isViewMode} onClick={() => setFormData(prev => ({ ...prev, sedentary: option }))} className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl border transition-all font-medium text-sm md:text-base ${formData.sedentary === option ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'} disabled:opacity-50`}>{option}</button>
+                          ))}
+                        </div>
+                        {formData.sedentary === 'Sim' && (<div className="animate-in fade-in slide-in-from-top-2 duration-300"><label className={labelClasses}>Quais atividades? <span className="text-red-500">*</span></label><input disabled={isViewMode} name="sedentary_details" value={formData.sedentary_details} onChange={handleInputChange} type="text" className={getInputClasses('sedentary_details')} placeholder="Ex: Caminhada 3x por semana, musculação..." /></div>)}
                       </div>
-                      {formData.sedentary === 'Sim' && (<div className="animate-in fade-in slide-in-from-top-2 duration-300"><label className={labelClasses}>Quais atividades? <span className="text-red-500">*</span></label><input disabled={isViewMode} name="sedentary_details" value={formData.sedentary_details} onChange={handleInputChange} type="text" className={getInputClasses('sedentary_details')} placeholder="Ex: Caminhada 3x por semana, musculação..." /></div>)}
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-slate-100 pt-8">
-                    <div className="space-y-4">
-                      <label className={labelClasses}>Faz uso de medicamentos?</label>
-                      <div className="flex gap-3 md:gap-4">
-                        {['Não', 'Sim'].map((option) => (
-                          <button key={option} type="button" disabled={isViewMode} onClick={() => setFormData(prev => ({ ...prev, has_medications: option }))} className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl border transition-all font-medium text-sm md:text-base ${formData.has_medications === option ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'} disabled:opacity-50`}>{option}</button>
-                        ))}
+
+                      <div className="space-y-4">
+                        <label className={labelClasses}>Qualidade do Sono</label>
+                        <CustomSelect 
+                          options={[
+                            { value: 'Boa', label: 'Boa' },
+                            { value: 'Média', label: 'Média' },
+                            { value: 'Ruim', label: 'Ruim' }
+                          ]} 
+                          value={formData.sleep_quality} 
+                          onChange={(val) => handleSelectChange('sleep_quality', val)} 
+                          disabled={isViewMode} 
+                        />
                       </div>
-                      {formData.has_medications === 'Sim' && (<div className="animate-in fade-in slide-in-from-top-2 duration-300"><label className={labelClasses}>Quais medicamentos? <span className="text-red-500">*</span></label><input disabled={isViewMode} name="medications" value={formData.medications} onChange={handleInputChange} type="text" className={getInputClasses('medications')} placeholder="Quais medicamentos?" /></div>)}
-                    </div>
-                    <div className="space-y-4">
-                      <label className={labelClasses}>Cirurgias Prévias?</label>
-                      <div className="flex gap-3 md:gap-4">
-                        {['Não', 'Sim'].map((option) => (
-                          <button key={option} type="button" disabled={isViewMode} onClick={() => setFormData(prev => ({ ...prev, has_surgeries: option }))} className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl border transition-all font-medium text-sm md:text-base ${formData.has_surgeries === option ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'} disabled:opacity-50`}>{option}</button>
-                        ))}
+
+                      <div className="space-y-4">
+                        <label className={labelClasses}>Horas de Sono por Noite</label>
+                        <input 
+                          disabled={isViewMode} 
+                          name="sleep_hours" 
+                          value={formData.sleep_hours} 
+                          onChange={handleInputChange} 
+                          type="text" 
+                          className={getInputClasses('sleep_hours')} 
+                          placeholder="Ex: 08" 
+                          maxLength={2} 
+                        />
                       </div>
-                      {formData.has_surgeries === 'Sim' && (<div className="animate-in fade-in slide-in-from-top-2 duration-300"><label className={labelClasses}>Quais cirurgias? <span className="text-red-500">*</span></label><input disabled={isViewMode} name="previous_surgeries" value={formData.previous_surgeries} onChange={handleInputChange} type="text" className={getInputClasses('previous_surgeries')} placeholder="Quais cirurgias e quando?" /></div>)}
+
+                      <div className="space-y-4">
+                        <label className={labelClasses}>Faz uso de medicamentos?</label>
+                        <div className="flex gap-3 md:gap-4">
+                          {['Não', 'Sim'].map((option) => (
+                            <button key={option} type="button" disabled={isViewMode} onClick={() => setFormData(prev => ({ ...prev, has_medications: option }))} className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl border transition-all font-medium text-sm md:text-base ${formData.has_medications === option ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'} disabled:opacity-50`}>{option}</button>
+                          ))}
+                        </div>
+                        {formData.has_medications === 'Sim' && (<div className="animate-in fade-in slide-in-from-top-2 duration-300"><label className={labelClasses}>Quais medicamentos? <span className="text-red-500">*</span></label><input disabled={isViewMode} name="medications" value={formData.medications} onChange={handleInputChange} type="text" className={getInputClasses('medications')} placeholder="Quais medicamentos?" /></div>)}
+                      </div>
+
+                      <div className="space-y-4">
+                        <label className={labelClasses}>Cirurgias Prévias?</label>
+                        <div className="flex gap-3 md:gap-4">
+                          {['Não', 'Sim'].map((option) => (
+                            <button key={option} type="button" disabled={isViewMode} onClick={() => setFormData(prev => ({ ...prev, has_surgeries: option }))} className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl border transition-all font-medium text-sm md:text-base ${formData.has_surgeries === option ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'} disabled:opacity-50`}>{option}</button>
+                          ))}
+                        </div>
+                        {formData.has_surgeries === 'Sim' && (<div className="animate-in fade-in slide-in-from-top-2 duration-300"><label className={labelClasses}>Quais cirurgias? <span className="text-red-500">*</span></label><input disabled={isViewMode} name="previous_surgeries" value={formData.previous_surgeries} onChange={handleInputChange} type="text" className={getInputClasses('previous_surgeries')} placeholder="Quais cirurgias e quando?" /></div>)}
+                      </div>
                     </div>
                   </div>
                 </div>

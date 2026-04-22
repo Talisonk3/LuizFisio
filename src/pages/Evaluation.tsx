@@ -61,8 +61,8 @@ const fieldLabels: Record<string, string> = {
   blood_pressure: 'PA',
   heart_rate: 'FC',
   respiratory_rate: 'FR',
-  temperature: 'Temp',
   saturation: 'SatO2',
+  consciousness_level: 'Nível de Consciência',
   cardiac_auscultation: 'Ausc. Cardíaca',
   pulmonary_auscultation: 'Ausc. Pulmonar',
   auditory_alteration_details: 'Alt. Auditiva',
@@ -157,8 +157,8 @@ const Evaluation = () => {
     blood_pressure: '',
     heart_rate: '',
     respiratory_rate: '',
-    temperature: '',
     saturation: '',
+    consciousness_level: '',
     cardiac_auscultation: '',
     pulmonary_auscultation: '',
     auditory_alteration: 'Não',
@@ -363,12 +363,6 @@ const Evaluation = () => {
     return `${numbers.slice(0, 3)}/${numbers.slice(3)}`;
   };
 
-  const formatTemp = (value: string) => {
-    const numbers = value.replace(/\D/g, '').substring(0, 3);
-    if (numbers.length <= 2) return numbers;
-    return `${numbers.slice(0, 2)}.${numbers.slice(2)}`;
-  };
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     if (isViewMode) return;
     const { name, value } = e.target;
@@ -390,8 +384,6 @@ const Evaluation = () => {
       filteredValue = filteredValue.replace(/\D/g, '').substring(0, 3);
     } else if (name === 'respiratory_rate') {
       filteredValue = filteredValue.replace(/\D/g, '').substring(0, 2);
-    } else if (name === 'temperature') {
-      filteredValue = formatTemp(filteredValue);
     } else if (name === 'saturation') {
       filteredValue = filteredValue.replace(/\D/g, '').substring(0, 3);
     } else if (name === 'address_number') {
@@ -1010,14 +1002,29 @@ const Evaluation = () => {
                   <div className="bg-blue-100 p-2 rounded-lg text-blue-600"><Activity size={20} /></div>
                   <h3 className="text-lg md:text-xl font-bold text-slate-800">Sinais Vitais e Exame Físico</h3>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 md:gap-6">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 md:gap-6">
                   <div><label className={labelClasses}>PA (mmHg)</label><input disabled={isViewMode} name="blood_pressure" value={formData.blood_pressure} onChange={handleInputChange} type="text" className={getInputClasses('blood_pressure')} placeholder="120/80" maxLength={6} /></div>
                   <div><label className={labelClasses}>FC (bpm)</label><input disabled={isViewMode} name="heart_rate" value={formData.heart_rate} onChange={handleInputChange} type="text" className={getInputClasses('heart_rate')} placeholder="70" maxLength={3} /></div>
                   <div><label className={labelClasses}>FR (irpm)</label><input disabled={isViewMode} name="respiratory_rate" value={formData.respiratory_rate} onChange={handleInputChange} type="text" className={getInputClasses('respiratory_rate')} placeholder="16" maxLength={2} /></div>
-                  <div><label className={labelClasses}>Temp (°C)</label><input disabled={isViewMode} name="temperature" value={formData.temperature} onChange={handleInputChange} type="text" className={getInputClasses('temperature')} placeholder="36.5" maxLength={4} /></div>
                   <div><label className={labelClasses}>SatO2 (%)</label><input disabled={isViewMode} name="saturation" value={formData.saturation} onChange={handleInputChange} type="text" className={getInputClasses('saturation')} placeholder="98" maxLength={3} /></div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-8 border-t border-slate-100 pt-8">
+                  <div>
+                    <label className={labelClasses}>Nível de Consciência</label>
+                    <CustomSelect 
+                      options={[
+                        { value: 'Lúcido/Orientado', label: 'Lúcido/Orientado' },
+                        { value: 'Desorientado', label: 'Desorientado' },
+                        { value: 'Lúcido com momentos de desorientação', label: 'Lúcido com momentos de desorientação' },
+                        { value: 'Inconsciente', label: 'Inconsciente' }
+                      ]} 
+                      value={formData.consciousness_level} 
+                      onChange={(val) => handleSelectChange('consciousness_level', val)} 
+                      disabled={isViewMode} 
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-8 border-t border-slate-100 pt-8">
                   <div><label className={labelClasses}>Ausculta Cardíaca</label><textarea disabled={isViewMode} name="cardiac_auscultation" value={formData.cardiac_auscultation} onChange={handleInputChange} className={`${getInputClasses('cardiac_auscultation')} h-24 resize-none`} placeholder="Bulhas rítmicas, sopros..."></textarea></div>
                   <div><label className={labelClasses}>Ausculta Pulmonar</label><textarea disabled={isViewMode} name="pulmonary_auscultation" value={formData.pulmonary_auscultation} onChange={handleInputChange} className={`${getInputClasses('pulmonary_auscultation')} h-24 resize-none`} placeholder="Murmúrio vesicular, ruídos adventícios..."></textarea></div>
                 </div>

@@ -187,6 +187,13 @@ const DownloadModal = ({ isOpen, onClose, evaluationData, patientName }: Downloa
           ['Histórico Familiar', evaluationData.family_history || '-'],
           ['Medicamentos', evaluationData.medications || '-'],
           ['Cirurgias Prévias', evaluationData.previous_surgeries || '-'],
+          ['Qualidade do Sono', evaluationData.sleep_quality || '-'],
+          ['Horas de Sono', evaluationData.sleep_hours ? `${evaluationData.sleep_hours}h` : '-'],
+          ['PA / FC / SatO2', `${evaluationData.blood_pressure || '-'} / ${evaluationData.heart_rate || '-'} bpm / ${evaluationData.saturation || '-'}%`],
+          ['Nível de Consciência', evaluationData.consciousness_level || '-'],
+          ['Postura Anterior', evaluationData.postural_anterior || '-'],
+          ['Postura Lateral', evaluationData.postural_lateral || '-'],
+          ['Postura Posterior', evaluationData.postural_posterior || '-'],
           ['Objetivo do Tratamento', evaluationData.treatment_objective || '-'],
           ['Diagnóstico Cinético Funcional', evaluationData.physio_diagnosis || '-'],
         ];

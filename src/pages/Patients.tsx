@@ -225,7 +225,7 @@ const Patients = () => {
             <p className="font-medium">Carregando lista...</p>
           </div>
         ) : filteredPatients.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {filteredPatients.map((patient) => (
               <div key={patient.id} className="group bg-white p-4 md:p-6 rounded-[1.5rem] md:rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all flex items-center justify-between">
                 <div className="flex items-center gap-3 md:gap-4 flex-1 min-w-0">

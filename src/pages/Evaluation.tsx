@@ -199,7 +199,7 @@ const Evaluation = () => {
     postural_posterior: ''
   };
 
-  const [formData, setFormData] = useState(initialFormData);
+  const [formData, setFormData] = useState<any>(initialFormData);
 
   // Cálculo automático de idade
   const patientAge = useMemo(() => {

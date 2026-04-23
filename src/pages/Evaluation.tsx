@@ -30,6 +30,72 @@ import EvolutionHistoryTab from '@/components/EvolutionHistoryTab';
 import DownloadModal from '@/components/DownloadModal';
 import FilePreviewModal from '@/components/FilePreviewModal';
 
+interface EvaluationFormData {
+  patient_name: string;
+  birth_date: string;
+  email: string;
+  phone: string;
+  address: string;
+  address_number: string;
+  marital_status: string;
+  gender: string;
+  profession: string;
+  has_caregiver: string;
+  caregiver_name: string;
+  caregiver_phone: string;
+  caregiver2_name: string;
+  caregiver2_phone: string;
+  caregiver3_name: string;
+  caregiver3_phone: string;
+  responsible_doctor: string;
+  doctor_phone: string;
+  evaluation_date: string;
+  chief_complaint: string;
+  history_present_illness: string;
+  previous_illness_history: string;
+  family_history: string;
+  drinks: string;
+  drinks_details: string;
+  smokes: string;
+  smokes_details: string;
+  sedentary: string;
+  sedentary_details: string;
+  sleep_quality: string;
+  sleep_hours: string;
+  has_medications: string;
+  medications: string;
+  has_surgeries: string;
+  previous_surgeries: string;
+  pain_scale: string;
+  pain_worsening_factors: string;
+  pain_improvement_factors: string;
+  blood_pressure: string;
+  heart_rate: string;
+  respiratory_rate: string;
+  saturation: string;
+  consciousness_level: string;
+  cardiac_auscultation: string;
+  pulmonary_auscultation: string;
+  auditory_alteration: string;
+  auditory_alteration_details: string;
+  visual_alteration: string;
+  visual_alteration_details: string;
+  gait_aid: string;
+  gait_aid_details: string;
+  inspection_palpation: string;
+  range_of_motion: string;
+  muscle_strength: string;
+  muscle_tone_mmss: string;
+  muscle_tone_mmii: string;
+  treatment_objective: string;
+  physio_diagnosis: string;
+  has_complementary_exams: string;
+  complementary_exams_details: string;
+  postural_anterior: string;
+  postural_lateral: string;
+  postural_posterior: string;
+}
+
 const fieldLabels: Record<string, string> = {
   patient_name: 'Nome',
   birth_date: 'Data de Nasc.',
@@ -111,7 +177,6 @@ const Evaluation = () => {
   const [previewFile, setPreviewFile] = useState<string | null>(null);
   
   const visitorId = sessionStorage.getItem('visitor_id');
-  const isVisitor = !!visitorId;
 
   const [modalConfig, setModalConfig] = useState<{
     isOpen: boolean;
@@ -129,11 +194,11 @@ const Evaluation = () => {
   });
   
   const [admRows, setAdmRows] = useState([{ movement: '', degree: '' }]);
-  const [originalData, setOriginalData] = useState<any>(null);
+  const [originalData, setOriginalData] = useState<EvaluationFormData | null>(null);
   const [originalAdmRows, setOriginalAdmRows] = useState<any>([]);
   const [originalFiles, setOriginalFiles] = useState<string[]>([]);
 
-  const initialFormData = {
+  const initialFormData: EvaluationFormData = {
     patient_name: '',
     birth_date: '',
     email: '',
@@ -199,9 +264,8 @@ const Evaluation = () => {
     postural_posterior: ''
   };
 
-  const [formData, setFormData] = useState<any>(initialFormData);
+  const [formData, setFormData] = useState<EvaluationFormData>(initialFormData);
 
-  // Cálculo automático de idade
   const patientAge = useMemo(() => {
     if (!formData.birth_date || formData.birth_date.length < 10) return '';
     const [day, month, year] = formData.birth_date.split('/').map(Number);
@@ -254,7 +318,7 @@ const Evaluation = () => {
             });
           }
 
-          const loadedData = {
+          const loadedData: EvaluationFormData = {
             ...initialFormData,
             ...data,
             address: street,
@@ -304,8 +368,8 @@ const Evaluation = () => {
     if (!id) {
       return Object.keys(formData).some(key => {
         if (key === 'evaluation_date') return false;
-        const val = formData[key as keyof typeof formData] || '';
-        const initialVal = initialFormData[key as keyof typeof initialFormData] || '';
+        const val = formData[key as keyof EvaluationFormData] || '';
+        const initialVal = initialFormData[key as keyof EvaluationFormData] || '';
         return val.toString().trim() !== initialVal.toString().trim();
       }) || examFiles.length > 0;
     }
@@ -314,8 +378,8 @@ const Evaluation = () => {
 
     const hasFormDataChanges = Object.keys(formData).some(key => {
       if (key === 'evaluation_date') return false;
-      const current = formData[key as keyof typeof formData] || '';
-      const original = originalData[key as keyof typeof originalData] || '';
+      const current = formData[key as keyof EvaluationFormData] || '';
+      const original = originalData[key as keyof EvaluationFormData] || '';
       return current.toString().trim() !== original.toString().trim();
     });
 
@@ -417,18 +481,18 @@ const Evaluation = () => {
     }
 
     if (errors.includes(name)) {
-      setErrors(prev => prev.filter(err => err !== name));
+      setErrors((prev: string[]) => prev.filter(err => err !== name));
     }
 
-    setFormData(prev => ({ ...prev, [name]: filteredValue }));
+    setFormData((prev: EvaluationFormData) => ({ ...prev, [name]: filteredValue }));
   };
 
   const handleSelectChange = (name: string, value: string) => {
     if (isViewMode) return;
     if (errors.includes(name)) {
-      setErrors(prev => prev.filter(err => err !== name));
+      setErrors((prev: string[]) => prev.filter(err => err !== name));
     }
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev: EvaluationFormData) => ({ ...prev, [name]: value }));
   };
 
   const handleAdmRowChange = (index: number, field: 'movement' | 'degree', value: string) => {
@@ -457,7 +521,6 @@ const Evaluation = () => {
     }
   };
 
-  // Função de compressão de imagem para otimizar performance de rede e banco
   const compressImage = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -488,8 +551,6 @@ const Evaluation = () => {
           canvas.height = height;
           const ctx = canvas.getContext('2d');
           ctx?.drawImage(img, 0, 0, width, height);
-          
-          // Qualidade 0.7 para equilíbrio perfeito entre nitidez e tamanho de arquivo
           resolve(canvas.toDataURL('image/jpeg', 0.7));
         };
         img.onerror = reject;
@@ -522,7 +583,6 @@ const Evaluation = () => {
           const compressed = await compressImage(file);
           setExamFiles(prev => [...prev, compressed]);
         } else {
-          // Para PDF, apenas convertemos para Base64 (sem compressão de canvas)
           const reader = new FileReader();
           reader.onloadend = () => {
             setExamFiles(prev => [...prev, reader.result as string]);
@@ -568,7 +628,7 @@ const Evaluation = () => {
         if (visibleCaregivers >= 3) requiredFields.push('caregiver3_name', 'caregiver3_phone');
       }
       requiredFields.forEach(field => {
-        const val = formData[field as keyof typeof formData];
+        const val = formData[field as keyof EvaluationFormData];
         if (!val || val.toString().trim() === '') newErrors.push(field);
       });
       
@@ -578,7 +638,7 @@ const Evaluation = () => {
 
       const phoneFields = ['phone', 'caregiver_phone', 'caregiver2_phone', 'caregiver3_phone', 'doctor_phone'];
       phoneFields.forEach(field => {
-        const val = formData[field as keyof typeof formData] as string;
+        const val = formData[field as keyof EvaluationFormData] as string;
         if (val && val.trim() !== '' && val.length < 15) {
           if (!newErrors.includes(field)) newErrors.push(field);
         }
@@ -612,7 +672,7 @@ const Evaluation = () => {
       if (visibleCaregivers >= 2) idFields.push('caregiver2_name', 'caregiver2_phone');
       if (visibleCaregivers >= 3) idFields.push('caregiver3_name', 'caregiver3_phone');
     }
-    idFields.forEach(f => { if (!formData[f as keyof typeof formData]?.toString().trim()) newErrors.push(f); });
+    idFields.forEach(f => { if (!formData[f as keyof EvaluationFormData]?.toString().trim()) newErrors.push(f); });
     
     if (formData.birth_date.length < 10 && !newErrors.includes('birth_date')) newErrors.push('birth_date');
     else if (isFutureDate(formData.birth_date)) newErrors.push('birth_date');
@@ -620,7 +680,7 @@ const Evaluation = () => {
 
     const phoneFields = ['phone', 'caregiver_phone', 'caregiver2_phone', 'caregiver3_phone', 'doctor_phone'];
     phoneFields.forEach(field => {
-      const val = formData[field as keyof typeof formData] as string;
+      const val = formData[field as keyof EvaluationFormData] as string;
       if (val && val.trim() !== '' && val.length < 15) {
         if (!newErrors.includes(field)) newErrors.push(field);
       }
@@ -647,7 +707,7 @@ const Evaluation = () => {
       const hasFutureDate = isFutureDate(formData.birth_date);
       const hasOldYear = isYearTooOld(formData.birth_date);
       const hasIncompletePhone = ['phone', 'caregiver_phone', 'caregiver2_phone', 'caregiver3_phone', 'doctor_phone'].some(f => {
-        const val = formData[f as keyof typeof formData] as string;
+        const val = formData[f as keyof EvaluationFormData] as string;
         return val && val.trim() !== '' && val.length < 15;
       });
 
@@ -681,7 +741,7 @@ const Evaluation = () => {
     setIsSaving(true);
     try {
       const fullAddress = `${formData.address}, ${formData.address_number}`;
-      const { has_medications, has_surgeries, has_caregiver, has_complementary_exams, address_number, evaluation_date, drinks, smokes, sedentary, auditory_alteration, visual_alteration, gait_aid, id: recordId, created_at, exam_files, ...dataToSave } = formData;
+      const { has_medications, has_surgeries, has_caregiver, has_complementary_exams, address_number, evaluation_date, drinks, smokes, sedentary, auditory_alteration, visual_alteration, gait_aid, ...dataToSave } = formData as any;
 
       const payload = { 
         ...dataToSave, 
@@ -713,8 +773,8 @@ const Evaluation = () => {
             if (JSON.stringify(examFiles) !== JSON.stringify(originalFiles)) changes.push('[Arquivos de Exames atualizados]');
             continue;
           }
-          if (payload[key as keyof typeof payload] !== originalData[key as keyof typeof originalData] && fieldLabels[key]) {
-            const oldValue = originalData[key as keyof typeof originalData] || 'Vazio';
+          if (payload[key as keyof typeof payload] !== (originalData as any)[key] && fieldLabels[key]) {
+            const oldValue = (originalData as any)[key] || 'Vazio';
             const newValue = payload[key as keyof typeof payload] || 'Vazio';
             changes.push(`[${fieldLabels[key]}: ${oldValue} → ${newValue}]`);
           }
@@ -773,7 +833,7 @@ const Evaluation = () => {
         const hasFutureDate = isFutureDate(formData.birth_date);
         const hasOldYear = isYearTooOld(formData.birth_date);
         const hasIncompletePhone = ['phone', 'caregiver_phone', 'caregiver2_phone', 'caregiver3_phone', 'doctor_phone'].some(f => {
-          const val = formData[f as keyof typeof formData] as string;
+          const val = formData[f as keyof EvaluationFormData] as string;
           return val && val.trim() !== '' && val.length < 15;
         });
         let message = 'Preencha os campos obrigatórios marcados em vermelho antes de prosseguir.';
@@ -844,7 +904,7 @@ const Evaluation = () => {
                   const hasFutureDate = isFutureDate(formData.birth_date);
                   const hasOldYear = isYearTooOld(formData.birth_date);
                   const hasIncompletePhone = ['phone', 'caregiver_phone', 'caregiver2_phone', 'caregiver3_phone', 'doctor_phone'].some(f => {
-                    const val = formData[f as keyof typeof formData] as string;
+                    const val = formData[f as keyof EvaluationFormData] as string;
                     return val && val.trim() !== '' && val.length < 15;
                   });
                   let message = 'Preencha os campos obrigatórios antes de mudar de aba.';
@@ -959,14 +1019,14 @@ const Evaluation = () => {
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                       <label className={labelClasses}>Possui Familiar Responsável ou Cuidador?</label>
                       {formData.has_caregiver === 'Sim' && visibleCaregivers < 3 && !isViewMode && (
-                        <button onClick={() => setVisibleCaregivers(prev => prev + 1)} className="flex items-center gap-1 text-xs font-bold text-blue-600 hover:bg-blue-50 px-3 py-1.5 rounded-lg transition-all">
+                        <button onClick={() => setVisibleCaregivers((prev: number) => prev + 1)} className="flex items-center gap-1 text-xs font-bold text-blue-600 hover:bg-blue-50 px-3 py-1.5 rounded-lg transition-all">
                           <Plus size={14} /> Adicionar Responsável
                         </button>
                       )}
                     </div>
                     <div className="flex gap-3 md:gap-4">
                       {['Não', 'Sim'].map((option) => (
-                        <button key={option} type="button" disabled={isViewMode} onClick={() => setFormData(prev => ({ ...prev, has_caregiver: option }))} className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl border transition-all font-medium text-sm md:text-base ${formData.has_caregiver === option ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'} disabled:opacity-50`}>
+                        <button key={option} type="button" disabled={isViewMode} onClick={() => setFormData((prev: EvaluationFormData) => ({ ...prev, has_caregiver: option }))} className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl border transition-all font-medium text-sm md:text-base ${formData.has_caregiver === option ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'} disabled:opacity-50`}>
                           {option}
                         </button>
                       ))}
@@ -1065,7 +1125,7 @@ const Evaluation = () => {
                         <label className={labelClasses}>Consome bebida alcoólica?</label>
                         <div className="flex gap-3 md:gap-4">
                           {['Não', 'Sim'].map((option) => (
-                            <button key={option} type="button" disabled={isViewMode} onClick={() => setFormData(prev => ({ ...prev, drinks: option }))} className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl border transition-all font-medium text-sm md:text-base ${formData.drinks === option ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'} disabled:opacity-50`}>{option}</button>
+                            <button key={option} type="button" disabled={isViewMode} onClick={() => setFormData((prev: EvaluationFormData) => ({ ...prev, drinks: option }))} className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl border transition-all font-medium text-sm md:text-base ${formData.drinks === option ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'} disabled:opacity-50`}>{option}</button>
                           ))}
                         </div>
                         {formData.drinks === 'Sim' && (<div className="animate-in fade-in slide-in-from-top-2 duration-300"><label className={labelClasses}>Frequência e tipo <span className="text-red-500">*</span></label><input disabled={isViewMode} name="drinks_details" value={formData.drinks_details} onChange={handleInputChange} type="text" className={getInputClasses('drinks_details')} placeholder="Frequência e tipo de bebida..." /></div>)}
@@ -1075,7 +1135,7 @@ const Evaluation = () => {
                         <label className={labelClasses}>É fumante ou ex-fumante?</label>
                         <div className="flex gap-3 md:gap-4">
                           {['Não', 'Sim'].map((option) => (
-                            <button key={option} type="button" disabled={isViewMode} onClick={() => setFormData(prev => ({ ...prev, smokes: option }))} className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl border transition-all font-medium text-sm md:text-base ${formData.smokes === option ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'} disabled:opacity-50`}>{option}</button>
+                            <button key={option} type="button" disabled={isViewMode} onClick={() => setFormData((prev: EvaluationFormData) => ({ ...prev, smokes: option }))} className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl border transition-all font-medium text-sm md:text-base ${formData.smokes === option ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'} disabled:opacity-50`}>{option}</button>
                           ))}
                         </div>
                         {formData.smokes === 'Sim' && (<div className="animate-in fade-in slide-in-from-top-2 duration-300"><label className={labelClasses}>Quantidade e tempo <span className="text-red-500">*</span></label><input disabled={isViewMode} name="smokes_details" value={formData.smokes_details} onChange={handleInputChange} type="text" className={getInputClasses('smokes_details')} placeholder="Quantidade de cigarros por dia/tempo..." /></div>)}
@@ -1085,7 +1145,7 @@ const Evaluation = () => {
                         <label className={labelClasses}>Pratica atividade física?</label>
                         <div className="flex gap-3 md:gap-4">
                           {['Não', 'Sim'].map((option) => (
-                            <button key={option} type="button" disabled={isViewMode} onClick={() => setFormData(prev => ({ ...prev, sedentary: option }))} className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl border transition-all font-medium text-sm md:text-base ${formData.sedentary === option ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'} disabled:opacity-50`}>{option}</button>
+                            <button key={option} type="button" disabled={isViewMode} onClick={() => setFormData((prev: EvaluationFormData) => ({ ...prev, sedentary: option }))} className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl border transition-all font-medium text-sm md:text-base ${formData.sedentary === option ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'} disabled:opacity-50`}>{option}</button>
                           ))}
                         </div>
                         {formData.sedentary === 'Sim' && (<div className="animate-in fade-in slide-in-from-top-2 duration-300"><label className={labelClasses}>Quais atividades? <span className="text-red-500">*</span></label><input disabled={isViewMode} name="sedentary_details" value={formData.sedentary_details} onChange={handleInputChange} type="text" className={getInputClasses('sedentary_details')} placeholder="Ex: Caminhada 3x por semana, musculação..." /></div>)}
@@ -1095,7 +1155,7 @@ const Evaluation = () => {
                         <label className={labelClasses}>Faz uso de medicamentos?</label>
                         <div className="flex gap-3 md:gap-4">
                           {['Não', 'Sim'].map((option) => (
-                            <button key={option} type="button" disabled={isViewMode} onClick={() => setFormData(prev => ({ ...prev, has_medications: option }))} className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl border transition-all font-medium text-sm md:text-base ${formData.has_medications === option ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'} disabled:opacity-50`}>{option}</button>
+                            <button key={option} type="button" disabled={isViewMode} onClick={() => setFormData((prev: EvaluationFormData) => ({ ...prev, has_medications: option }))} className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl border transition-all font-medium text-sm md:text-base ${formData.has_medications === option ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'} disabled:opacity-50`}>{option}</button>
                           ))}
                         </div>
                         {formData.has_medications === 'Sim' && (<div className="animate-in fade-in slide-in-from-top-2 duration-300"><label className={labelClasses}>Quais medicamentos? <span className="text-red-500">*</span></label><input disabled={isViewMode} name="medications" value={formData.medications} onChange={handleInputChange} type="text" className={getInputClasses('medications')} placeholder="Quais medicamentos?" /></div>)}
@@ -1133,7 +1193,7 @@ const Evaluation = () => {
                         <label className={labelClasses}>Cirurgias Prévias?</label>
                         <div className="flex gap-3 md:gap-4">
                           {['Não', 'Sim'].map((option) => (
-                            <button key={option} type="button" disabled={isViewMode} onClick={() => setFormData(prev => ({ ...prev, has_surgeries: option }))} className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl border transition-all font-medium text-sm md:text-base ${formData.has_surgeries === option ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'} disabled:opacity-50`}>{option}</button>
+                            <button key={option} type="button" disabled={isViewMode} onClick={() => setFormData((prev: EvaluationFormData) => ({ ...prev, has_surgeries: option }))} className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl border transition-all font-medium text-sm md:text-base ${formData.has_surgeries === option ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'} disabled:opacity-50`}>{option}</button>
                           ))}
                         </div>
                         {formData.has_surgeries === 'Sim' && (<div className="animate-in fade-in slide-in-from-top-2 duration-300"><label className={labelClasses}>Quais cirurgias? <span className="text-red-500">*</span></label><input disabled={isViewMode} name="previous_surgeries" value={formData.previous_surgeries} onChange={handleInputChange} type="text" className={getInputClasses('previous_surgeries')} placeholder="Quais cirurgias e quando?" /></div>)}
@@ -1181,7 +1241,7 @@ const Evaluation = () => {
                     <label className={labelClasses}>Alterações Auditivas</label>
                     <div className="flex gap-3 md:gap-4">
                       {['Não', 'Sim'].map((option) => (
-                        <button key={option} type="button" disabled={isViewMode} onClick={() => setFormData(prev => ({ ...prev, auditory_alteration: option }))} className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl border transition-all font-medium text-sm md:text-base ${formData.auditory_alteration === option ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'} disabled:opacity-50`}>{option}</button>
+                        <button key={option} type="button" disabled={isViewMode} onClick={() => setFormData((prev: EvaluationFormData) => ({ ...prev, auditory_alteration: option }))} className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl border transition-all font-medium text-sm md:text-base ${formData.auditory_alteration === option ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'} disabled:opacity-50`}>{option}</button>
                       ))}
                     </div>
                     {formData.auditory_alteration === 'Sim' && (
@@ -1195,7 +1255,7 @@ const Evaluation = () => {
                     <label className={labelClasses}>Alterações Visuais</label>
                     <div className="flex gap-3 md:gap-4">
                       {['Não', 'Sim'].map((option) => (
-                        <button key={option} type="button" disabled={isViewMode} onClick={() => setFormData(prev => ({ ...prev, visual_alteration: option }))} className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl border transition-all font-medium text-sm md:text-base ${formData.visual_alteration === option ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'} disabled:opacity-50`}>{option}</button>
+                        <button key={option} type="button" disabled={isViewMode} onClick={() => setFormData((prev: EvaluationFormData) => ({ ...prev, visual_alteration: option }))} className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl border transition-all font-medium text-sm md:text-base ${formData.visual_alteration === option ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'} disabled:opacity-50`}>{option}</button>
                       ))}
                     </div>
                     {formData.visual_alteration === 'Sim' && (
@@ -1211,7 +1271,7 @@ const Evaluation = () => {
                     <label className={labelClasses}>Dispositivo para Auxílio de Marcha</label>
                     <div className="flex gap-3 md:gap-4">
                       {['Não', 'Sim'].map((option) => (
-                        <button key={option} type="button" disabled={isViewMode} onClick={() => setFormData(prev => ({ ...prev, gait_aid: option }))} className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl border transition-all font-medium text-sm md:text-base ${formData.gait_aid === option ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'} disabled:opacity-50`}>{option}</button>
+                        <button key={option} type="button" disabled={isViewMode} onClick={() => setFormData((prev: EvaluationFormData) => ({ ...prev, gait_aid: option }))} className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl border transition-all font-medium text-sm md:text-base ${formData.gait_aid === option ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'} disabled:opacity-50`}>{option}</button>
                       ))}
                     </div>
                     {formData.gait_aid === 'Sim' && (
@@ -1225,7 +1285,7 @@ const Evaluation = () => {
                     <label className={labelClasses}>Exames Complementares?</label>
                     <div className="flex gap-3 md:gap-4">
                       {['Não', 'Sim'].map((option) => (
-                        <button key={option} type="button" disabled={isViewMode} onClick={() => setFormData(prev => ({ ...prev, has_complementary_exams: option }))} className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl border transition-all font-medium text-sm md:text-base ${formData.has_complementary_exams === option ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'} disabled:opacity-50`}>{option}</button>
+                        <button key={option} type="button" disabled={isViewMode} onClick={() => setFormData((prev: EvaluationFormData) => ({ ...prev, has_complementary_exams: option }))} className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl border transition-all font-medium text-sm md:text-base ${formData.has_complementary_exams === option ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'} disabled:opacity-50`}>{option}</button>
                       ))}
                     </div>
                     {formData.has_complementary_exams === 'Sim' && (
@@ -1268,7 +1328,7 @@ const Evaluation = () => {
                         key={num}
                         type="button"
                         disabled={isViewMode}
-                        onClick={() => setFormData(prev => ({ ...prev, pain_scale: num.toString() }))}
+                        onClick={() => setFormData((prev: EvaluationFormData) => ({ ...prev, pain_scale: num.toString() }))}
                         className={`w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center font-bold transition-all text-xs md:text-sm ${
                           formData.pain_scale === num.toString()
                           ? `${getPainColor(num)} text-white scale-110 shadow-lg ring-4 ring-white`
@@ -1300,7 +1360,7 @@ const Evaluation = () => {
                       <label className={labelClasses}>Tônus Muscular MMSS</label>
                       <div className="flex flex-wrap gap-2 md:gap-3">
                         {['Normal', 'Hipertônico', 'Hipotônico'].map((option) => (
-                          <button key={option} type="button" disabled={isViewMode} onClick={() => setFormData(prev => ({ ...prev, muscle_tone_mmss: option }))} className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl border transition-all font-medium text-xs md:text-sm ${formData.muscle_tone_mmss === option ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'} disabled:opacity-50`}>{option}</button>
+                          <button key={option} type="button" disabled={isViewMode} onClick={() => setFormData((prev: EvaluationFormData) => ({ ...prev, muscle_tone_mmss: option }))} className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl border transition-all font-medium text-xs md:text-sm ${formData.muscle_tone_mmss === option ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'} disabled:opacity-50`}>{option}</button>
                         ))}
                       </div>
                     </div>
@@ -1308,7 +1368,7 @@ const Evaluation = () => {
                       <label className={labelClasses}>Tônus Muscular MMII</label>
                       <div className="flex flex-wrap gap-2 md:gap-3">
                         {['Normal', 'Hipertônico', 'Hipotônico'].map((option) => (
-                          <button key={option} type="button" disabled={isViewMode} onClick={() => setFormData(prev => ({ ...prev, muscle_tone_mmii: option }))} className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl border transition-all font-medium text-xs md:text-sm ${formData.muscle_tone_mmii === option ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'} disabled:opacity-50`}>{option}</button>
+                          <button key={option} type="button" disabled={isViewMode} onClick={() => setFormData((prev: EvaluationFormData) => ({ ...prev, muscle_tone_mmii: option }))} className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl border transition-all font-medium text-xs md:text-sm ${formData.muscle_tone_mmii === option ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'} disabled:opacity-50`}>{option}</button>
                         ))}
                       </div>
                     </div>
@@ -1335,7 +1395,7 @@ const Evaluation = () => {
                           key={option.value}
                           type="button"
                           disabled={isViewMode}
-                          onClick={() => setFormData(prev => ({ 
+                          onClick={() => setFormData((prev: EvaluationFormData) => ({ 
                             ...prev, 
                             muscle_strength: prev.muscle_strength === option.label ? '' : option.label 
                           }))}
@@ -1440,7 +1500,7 @@ const Evaluation = () => {
 
       <DownloadModal isOpen={isDownloadModalOpen} onClose={() => setIsDownloadModalOpen(false)} evaluationData={{ ...formData, id }} patientName={formData.patient_name} />
       <FilePreviewModal isOpen={!!previewFile} onClose={() => setPreviewFile(null)} fileUrl={previewFile} />
-      <NotificationModal isOpen={modalConfig.isOpen} onClose={() => setModalConfig(prev => ({ ...prev, isOpen: false }))} onConfirm={modalConfig.onConfirm} type={modalConfig.type} title={modalConfig.title} message={modalConfig.message} confirmLabel={modalConfig.confirmLabel} cancelLabel={modalConfig.cancelLabel} />
+      <NotificationModal isOpen={modalConfig.isOpen} onClose={() => setModalConfig((prev: any) => ({ ...prev, isOpen: false }))} onConfirm={modalConfig.onConfirm} type={modalConfig.type} title={modalConfig.title} message={modalConfig.message} confirmLabel={modalConfig.confirmLabel} cancelLabel={modalConfig.cancelLabel} />
     </div>
   );
 };

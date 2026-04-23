@@ -176,7 +176,9 @@ const Evaluation = () => {
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
   const [previewFile, setPreviewFile] = useState<string | null>(null);
   
+  const visitorAccess = sessionStorage.getItem('visitor_access');
   const visitorId = sessionStorage.getItem('visitor_id');
+  const isVisitor = !!visitorAccess;
 
   const [modalConfig, setModalConfig] = useState<{
     isOpen: boolean;

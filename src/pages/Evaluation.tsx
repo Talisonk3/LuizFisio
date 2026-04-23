@@ -1254,7 +1254,7 @@ const Evaluation = () => {
                         className={`w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center font-bold transition-all text-xs md:text-sm ${
                           formData.pain_scale === num.toString()
                           ? `${getPainColor(num)} text-white scale-110 shadow-lg ring-4 ring-white`
-                          : 'bg-white text-slate-400 border border-slate-200 hover:border-slate-400'
+                          : 'bg-white text-slate-400 border border-slate-200 hover:border-slate-300'
                         } disabled:opacity-50`}
                       >
                         {num}
@@ -1331,7 +1331,7 @@ const Evaluation = () => {
                         value={formData.physio_diagnosis} 
                         onChange={handleInputChange} 
                         className="w-full p-4 bg-white border border-blue-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all h-32 font-medium text-blue-900 placeholder:text-blue-300 disabled:bg-slate-50 disabled:text-slate-500 text-sm md:text-base" 
-                        placeholder="Conclusão clínica baseada na avaliação funcional..."
+                        placeholder="Conclusão clínica..."
                       />
                     </div>
                   </div>

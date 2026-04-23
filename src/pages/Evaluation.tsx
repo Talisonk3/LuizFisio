@@ -82,12 +82,12 @@ const fieldLabels: Record<string, string> = {
 };
 
 const oxfordScale = [
-  { value: '5', label: '5 - Força Normal' },
-  { value: '4', label: '4 - Vence com dificuldade a resistência' },
-  { value: '3', label: '3 - Move contra a gravidade, mas não contra a resistência' },
-  { value: '2', label: '2 - Não se move contra a gravidade' },
+  { value: '0', label: '0 - Ausência de contração' },
   { value: '1', label: '1 - Há contração muscular, sem movimento articular' },
-  { value: '0', label: '0 - Ausência de contração' }
+  { value: '2', label: '2 - Não se move contra a gravidade' },
+  { value: '3', label: '3 - Move contra a gravidade, mas não contra a resistência' },
+  { value: '4', label: '4 - Vence com dificuldade a resistência' },
+  { value: '5', label: '5 - Força Normal' }
 ];
 
 const Evaluation = () => {
@@ -1057,7 +1057,7 @@ const Evaluation = () => {
                         <label className={labelClasses}>Consome bebida alcoólica?</label>
                         <div className="flex gap-3 md:gap-4">
                           {['Não', 'Sim'].map((option) => (
-                            <button key={option} type="button" disabled={isViewMode} onClick={() => setFormData(prev => ({ ...prev, drinks: option }))} className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl border transition-all font-medium text-sm md:text-base ${formData.drinks === option ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'} disabled:opacity-50`}>{option}</button>
+                            <button key={option} type="button" disabled={isViewMode} onClick={() => setFormData(prev => ({ ...prev, drinks: option }))} className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl border transition-all font-medium text-sm md:text-base ${formData.has_caregiver === option ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'} disabled:opacity-50`}>{option}</button>
                           ))}
                         </div>
                         {formData.drinks === 'Sim' && (<div className="animate-in fade-in slide-in-from-top-2 duration-300"><label className={labelClasses}>Frequência e tipo <span className="text-red-500">*</span></label><input disabled={isViewMode} name="drinks_details" value={formData.drinks_details} onChange={handleInputChange} type="text" className={getInputClasses('drinks_details')} placeholder="Frequência e tipo de bebida..." /></div>)}

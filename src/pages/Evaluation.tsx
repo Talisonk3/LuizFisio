@@ -1335,7 +1335,10 @@ const Evaluation = () => {
                           key={option.value}
                           type="button"
                           disabled={isViewMode}
-                          onClick={() => setFormData(prev => ({ ...prev, muscle_strength: option.label }))}
+                          onClick={() => setFormData(prev => ({ 
+                            ...prev, 
+                            muscle_strength: prev.muscle_strength === option.label ? '' : option.label 
+                          }))}
                           className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-all text-left group ${
                             formData.muscle_strength === option.label
                             ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-100 scale-[1.02]'

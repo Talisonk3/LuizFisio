@@ -78,7 +78,10 @@ const fieldLabels: Record<string, string> = {
   muscle_tone_mmii: 'Tônus MMII',
   treatment_objective: 'Objetivo do Tratamento',
   physio_diagnosis: 'Diagnóstico Cinético Funcional',
-  complementary_exams_details: 'Exames Compl.'
+  complementary_exams_details: 'Exames Compl.',
+  postural_anterior: 'Postura Anterior',
+  postural_lateral: 'Postura Lateral',
+  postural_posterior: 'Postura Posterior'
 };
 
 const oxfordScale = [
@@ -190,7 +193,10 @@ const Evaluation = () => {
     treatment_objective: '',
     physio_diagnosis: '',
     has_complementary_exams: 'Não',
-    complementary_exams_details: ''
+    complementary_exams_details: '',
+    postural_anterior: '',
+    postural_lateral: '',
+    postural_posterior: ''
   };
 
   const [formData, setFormData] = useState(initialFormData);
@@ -406,6 +412,8 @@ const Evaluation = () => {
       filteredValue = filteredValue.replace(/\D/g, '').substring(0, 4);
     } else if (name === 'sleep_hours') {
       filteredValue = filteredValue.replace(/\D/g, '').substring(0, 2);
+    } else if (name.startsWith('postural_')) {
+      filteredValue = filteredValue.replace(/[^a-zA-ZÀ-ÿ0-9\s]/g, '');
     }
 
     if (errors.includes(name)) {
@@ -1057,7 +1065,7 @@ const Evaluation = () => {
                         <label className={labelClasses}>Consome bebida alcoólica?</label>
                         <div className="flex gap-3 md:gap-4">
                           {['Não', 'Sim'].map((option) => (
-                            <button key={option} type="button" disabled={isViewMode} onClick={() => setFormData(prev => ({ ...prev, drinks: option }))} className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl border transition-all font-medium text-sm md:text-base ${formData.has_caregiver === option ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'} disabled:opacity-50`}>{option}</button>
+                            <button key={option} type="button" disabled={isViewMode} onClick={() => setFormData(prev => ({ ...prev, drinks: option }))} className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl border transition-all font-medium text-sm md:text-base ${formData.drinks === option ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'} disabled:opacity-50`}>{option}</button>
                           ))}
                         </div>
                         {formData.drinks === 'Sim' && (<div className="animate-in fade-in slide-in-from-top-2 duration-300"><label className={labelClasses}>Frequência e tipo <span className="text-red-500">*</span></label><input disabled={isViewMode} name="drinks_details" value={formData.drinks_details} onChange={handleInputChange} type="text" className={getInputClasses('drinks_details')} placeholder="Frequência e tipo de bebida..." /></div>)}
@@ -1344,8 +1352,47 @@ const Evaluation = () => {
                       ))}
                     </div>
                   </div>
+
+                  <div className="space-y-4 border-t border-slate-100 pt-8">
+                    <label className="text-sm md:text-base font-bold text-slate-800 mb-4 block ml-1">Avaliação Postural</label>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6">
+                      <div>
+                        <label className={labelClasses}>Vista Anterior</label>
+                        <textarea 
+                          disabled={isViewMode} 
+                          name="postural_anterior" 
+                          value={formData.postural_anterior} 
+                          onChange={handleInputChange} 
+                          className={`${getInputClasses('postural_anterior')} h-32 resize-none`} 
+                          placeholder="Descreva a vista anterior..."
+                        />
+                      </div>
+                      <div>
+                        <label className={labelClasses}>Vista Lateral</label>
+                        <textarea 
+                          disabled={isViewMode} 
+                          name="postural_lateral" 
+                          value={formData.postural_lateral} 
+                          onChange={handleInputChange} 
+                          className={`${getInputClasses('postural_lateral')} h-32 resize-none`} 
+                          placeholder="Descreva a vista lateral..."
+                        />
+                      </div>
+                      <div>
+                        <label className={labelClasses}>Vista Posterior</label>
+                        <textarea 
+                          disabled={isViewMode} 
+                          name="postural_posterior" 
+                          value={formData.postural_posterior} 
+                          onChange={handleInputChange} 
+                          className={`${getInputClasses('postural_posterior')} h-32 resize-none`} 
+                          placeholder="Descreva a vista posterior..."
+                        />
+                      </div>
+                    </div>
+                  </div>
                   
-                  <div className="space-y-6">
+                  <div className="space-y-6 border-t border-slate-100 pt-8">
                     <div>
                       <label className={labelClasses}>Objetivo do Tratamento</label>
                       <textarea 

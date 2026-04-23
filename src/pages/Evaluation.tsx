@@ -18,7 +18,8 @@ import {
   History,
   Home,
   Download,
-  Eye as EyeIcon
+  Eye as EyeIcon,
+  CheckCircle2
 } from 'lucide-react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -72,13 +73,22 @@ const fieldLabels: Record<string, string> = {
   gait_aid_details: 'Aux. Marcha',
   inspection_palpation: 'Inspeção',
   range_of_motion: 'ADM',
-  muscle_strength: 'Força',
+  muscle_strength: 'Força Muscular',
   muscle_tone_mmss: 'Tônus MMSS',
   muscle_tone_mmii: 'Tônus MMII',
   treatment_objective: 'Objetivo do Tratamento',
   physio_diagnosis: 'Diagnóstico Cinético Funcional',
   complementary_exams_details: 'Exames Compl.'
 };
+
+const oxfordScale = [
+  { value: '5', label: '5 - Força Normal' },
+  { value: '4', label: '4 - Vence com dificuldade a resistência' },
+  { value: '3', label: '3 - Move contra a gravidade, mas não contra a resistência' },
+  { value: '2', label: '2 - Não se move contra a gravidade' },
+  { value: '1', label: '1 - Há contração muscular, sem movimento articular' },
+  { value: '0', label: '0 - Ausência de contração' }
+];
 
 const Evaluation = () => {
   const { id } = useParams();
@@ -1308,7 +1318,32 @@ const Evaluation = () => {
                     </div>
                     {!isViewMode && (<button onClick={addAdmRow} className="mt-2 flex items-center gap-2 text-blue-600 font-bold text-sm hover:bg-blue-50 px-4 py-2 rounded-xl transition-all"><Plus size={18} /> Adicionar Movimento</button>)}
                   </div>
-                  <div><label className={labelClasses}>Força Muscular (Grau 0-5)</label><textarea disabled={isViewMode} name="muscle_strength" value={formData.muscle_strength} onChange={handleInputChange} className={`${getInputClasses('muscle_strength')} h-28 resize-none`} placeholder="Teste de força manual por grupos musculares..."></textarea></div>
+                  
+                  <div className="space-y-4">
+                    <label className={labelClasses}>Força Muscular Manual (Escala de Oxford)</label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {oxfordScale.map((option) => (
+                        <button
+                          key={option.value}
+                          type="button"
+                          disabled={isViewMode}
+                          onClick={() => setFormData(prev => ({ ...prev, muscle_strength: option.label }))}
+                          className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-all text-left group ${
+                            formData.muscle_strength === option.label
+                            ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-100 scale-[1.02]'
+                            : 'bg-white border-slate-100 text-slate-600 hover:border-blue-200 hover:bg-blue-50/30'
+                          } disabled:opacity-50 disabled:scale-100`}
+                        >
+                          <span className={`text-xs md:text-sm font-bold ${formData.muscle_strength === option.label ? 'text-white' : 'text-slate-700'}`}>
+                            {option.label}
+                          </span>
+                          {formData.muscle_strength === option.label && (
+                            <CheckCircle2 size={18} className="text-white shrink-0 ml-2" />
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                   
                   <div className="space-y-6">
                     <div>

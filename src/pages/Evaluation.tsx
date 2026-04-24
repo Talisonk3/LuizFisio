@@ -1494,10 +1494,10 @@ const Evaluation = () => {
                   const currentIndex = tabs.findIndex(t => t.id === activeTab); 
                   setActiveTab(tabs[currentIndex - 1].id); 
                 }} 
-                className="flex items-center gap-2 text-slate-400 font-bold hover:text-slate-600 disabled:opacity-20 transition-all px-3 md:px-4 py-2 rounded-xl hover:bg-slate-50 text-xs md:text-sm"
+                className="bg-slate-100 text-blue-600 font-black flex items-center gap-2 px-4 md:px-6 py-3 rounded-2xl hover:bg-blue-600 hover:text-white transition-all group text-xs md:text-sm disabled:opacity-50"
               >
-                <ChevronLeft size={18} /> 
-                <span className="hidden sm:inline">Voltar</span>
+                <ChevronLeft size={18} className="group-hover:-translate-x-1 transition-transform" /> 
+                <span>Voltar</span>
               </button>
               
               <div className="flex flex-col items-center gap-2">

@@ -166,6 +166,7 @@ const Evaluation = () => {
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState('identificacao');
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(!!id);
@@ -362,6 +363,13 @@ const Evaluation = () => {
 
     fetchEvaluation();
   }, [id]);
+
+  // Scroll to top when tab changes
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [activeTab]);
 
   const isFormDirty = useMemo(() => {
     if (isViewMode) return false;
@@ -932,7 +940,7 @@ const Evaluation = () => {
         </div>
       </aside>
 
-      <main className="flex-1 overflow-y-auto p-4 md:p-12">
+      <main ref={scrollContainerRef} className="flex-1 overflow-y-auto p-4 md:p-12">
         <div className="max-w-4xl mx-auto">
           <header className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div className="w-full md:w-auto flex items-center gap-3">

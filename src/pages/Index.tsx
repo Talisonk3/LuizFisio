@@ -53,8 +53,8 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-blue-50 flex flex-col">
-      {/* Header - Atualizado para bg-blue-100 para dar o destaque solicitado */}
-      <header className="bg-blue-100 border-b border-blue-200 px-6 py-4 sticky top-0 z-10 shadow-sm">
+      {/* Header - Atualizado com z-50 e bg-blue-100 sólido para evitar transparência indesejada */}
+      <header className="bg-blue-100 border-b border-blue-200 px-6 py-4 sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div className="flex items-center gap-2">
             <div className="bg-blue-600 p-2 rounded-xl shadow-lg shadow-blue-200">

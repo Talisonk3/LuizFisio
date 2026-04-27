@@ -48,15 +48,23 @@ const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
     message: ''
   });
 
-  // Bloquear scroll do body quando a modal estiver aberta
+  // Bloquear scroll total quando a modal estiver aberta
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = 'hidden';
+      const scrollY = window.scrollY;
+      document.documentElement.classList.add('no-scroll');
+      document.body.style.top = `-${scrollY}px`;
     } else {
-      document.body.style.overflow = 'unset';
+      const scrollY = document.body.style.top;
+      document.documentElement.classList.remove('no-scroll');
+      document.body.style.top = '';
+      if (scrollY) {
+        window.scrollTo(0, parseInt(scrollY || '0') * -1);
+      }
     }
     return () => {
-      document.body.style.overflow = 'unset';
+      document.documentElement.classList.remove('no-scroll');
+      document.body.style.top = '';
     };
   }, [isOpen]);
 
@@ -98,7 +106,7 @@ const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    let filteredValue = value.trimStart(); // Impede espaço no início
+    let filteredValue = value.trimStart();
 
     if (name === 'full_name') {
       filteredValue = filteredValue.replace(/[^a-zA-ZÀ-ÿ\s]/g, '');

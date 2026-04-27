@@ -27,15 +27,23 @@ const NotificationModal = ({
   cancelLabel = 'Voltar'
 }: NotificationModalProps) => {
   
-  // Bloquear scroll do body quando a modal estiver aberta
+  // Bloquear scroll total quando a modal estiver aberta
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = 'hidden';
+      const scrollY = window.scrollY;
+      document.documentElement.classList.add('no-scroll');
+      document.body.style.top = `-${scrollY}px`;
     } else {
-      document.body.style.overflow = 'unset';
+      const scrollY = document.body.style.top;
+      document.documentElement.classList.remove('no-scroll');
+      document.body.style.top = '';
+      if (scrollY) {
+        window.scrollTo(0, parseInt(scrollY || '0') * -1);
+      }
     }
     return () => {
-      document.body.style.overflow = 'unset';
+      document.documentElement.classList.remove('no-scroll');
+      document.body.style.top = '';
     };
   }, [isOpen]);
 

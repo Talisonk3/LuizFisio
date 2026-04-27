@@ -1316,19 +1316,61 @@ const Evaluation = () => {
                         <div><label className={labelClasses}>Descrição dos Exames <span className="text-red-500">*</span></label><textarea disabled={isViewMode} name="complementary_exams_details" value={formData.complementary_exams_details} onChange={handleInputChange} className={`${getInputClasses('complementary_exams_details')} h-24 resize-none`} placeholder="Descreva os resultados dos exames..."></textarea></div>
                         <div>
                           <label className={labelClasses}>Arquivos dos Exames (Imagens ou PDF - Máx. 10)</label>
-                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 md:gap-4 mt-2">
+                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-5 md:gap-6 mt-4">
                             {examFiles.map((file, index) => (
-                              <div key={index} className="relative group aspect-square rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 flex items-center justify-center">
-                                {file.startsWith('data:application/pdf') ? (<div className="flex flex-col items-center gap-1 text-slate-400"><FileText size={32} /><span className="text-[10px] font-bold uppercase">PDF</span></div>) : (<img src={file} alt={`Exame ${index + 1}`} className="w-full h-full object-cover" />)}
-                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                                  <button onClick={() => setPreviewFile(file)} className="p-2 bg-white text-blue-600 rounded-full shadow-lg hover:scale-110 transition-transform" title="Visualizar"><EyeIcon size={16} /></button>
-                                  {!isViewMode && (<button onClick={() => removeFile(index)} className="p-2 bg-red-500 text-white rounded-full shadow-lg hover:scale-110 transition-transform" title="Remover"><X size={16} /></button>)}
-                                </div>
+                              <div key={index} className="relative aspect-square rounded-2xl border border-slate-200 bg-slate-50 flex items-center justify-center transition-all hover:shadow-md">
+                                {/* Área de clique para visualizar */}
+                                <button 
+                                  type="button"
+                                  onClick={() => setPreviewFile(file)}
+                                  className="w-full h-full flex flex-col items-center justify-center overflow-hidden rounded-2xl group"
+                                >
+                                  {file.startsWith('data:application/pdf') ? (
+                                    <div className="flex flex-col items-center gap-1 text-slate-400 group-hover:text-blue-500 transition-colors">
+                                      <FileText size={32} />
+                                      <span className="text-[10px] font-black uppercase tracking-wider">PDF</span>
+                                    </div>
+                                  ) : (
+                                    <img src={file} alt={`Exame ${index + 1}`} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
+                                  )}
+                                  
+                                  {/* Overlay de visualização */}
+                                  <div className="absolute inset-0 bg-blue-600/0 group-hover:bg-blue-600/5 transition-colors flex items-center justify-center">
+                                    <EyeIcon size={20} className="text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                                  </div>
+                                </button>
+
+                                {/* Botão de Excluir (X Vermelho na borda) */}
+                                {!isViewMode && (
+                                  <button 
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      removeFile(index);
+                                    }}
+                                    className="absolute -top-2 -right-2 w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-red-600 transition-all hover:scale-110 z-20 border-2 border-white"
+                                    title="Remover arquivo"
+                                  >
+                                    <X size={16} strokeWidth={3} />
+                                  </button>
+                                )}
                               </div>
                             ))}
                             {examFiles.length < 10 && !isViewMode && (
-                              <button onClick={() => fileInputRef.current?.click()} disabled={isProcessingFile} className="aspect-square rounded-2xl border-2 border-dashed border-slate-200 flex items-center justify-center p-2 text-slate-400 hover:border-blue-400 hover:text-blue-500 hover:bg-blue-50 transition-all overflow-hidden">
-                                {isProcessingFile ? <Loader2 className="animate-spin" size={28} /> : <Plus size={28} className="shrink-0" />}
+                              <button 
+                                type="button"
+                                onClick={() => fileInputRef.current?.click()} 
+                                disabled={isProcessingFile} 
+                                className="aspect-square rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center p-2 text-slate-400 hover:border-blue-400 hover:text-blue-500 hover:bg-blue-50 transition-all"
+                              >
+                                {isProcessingFile ? (
+                                  <Loader2 className="animate-spin" size={28} />
+                                ) : (
+                                  <>
+                                    <Plus size={28} className="mb-1" />
+                                    <span className="text-[10px] font-black uppercase tracking-wider">Adicionar</span>
+                                  </>
+                                )}
                               </button>
                             )}
                           </div>

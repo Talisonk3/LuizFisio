@@ -1488,17 +1488,20 @@ const Evaluation = () => {
             {activeTab === 'historico-evolucoes' && id && (<EvolutionHistoryTab evaluationId={id} isReadOnly={isViewMode} />)}
 
             <div className="mt-12 pt-8 border-t border-slate-100 flex justify-between items-center">
-              <button 
-                disabled={activeTab === 'identificacao'} 
-                onClick={() => { 
-                  const currentIndex = tabs.findIndex(t => t.id === activeTab); 
-                  setActiveTab(tabs[currentIndex - 1].id); 
-                }} 
-                className="bg-slate-100 text-blue-600 font-black flex items-center gap-2 px-4 md:px-6 py-3 rounded-2xl hover:bg-blue-600 hover:text-white transition-all group text-xs md:text-sm disabled:opacity-50"
-              >
-                <ChevronLeft size={18} className="group-hover:-translate-x-1 transition-transform" /> 
-                <span>Voltar</span>
-              </button>
+              {activeTab !== 'identificacao' ? (
+                <button 
+                  onClick={() => { 
+                    const currentIndex = tabs.findIndex(t => t.id === activeTab); 
+                    setActiveTab(tabs[currentIndex - 1].id); 
+                  }} 
+                  className="bg-slate-100 text-blue-600 font-black flex items-center gap-2 px-4 md:px-6 py-3 rounded-2xl hover:bg-blue-600 hover:text-white transition-all group text-xs md:text-sm"
+                >
+                  <ChevronLeft size={18} className="group-hover:-translate-x-1 transition-transform" /> 
+                  <span>Voltar</span>
+                </button>
+              ) : (
+                <div />
+              )}
               
               <div className="flex flex-col items-center gap-2">
                 <div className="flex gap-1.5 md:gap-2">{tabs.map((tab) => (<div key={tab.id} className={`h-1.5 rounded-full transition-all duration-300 ${activeTab === tab.id ? 'w-6 md:w-8 bg-blue-600' : 'w-1.5 md:w-2 bg-slate-200'}`} />))}</div>

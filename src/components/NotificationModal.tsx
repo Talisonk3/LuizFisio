@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { AlertTriangle, CheckCircle2, XCircle, Info, X } from 'lucide-react';
 
 export type ModalType = 'warning' | 'success' | 'error' | 'info';
@@ -26,6 +26,19 @@ const NotificationModal = ({
   confirmLabel = 'Confirmar',
   cancelLabel = 'Voltar'
 }: NotificationModalProps) => {
+  
+  // Bloquear scroll do body quando a modal estiver aberta
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const config = {

@@ -48,6 +48,18 @@ const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
     message: ''
   });
 
+  // Bloquear scroll do body quando a modal estiver aberta
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
+
   useEffect(() => {
     const fetchProfile = async () => {
       if (!user || !isOpen) return;

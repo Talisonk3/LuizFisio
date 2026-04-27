@@ -6,19 +6,22 @@
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
 }
 
-/* Bloqueio total de scroll em todos os níveis */
-.no-scroll, 
-.no-scroll body {
+/* Bloqueio total e absoluto de scroll */
+html.no-scroll,
+html.no-scroll body {
   overflow: hidden !important;
   height: 100vh !important;
   width: 100% !important;
   position: fixed !important;
+  top: 0;
+  left: 0;
 }
 
-/* Garante que containers com scroll interno (como o main da Avaliação) também travem */
-.no-scroll main,
-.no-scroll .overflow-y-auto {
+/* Trava específica para o container de scroll da página de Avaliação */
+html.no-scroll main,
+html.no-scroll .overflow-y-auto {
   overflow: hidden !important;
+  touch-action: none;
 }
 
 body {

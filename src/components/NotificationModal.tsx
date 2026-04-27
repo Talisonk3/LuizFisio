@@ -27,23 +27,27 @@ const NotificationModal = ({
   cancelLabel = 'Voltar'
 }: NotificationModalProps) => {
   
-  // Bloquear scroll total quando a modal estiver aberta
   useEffect(() => {
     if (isOpen) {
-      const scrollY = window.scrollY;
+      const count = parseInt(document.documentElement.getAttribute('data-scroll-locks') || '0');
+      document.documentElement.setAttribute('data-scroll-locks', (count + 1).toString());
       document.documentElement.classList.add('no-scroll');
-      document.body.style.top = `-${scrollY}px`;
     } else {
-      const scrollY = document.body.style.top;
-      document.documentElement.classList.remove('no-scroll');
-      document.body.style.top = '';
-      if (scrollY) {
-        window.scrollTo(0, parseInt(scrollY || '0') * -1);
+      const count = parseInt(document.documentElement.getAttribute('data-scroll-locks') || '0');
+      const newCount = Math.max(0, count - 1);
+      document.documentElement.setAttribute('data-scroll-locks', newCount.toString());
+      if (newCount === 0) {
+        document.documentElement.classList.remove('no-scroll');
       }
     }
+    
     return () => {
-      document.documentElement.classList.remove('no-scroll');
-      document.body.style.top = '';
+      const count = parseInt(document.documentElement.getAttribute('data-scroll-locks') || '0');
+      const newCount = Math.max(0, count - 1);
+      document.documentElement.setAttribute('data-scroll-locks', newCount.toString());
+      if (newCount === 0) {
+        document.documentElement.classList.remove('no-scroll');
+      }
     };
   }, [isOpen]);
 

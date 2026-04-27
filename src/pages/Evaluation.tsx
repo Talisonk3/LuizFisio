@@ -364,11 +364,25 @@ const Evaluation = () => {
     fetchEvaluation();
   }, [id]);
 
-  // Scroll to top when tab changes
+  // Scroll to top when tab changes - Reforçado para Mobile
   useEffect(() => {
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+    const handleScroll = () => {
+      // Tenta scrollar o container principal da página
+      if (scrollContainerRef.current) {
+        scrollContainerRef.current.scrollTop = 0;
+      }
+      // Tenta scrollar a janela do navegador (fallback para alguns navegadores mobile)
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    };
+
+    // Executa imediatamente
+    handleScroll();
+    
+    // Executa novamente após um pequeno delay para garantir que o conteúdo renderizou
+    const timer = setTimeout(handleScroll, 50);
+    return () => clearTimeout(timer);
   }, [activeTab]);
 
   const isFormDirty = useMemo(() => {

@@ -6,6 +6,7 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/AuthProvider';
+import { useScrollLock } from '@/hooks/useScrollLock';
 
 interface DownloadModalProps {
   isOpen: boolean;
@@ -27,6 +28,9 @@ const DownloadModal = ({ isOpen, onClose, evaluationData, patientName }: Downloa
     start: '',
     end: new Date().toLocaleDateString('pt-BR')
   });
+
+  // Aplica o bloqueio de scroll
+  useScrollLock(isOpen);
 
   const formatName = (name: string) => {
     if (!name) return '';

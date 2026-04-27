@@ -13,6 +13,7 @@ import {
   X
 } from 'lucide-react';
 import NotificationModal, { ModalType } from './NotificationModal';
+import { useScrollLock } from '@/hooks/useScrollLock';
 
 interface ProfileModalProps {
   isOpen: boolean;
@@ -48,29 +49,8 @@ const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
     message: ''
   });
 
-  useEffect(() => {
-    if (isOpen) {
-      const count = parseInt(document.documentElement.getAttribute('data-scroll-locks') || '0');
-      document.documentElement.setAttribute('data-scroll-locks', (count + 1).toString());
-      document.documentElement.classList.add('no-scroll');
-    } else {
-      const count = parseInt(document.documentElement.getAttribute('data-scroll-locks') || '0');
-      const newCount = Math.max(0, count - 1);
-      document.documentElement.setAttribute('data-scroll-locks', newCount.toString());
-      if (newCount === 0) {
-        document.documentElement.classList.remove('no-scroll');
-      }
-    }
-    
-    return () => {
-      const count = parseInt(document.documentElement.getAttribute('data-scroll-locks') || '0');
-      const newCount = Math.max(0, count - 1);
-      document.documentElement.setAttribute('data-scroll-locks', newCount.toString());
-      if (newCount === 0) {
-        document.documentElement.classList.remove('no-scroll');
-      }
-    };
-  }, [isOpen]);
+  // Aplica o bloqueio de scroll
+  useScrollLock(isOpen);
 
   useEffect(() => {
     const fetchProfile = async () => {

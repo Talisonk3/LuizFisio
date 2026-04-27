@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { AlertTriangle, CheckCircle2, XCircle, Info, X } from 'lucide-react';
+import { useScrollLock } from '@/hooks/useScrollLock';
 
 export type ModalType = 'warning' | 'success' | 'error' | 'info';
 
@@ -27,29 +28,8 @@ const NotificationModal = ({
   cancelLabel = 'Voltar'
 }: NotificationModalProps) => {
   
-  useEffect(() => {
-    if (isOpen) {
-      const count = parseInt(document.documentElement.getAttribute('data-scroll-locks') || '0');
-      document.documentElement.setAttribute('data-scroll-locks', (count + 1).toString());
-      document.documentElement.classList.add('no-scroll');
-    } else {
-      const count = parseInt(document.documentElement.getAttribute('data-scroll-locks') || '0');
-      const newCount = Math.max(0, count - 1);
-      document.documentElement.setAttribute('data-scroll-locks', newCount.toString());
-      if (newCount === 0) {
-        document.documentElement.classList.remove('no-scroll');
-      }
-    }
-    
-    return () => {
-      const count = parseInt(document.documentElement.getAttribute('data-scroll-locks') || '0');
-      const newCount = Math.max(0, count - 1);
-      document.documentElement.setAttribute('data-scroll-locks', newCount.toString());
-      if (newCount === 0) {
-        document.documentElement.classList.remove('no-scroll');
-      }
-    };
-  }, [isOpen]);
+  // Aplica o bloqueio de scroll
+  useScrollLock(isOpen);
 
   if (!isOpen) return null;
 

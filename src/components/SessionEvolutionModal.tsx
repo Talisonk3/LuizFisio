@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { X, Save, Loader2, MessageSquarePlus, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import NotificationModal, { ModalType } from './NotificationModal';
+import { useScrollLock } from '@/hooks/useScrollLock';
 
 interface SessionEvolutionModalProps {
   isOpen: boolean;
@@ -38,25 +39,8 @@ const SessionEvolutionModal = ({
     message: ''
   });
 
-  // Bloquear scroll total quando a modal estiver aberta
-  useEffect(() => {
-    if (isOpen) {
-      const scrollY = window.scrollY;
-      document.documentElement.classList.add('no-scroll');
-      document.body.style.top = `-${scrollY}px`;
-    } else {
-      const scrollY = document.body.style.top;
-      document.documentElement.classList.remove('no-scroll');
-      document.body.style.top = '';
-      if (scrollY) {
-        window.scrollTo(0, parseInt(scrollY || '0') * -1);
-      }
-    }
-    return () => {
-      document.documentElement.classList.remove('no-scroll');
-      document.body.style.top = '';
-    };
-  }, [isOpen]);
+  // Aplica o bloqueio de scroll
+  useScrollLock(isOpen);
 
   const formatDate = (value: string) => {
     const numbers = value.replace(/\D/g, '');

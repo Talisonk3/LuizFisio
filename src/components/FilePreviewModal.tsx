@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { X, Download, FileText, Loader2, ExternalLink } from 'lucide-react';
+import { useScrollLock } from '@/hooks/useScrollLock';
 
 interface FilePreviewModalProps {
   isOpen: boolean;
@@ -12,6 +13,9 @@ interface FilePreviewModalProps {
 const FilePreviewModal = ({ isOpen, onClose, fileUrl }: FilePreviewModalProps) => {
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Aplica o bloqueio de scroll
+  useScrollLock(isOpen);
 
   const isPDF = fileUrl?.startsWith('data:application/pdf') || fileUrl?.toLowerCase().endsWith('.pdf');
 

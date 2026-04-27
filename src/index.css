@@ -6,22 +6,20 @@
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
 }
 
-/* Bloqueio total e absoluto de scroll */
+/* Bloqueio Nuclear de Scroll */
+/* Aplicamos em HTML, BODY, #ROOT e qualquer MAIN para garantir que nada escape */
 html.no-scroll,
-html.no-scroll body {
+html.no-scroll body,
+html.no-scroll #root,
+html.no-scroll main {
   overflow: hidden !important;
   height: 100vh !important;
   width: 100% !important;
   position: fixed !important;
   top: 0;
   left: 0;
-}
-
-/* Trava específica para o container de scroll da página de Avaliação */
-html.no-scroll main,
-html.no-scroll .overflow-y-auto {
-  overflow: hidden !important;
   touch-action: none;
+  -webkit-overflow-scrolling: none;
 }
 
 body {

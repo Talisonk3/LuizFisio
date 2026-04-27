@@ -38,6 +38,26 @@ const SessionEvolutionModal = ({
     message: ''
   });
 
+  // Bloquear scroll total quando a modal estiver aberta
+  useEffect(() => {
+    if (isOpen) {
+      const scrollY = window.scrollY;
+      document.documentElement.classList.add('no-scroll');
+      document.body.style.top = `-${scrollY}px`;
+    } else {
+      const scrollY = document.body.style.top;
+      document.documentElement.classList.remove('no-scroll');
+      document.body.style.top = '';
+      if (scrollY) {
+        window.scrollTo(0, parseInt(scrollY || '0') * -1);
+      }
+    }
+    return () => {
+      document.documentElement.classList.remove('no-scroll');
+      document.body.style.top = '';
+    };
+  }, [isOpen]);
+
   const formatDate = (value: string) => {
     const numbers = value.replace(/\D/g, '');
     const currentYear = new Date().getFullYear();

@@ -6,12 +6,19 @@
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
 }
 
-/* Classe para bloquear scroll quando modais estão abertas */
-.no-scroll {
+/* Bloqueio total de scroll em todos os níveis */
+.no-scroll, 
+.no-scroll body {
   overflow: hidden !important;
   height: 100vh !important;
   width: 100% !important;
   position: fixed !important;
+}
+
+/* Garante que containers com scroll interno (como o main da Avaliação) também travem */
+.no-scroll main,
+.no-scroll .overflow-y-auto {
+  overflow: hidden !important;
 }
 
 body {

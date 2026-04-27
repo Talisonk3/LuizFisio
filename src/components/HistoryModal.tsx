@@ -21,6 +21,26 @@ const HistoryModal = ({ isOpen, onClose, evaluationId, patientName }: HistoryMod
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Bloquear scroll total quando a modal estiver aberta
+  useEffect(() => {
+    if (isOpen) {
+      const scrollY = window.scrollY;
+      document.documentElement.classList.add('no-scroll');
+      document.body.style.top = `-${scrollY}px`;
+    } else {
+      const scrollY = document.body.style.top;
+      document.documentElement.classList.remove('no-scroll');
+      document.body.style.top = '';
+      if (scrollY) {
+        window.scrollTo(0, parseInt(scrollY || '0') * -1);
+      }
+    }
+    return () => {
+      document.documentElement.classList.remove('no-scroll');
+      document.body.style.top = '';
+    };
+  }, [isOpen]);
+
   useEffect(() => {
     if (isOpen && evaluationId) {
       const fetchHistory = async () => {
